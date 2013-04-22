@@ -13,7 +13,7 @@ import Control.Monad.Trans
 testCase :: TestName -> Assertion -> TestTree
 testCase name = singleTest name . TestCase
 
-instance Result TestCaseResult where
+instance IsResult TestCaseResult where
     testSucceeded = testCaseSucceeded
 
 data TestCaseRunning = TestCaseRunning
