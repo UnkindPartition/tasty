@@ -1,11 +1,14 @@
 {-# LANGUAGE TypeFamilies, GeneralizedNewtypeDeriving, FlexibleContexts,
-             ExistentialQuantification #-}
+             ExistentialQuantification, RankNTypes #-}
 module Test.Tasty.Core where
 
 import Control.Applicative
 import Control.Monad.Reader
 import Control.Concurrent.STM
 import Control.Exception
+import Test.Tasty.Options
+import Data.Foldable
+import Data.Monoid
 
 class Show r => IsResult r where
   testSucceeded :: r -> Bool
@@ -64,4 +67,20 @@ data TestTree
   {-
   | PlusTestOptions TestOptions Test
     -- ^ Add some options to child tests
-  -}
+
+foldTestTree
+  :: Monoid b
+  => (forall t . IsTest t => OptionSet -> TestName -> t -> b)
+     -- ^ interpret a single test
+  -> (TestName -> b -> b)
+     -- ^ interpret a test group
+  -> OptionSet
+     -- ^ initial options
+  -> TestTree -> b
+foldTestTree fTest fGroup opts tree = go opts tree
+  where
+    go opts tree =
+      case tree of
+        SingleTest name test -> fTest opts name test
+        TestGroup name trees -> fGroup name $ foldMap (go opts) trees
+        PlusTestOptions f tree -> go (f opts) tree
