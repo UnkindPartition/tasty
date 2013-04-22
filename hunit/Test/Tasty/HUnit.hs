@@ -39,7 +39,7 @@ testCaseSucceeded _              = False
 newtype TestCase = TestCase Assertion
     deriving Typeable
 
-instance Test TestCase where
+instance IsTest TestCase where
   type TestResult TestCase = TestCaseResult
   type TestProgress TestCase = TestCaseRunning
 

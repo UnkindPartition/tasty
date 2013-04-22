@@ -1,6 +1,6 @@
 module Test.Tasty.Providers
-  ( Test(..)
-  , Result(..)
+  ( IsTest(..)
+  , IsResult(..)
   , TestM
   , yieldProgress
   , TestName
@@ -11,5 +11,5 @@ module Test.Tasty.Providers
 
 import Test.Tasty.Core
 
-singleTest :: Test t => TestName -> t -> TestTree
+singleTest :: IsTest t => TestName -> t -> TestTree
 singleTest = SingleTest

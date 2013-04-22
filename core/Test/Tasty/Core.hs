@@ -7,10 +7,10 @@ import Control.Monad.Reader
 import Control.Concurrent.STM
 import Control.Exception
 
-class Show r => Result r where
+class Show r => IsResult r where
   testSucceeded :: r -> Bool
 
-class (Result (TestResult t), Show (TestProgress t)) => Test t where
+class (IsResult (TestResult t), Show (TestProgress t)) => IsTest t where
   type TestResult t
   type TestProgress t
 
@@ -24,17 +24,17 @@ data Status
   = NotStarted
   | Progress String
   | Exception SomeException
-  | forall r . Result r => Done r
+  | forall r . IsResult r => Done r
 
 yieldProgress
-  :: Test t
+  :: IsTest t
   => TestProgress t -> TestM t ()
 yieldProgress p = TestM $ do
   v <- ask
   liftIO $ atomically $ writeTVar v $ (Progress . show) p
 
 runTestM
-  :: (Result r, Show progress)
+  :: (IsResult r, Show progress)
   => TestM progress r -> TVar Status -> IO ()
 runTestM action statusVar = do
   result <-
@@ -57,7 +57,7 @@ runTestM action statusVar = do
 type TestName = String
 
 data TestTree
-  = forall t . Test t => SingleTest TestName t
+  = forall t . IsTest t => SingleTest TestName t
     -- ^ A single test of some particular type
   | TestGroup TestName [TestTree]
     -- ^ Assemble a number of tests into a cohesive group
