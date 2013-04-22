@@ -22,7 +22,8 @@ library
   other-modules:
     Test.Tasty.Parallel,
     Test.Tasty.Run,
-    Test.Tasty.Core
-  build-depends:       base ==4.*, stm, containers, mtl
+    Test.Tasty.Core,
+    Test.Tasty.Options
+  build-depends:       base ==4.*, stm, containers, mtl, tagged
   -- hs-source-dirs:      
   default-language:    Haskell2010
