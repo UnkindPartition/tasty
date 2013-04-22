@@ -6,6 +6,7 @@ module Test.Tasty.Options
   , setOption
   , changeOption
   , lookupOption
+  , safeRead
   ) where
 
 import Data.Typeable
@@ -36,3 +37,10 @@ lookupOption (OptionSet s) =
 
 changeOption :: forall v . IsOption v => (v -> v) -> OptionSet -> OptionSet
 changeOption f s = setOption (f $ lookupOption s) s
+
+-- | Safe read function. Defined here for convenience to use for
+-- 'parseValue'.
+safeRead :: Read a => String -> Maybe a
+safeRead s
+  | [(x, "")] <- read s = Just x
+  | otherwise = Nothing
