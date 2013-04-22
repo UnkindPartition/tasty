@@ -16,7 +16,7 @@ import Data.Proxy
 
 class Typeable v => IsOption v where
   defaultValue :: v
-  parseValue :: String -> v
+  parseValue :: String -> Maybe v
   optionName :: Proxy v -> String
 
 data OptionValue = forall v . IsOption v => OptionValue v
