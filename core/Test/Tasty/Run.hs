@@ -1,7 +1,9 @@
+{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
 module Test.Tasty.Run where
 
 import qualified Data.IntMap as IntMap
 import Data.Maybe
+import Data.Typeable
 import Control.Concurrent.STM
 import Control.Monad.State
 import Text.Printf
@@ -75,5 +77,13 @@ runUI opts tree (StatusMap n smap) =
 runTestTree :: OptionSet -> TestTree -> IO ()
 runTestTree opts tree = do
   smap <- createStatusMap opts tree
-  launchTests 4 smap -- FIXME
+  let NumThreads numTheads = lookupOption opts
+  launchTests numTheads smap
   runUI opts tree smap
+
+newtype NumThreads = NumThreads { getNumThreads :: Int }
+  deriving (Eq, Ord, Num, Typeable)
+instance IsOption NumThreads where
+  defaultValue = 1
+  parseValue = fmap NumThreads . safeRead
+  optionName _  = "num-threads"
