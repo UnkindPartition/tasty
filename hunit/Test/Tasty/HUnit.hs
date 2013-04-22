@@ -43,7 +43,7 @@ instance IsTest TestCase where
   type TestResult TestCase = TestCaseResult
   type TestProgress TestCase = TestCaseRunning
 
-  run (TestCase assertion) =
+  run _ (TestCase assertion) =
     liftIO $ myPerformTestCase assertion
 
 myPerformTestCase :: Assertion -> IO TestCaseResult
