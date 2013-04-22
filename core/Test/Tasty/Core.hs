@@ -17,7 +17,7 @@ class (IsResult (TestResult t), Show (TestProgress t)) => IsTest t where
   type TestResult t
   type TestProgress t
 
-  run :: t -> TestM (TestProgress t) (TestResult t)
+  run :: OptionSet -> t -> TestM (TestProgress t) (TestResult t)
 
 newtype TestM progress a = TestM
   { unTestM :: ReaderT (TVar Status) IO a }
@@ -64,8 +64,7 @@ data TestTree
     -- ^ A single test of some particular type
   | TestGroup TestName [TestTree]
     -- ^ Assemble a number of tests into a cohesive group
-  {-
-  | PlusTestOptions TestOptions Test
+  | PlusTestOptions (OptionSet -> OptionSet) TestTree
     -- ^ Add some options to child tests
 
 foldTestTree
@@ -84,3 +83,9 @@ foldTestTree fTest fGroup opts tree = go opts tree
         SingleTest name test -> fTest opts name test
         TestGroup name trees -> fGroup name $ foldMap (go opts) trees
         PlusTestOptions f tree -> go (f opts) tree
+
+-- Useful wrapper for use with foldTestTree
+newtype AppMonoid f = AppMonoid { getApp :: f () }
+instance Applicative f => Monoid (AppMonoid f) where
+  mempty = AppMonoid $ pure ()
+  AppMonoid f1 `mappend` AppMonoid f2 = AppMonoid $ f1 *> f2
