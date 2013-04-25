@@ -58,8 +58,13 @@ runTestM action statusVar = do
 
         Right result -> return $ Done result
 
+-- | The name of a test or a group of tests
 type TestName = String
 
+-- | The main data structure defining a test suite.
+--
+-- It consists of individual test cases and properties, organized in named
+-- groups which form a tree-like hierarchy.
 data TestTree
   = forall t . IsTest t => SingleTest TestName t
     -- ^ A single test of some particular type
