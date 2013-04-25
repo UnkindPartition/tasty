@@ -1,8 +1,8 @@
 {-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable,
              ExistentialQuantification #-}
 module Test.Tasty.Options
-  ( OptionSet
-  , IsOption(..)
+  ( IsOption(..)
+  , OptionSet
   , setOption
   , changeOption
   , lookupOption
@@ -15,13 +15,19 @@ import Data.Map (Map)
 import Data.Monoid
 import Data.Proxy
 
+-- | An option is a data type that inhabits the `IsOption` type class.
 class Typeable v => IsOption v where
+  -- | The value to use if the option was not supplied explicitly
   defaultValue :: v
+  -- | Try to parse an option value from a string
   parseValue :: String -> Maybe v
+  -- | An option name. It is used to form the command line option name, for
+  -- instance.
   optionName :: Proxy v -> String
 
 data OptionValue = forall v . IsOption v => OptionValue v
 
+-- | A set of options. Only one option of each type can be kept.
 newtype OptionSet = OptionSet (Map TypeRep OptionValue)
 
 setOption :: IsOption v => v -> OptionSet -> OptionSet

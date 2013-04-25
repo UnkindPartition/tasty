@@ -18,12 +18,12 @@ cabal-version:       >=1.10
 library
   exposed-modules:
     Test.Tasty,
+    Test.Tasty.Options,
     Test.Tasty.Providers
   other-modules:
     Test.Tasty.Parallel,
     Test.Tasty.Run,
     Test.Tasty.Core,
-    Test.Tasty.Options,
     Test.Tasty.Patterns
   build-depends:       base ==4.*, stm, containers, mtl, tagged, regex-posix
   -- hs-source-dirs:      
