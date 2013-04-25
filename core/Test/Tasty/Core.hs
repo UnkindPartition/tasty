@@ -10,6 +10,7 @@ import Test.Tasty.Options
 import Test.Tasty.Patterns
 import Data.Foldable
 import Data.Monoid
+import Data.Tagged
 
 data Result = Result
   { resultSuccessful :: Bool
@@ -21,8 +22,10 @@ data Progress = Progress
   , progressPercent :: Float
   }
 
-class IsTest t where
+class OptionList (TestOptions t) => IsTest t where
   run :: OptionSet -> t -> TestM Result
+
+  type TestOptions t
 
 newtype TestM a = TestM
   { unTestM :: ReaderT (TVar Status) IO a }

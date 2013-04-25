@@ -35,6 +35,8 @@ instance IsTest TestCase where
   run _ (TestCase assertion) =
     liftIO $ myPerformTestCase assertion
 
+  type TestOptions TestCase = ()
+
 myPerformTestCase :: Assertion -> IO Result
 myPerformTestCase assertion = do
     hunitResult <- performTestCase assertion
