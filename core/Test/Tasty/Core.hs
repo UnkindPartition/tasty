@@ -7,6 +7,7 @@ import Control.Monad.Reader
 import Control.Concurrent.STM
 import Control.Exception
 import Test.Tasty.Options
+import Test.Tasty.Patterns
 import Data.Foldable
 import Data.Monoid
 
@@ -76,13 +77,19 @@ foldTestTree
   -> OptionSet
      -- ^ initial options
   -> TestTree -> b
-foldTestTree fTest fGroup opts tree = go opts tree
+foldTestTree fTest fGroup opts tree =
+  let pat = lookupOption opts
+  in go pat [] opts tree
   where
-    go opts tree =
+    go pat path opts tree =
       case tree of
-        SingleTest name test -> fTest opts name test
-        TestGroup name trees -> fGroup name $ foldMap (go opts) trees
-        PlusTestOptions f tree -> go (f opts) tree
+        SingleTest name test
+          | testPatternMatches pat path
+            -> fTest opts name test
+          | otherwise -> mempty
+        TestGroup name trees ->
+          fGroup name $ foldMap (go pat (path ++ [name]) opts) trees
+        PlusTestOptions f tree -> go pat path (f opts) tree
 
 -- Useful wrapper for use with foldTestTree
 newtype AppMonoid f = AppMonoid { getApp :: f () }
