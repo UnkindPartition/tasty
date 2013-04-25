@@ -1,5 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable,
-             ExistentialQuantification #-}
+             ExistentialQuantification, GADTs,
+             OverlappingInstances, FlexibleInstances, UndecidableInstances,
+             TypeOperators #-}
 -- | Extensible options. They are used for provider-specific settings,
 -- runner-specific settings and core settings (number of threads, test
 -- pattern).
@@ -12,6 +14,12 @@ module Test.Tasty.Options
   , setOption
   , changeOption
   , lookupOption
+    -- * Option lists
+    -- | Option lists are needed in order to know which options are
+    -- relevant for a particular test suite.
+  , OptionList(..)
+  , (:&)
+  , OptionDescription(..)
     -- * Utilities
   , safeRead
   ) where
@@ -21,6 +29,7 @@ import qualified Data.Map as Map
 import Data.Map (Map)
 import Data.Monoid
 import Data.Tagged
+import Data.Proxy
 
 -- | An option is a data type that inhabits the `IsOption` type class.
 class Typeable v => IsOption v where
@@ -55,6 +64,28 @@ lookupOption (OptionSet s) =
 -- | Change the option value
 changeOption :: forall v . IsOption v => (v -> v) -> OptionSet -> OptionSet
 changeOption f s = setOption (f $ lookupOption s) s
+
+-- | The purpose of this data type is to capture the dictionary
+-- corresponding to a particular option.
+data OptionDescription where
+  Describe :: IsOption v => Proxy v -> OptionDescription
+
+class OptionList l where
+  optionList :: Tagged l [OptionDescription]
+
+instance IsOption a => OptionList a where
+  optionList =
+    Tagged [Describe (Proxy :: Proxy a)] :: Tagged a [OptionDescription]
+
+data a :& b
+infixr 1 :&
+
+instance (OptionList a, OptionList b) => OptionList (a :& b) where
+  optionList =
+    let
+      Tagged l1 = optionList :: Tagged a [OptionDescription]
+      Tagged l2 = optionList :: Tagged b [OptionDescription]
+    in Tagged $ l1 ++ l2
 
 -- | Safe read function. Defined here for convenience to use for
 -- 'parseValue'.
