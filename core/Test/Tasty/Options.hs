@@ -4,11 +4,15 @@
 -- runner-specific settings and core settings (number of threads, test
 -- pattern).
 module Test.Tasty.Options
-  ( IsOption(..)
+  (
+    -- * IsOption class
+    IsOption(..)
+    -- * Option sets and operations
   , OptionSet
   , setOption
   , changeOption
   , lookupOption
+    -- * Utilities
   , safeRead
   ) where
 
