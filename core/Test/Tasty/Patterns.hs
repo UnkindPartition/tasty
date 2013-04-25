@@ -77,7 +77,7 @@ instance Read TestPattern where
 instance IsOption TestPattern where
     defaultValue = noPattern
     parseValue = Just . parseTestPattern
-    optionName _ = "pattern"
+    optionName = return "pattern"
 
 parseTestPattern :: String -> TestPattern
 parseTestPattern string = TestPattern {

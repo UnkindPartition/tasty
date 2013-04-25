@@ -13,7 +13,7 @@ import Data.Typeable
 import qualified Data.Map as Map
 import Data.Map (Map)
 import Data.Monoid
-import Data.Proxy
+import Data.Tagged
 
 -- | An option is a data type that inhabits the `IsOption` type class.
 class Typeable v => IsOption v where
@@ -23,7 +23,7 @@ class Typeable v => IsOption v where
   parseValue :: String -> Maybe v
   -- | An option name. It is used to form the command line option name, for
   -- instance.
-  optionName :: Proxy v -> String
+  optionName :: Tagged v String
 
 data OptionValue = forall v . IsOption v => OptionValue v
 

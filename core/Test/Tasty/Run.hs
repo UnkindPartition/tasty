@@ -86,4 +86,4 @@ newtype NumThreads = NumThreads { getNumThreads :: Int }
 instance IsOption NumThreads where
   defaultValue = 1
   parseValue = fmap NumThreads . safeRead
-  optionName _  = "num-threads"
+  optionName  = return "num-threads"
