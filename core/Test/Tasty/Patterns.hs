@@ -24,16 +24,22 @@ IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISI
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
+{-# LANGUAGE DeriveDataTypeable #-}
+
 module Test.Tasty.Patterns
   ( TestPattern
   , parseTestPattern
+  , noPattern
   , testPatternMatches
   ) where
+
+import Test.Tasty.Options
 
 import Text.Regex.Posix.Wrap
 import Text.Regex.Posix.String()
 
 import Data.List
+import Data.Typeable
 
 
 data Token = SlashToken
@@ -58,10 +64,20 @@ data TestPattern = TestPattern {
         tp_negated :: Bool,
         tp_match_mode :: TestPatternMatchMode,
         tp_tokens :: [Token]
-    }
+    } | NoPattern
+    deriving Typeable
+
+-- | A pattern that matches anything.
+noPattern :: TestPattern
+noPattern = NoPattern
 
 instance Read TestPattern where
     readsPrec _ string = [(parseTestPattern string, "")]
+
+instance IsOption TestPattern where
+    defaultValue = noPattern
+    parseValue = Just . parseTestPattern
+    optionName _ = "pattern"
 
 parseTestPattern :: String -> TestPattern
 parseTestPattern string = TestPattern {
@@ -84,6 +100,7 @@ parseTestPattern string = TestPattern {
 
 
 testPatternMatches :: TestPattern -> [String] -> Bool
+testPatternMatches NoPattern _ = True
 testPatternMatches test_pattern path = not_maybe $ any (=~ tokens_regex) things_to_match
   where
     not_maybe | tp_negated test_pattern = not
