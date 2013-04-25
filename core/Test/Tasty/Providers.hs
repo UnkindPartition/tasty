@@ -1,6 +1,7 @@
 module Test.Tasty.Providers
   ( IsTest(..)
-  , IsResult(..)
+  , Result(..)
+  , Progress(..)
   , TestM
   , yieldProgress
   , TestName

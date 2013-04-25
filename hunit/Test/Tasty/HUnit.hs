@@ -13,24 +13,16 @@ import Control.Monad.Trans
 testCase :: TestName -> Assertion -> TestTree
 testCase name = singleTest name . TestCase
 
-instance IsResult TestCaseResult where
-    testSucceeded = testCaseSucceeded
-
-data TestCaseRunning = TestCaseRunning
-
-instance Show TestCaseRunning where
-    show TestCaseRunning = "Running"
-
 data TestCaseResult
   = TestCasePassed
   | TestCaseFailed String
   | TestCaseError String
 
-instance Show TestCaseResult where
-    show result = case result of
-        TestCasePassed         -> "OK"
-        TestCaseFailed message -> message
-        TestCaseError message  -> "ERROR: " ++ message
+describe r =
+  case r of
+    TestCasePassed         -> "OK"
+    TestCaseFailed message -> message
+    TestCaseError message  -> "ERROR: " ++ message
 
 testCaseSucceeded :: TestCaseResult -> Bool
 testCaseSucceeded TestCasePassed = True
@@ -40,16 +32,21 @@ newtype TestCase = TestCase Assertion
     deriving Typeable
 
 instance IsTest TestCase where
-  type TestResult TestCase = TestCaseResult
-  type TestProgress TestCase = TestCaseRunning
-
   run _ (TestCase assertion) =
     liftIO $ myPerformTestCase assertion
 
-myPerformTestCase :: Assertion -> IO TestCaseResult
+myPerformTestCase :: Assertion -> IO Result
 myPerformTestCase assertion = do
-    result <- performTestCase assertion
-    return $ case result of
-        Nothing               -> TestCasePassed
-        Just (True, message)  -> TestCaseFailed message
-        Just (False, message) -> TestCaseError message
+    hunitResult <- performTestCase assertion
+    let
+      tcResult =
+        case hunitResult of
+          Nothing               -> TestCasePassed
+          Just (True, message)  -> TestCaseFailed message
+          Just (False, message) -> TestCaseError message
+      result =
+        Result
+          { resultSuccessful = testCaseSucceeded tcResult
+          , resultDescription = describe tcResult
+          }
+    return result

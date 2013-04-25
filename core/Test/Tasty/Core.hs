@@ -11,35 +11,35 @@ import Test.Tasty.Patterns
 import Data.Foldable
 import Data.Monoid
 
-class Show r => IsResult r where
-  testSucceeded :: r -> Bool
+data Result = Result
+  { resultSuccessful :: Bool
+  , resultDescription :: String
+  }
 
-class (IsResult (TestResult t), Show (TestProgress t)) => IsTest t where
-  type TestResult t
-  type TestProgress t
+data Progress = Progress
+  { progressText :: String
+  , progressPercent :: Float
+  }
 
-  run :: OptionSet -> t -> TestM (TestProgress t) (TestResult t)
+class IsTest t where
+  run :: OptionSet -> t -> TestM Result
 
-newtype TestM progress a = TestM
+newtype TestM a = TestM
   { unTestM :: ReaderT (TVar Status) IO a }
   deriving (Functor, Monad, Applicative, MonadIO)
 
 data Status
   = NotStarted
-  | Progress String
+  | Executing Progress
   | Exception SomeException
-  | forall r . IsResult r => Done r
+  | Done Result
 
-yieldProgress
-  :: IsTest t
-  => TestProgress t -> TestM t ()
+yieldProgress :: Progress -> TestM ()
 yieldProgress p = TestM $ do
   v <- ask
-  liftIO $ atomically $ writeTVar v $ (Progress . show) p
+  liftIO $ atomically $ writeTVar v $ Executing p
 
-runTestM
-  :: (IsResult r, Show progress)
-  => TestM progress r -> TVar Status -> IO ()
+runTestM :: TestM Result -> TVar Status -> IO ()
 runTestM action statusVar = do
   result <-
     handleExceptions $

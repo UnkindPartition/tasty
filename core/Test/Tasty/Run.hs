@@ -66,7 +66,7 @@ runUI opts tree (StatusMap n smap) =
       ok <- liftIO $ atomically $ do
         status <- readTVar statusVar
         case status of
-          Done r -> return $ testSucceeded r
+          Done r -> return $ resultSuccessful r
           Exception _ -> return False
           _ -> retry
       liftIO $ printf "%s: %s\n" name
