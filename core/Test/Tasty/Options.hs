@@ -27,7 +27,6 @@ module Test.Tasty.Options
 import Data.Typeable
 import qualified Data.Map as Map
 import Data.Map (Map)
-import Data.Monoid
 import Data.Tagged
 import Data.Proxy
 
