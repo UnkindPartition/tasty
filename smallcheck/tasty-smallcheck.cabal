@@ -1,0 +1,21 @@
+Name:                tasty-smallcheck
+Version:             0.2
+Cabal-Version:       >= 1.6
+Category:            Testing
+Synopsis:            SmallCheck support for the Tasty test framework.
+Description:         SmallCheck support for the Tasty test framework.
+License:             BSD3
+License-File:        LICENSE
+Author:              Roman Cheplyaka <roma@ro-che.info>
+Maintainer:          Roman Cheplyaka <roma@ro-che.info>
+Homepage:            https://github.com/feuerbach/tasty
+Bug-reports:         https://github.com/feuerbach/tasty/issues
+Build-Type:          Simple
+
+Library
+        Exposed-Modules:        Test.Tasty.SmallCheck
+
+        Build-Depends:          tasty,
+                                smallcheck >= 1.0,
+                                base >= 4 && < 5,
+                                async
