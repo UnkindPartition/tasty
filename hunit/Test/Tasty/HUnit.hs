@@ -32,8 +32,8 @@ newtype TestCase = TestCase Assertion
     deriving Typeable
 
 instance IsTest TestCase where
-  run _ (TestCase assertion) =
-    liftIO $ myPerformTestCase assertion
+  run _ (TestCase assertion) _ =
+    myPerformTestCase assertion
 
   type TestOptions TestCase = ()
 
