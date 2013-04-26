@@ -8,7 +8,6 @@ module Test.Tasty
   where
 
 import Test.Tasty.Core
-import Test.Tasty.Run
 
 -- | Create a named group of test cases or other groups
 testGroup :: TestName -> [TestTree] -> TestTree

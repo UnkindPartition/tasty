@@ -6,10 +6,17 @@ import Data.Maybe
 import Data.Typeable
 import Control.Concurrent.STM
 import Control.Monad.State
+import Control.Exception
 import Text.Printf
 import Test.Tasty.Core
 import Test.Tasty.Parallel
 import Test.Tasty.Options
+
+data Status
+  = NotStarted
+  | Executing Progress
+  | Exception SomeException
+  | Done Result
 
 data StatusMap = StatusMap
     !Int
@@ -22,6 +29,29 @@ data StatusMap = StatusMap
       --    * the action to launch the test
       --    * the status variable of the launched test
 
+executeTest
+  :: ((Progress -> IO ()) -> IO Result)
+  -> TVar Status
+  -> IO ()
+executeTest action statusVar = do
+  result <- handleExceptions $ action yieldProgress
+  atomically $ writeTVar statusVar result
+  where
+    yieldProgress progress =
+      atomically $ writeTVar statusVar $ Executing progress
+
+    handleExceptions a = do
+      resultOrException <- try a
+      case resultOrException of
+        Left e
+          | Just async <- fromException e
+          -> throwIO (async :: AsyncException) -- user interrupt, etc
+
+          | otherwise
+          -> return $ Exception e
+
+        Right result -> return $ Done result
+
 createStatusMap :: OptionSet -> TestTree -> IO StatusMap
 createStatusMap opts tree =
   flip execStateT (StatusMap 0 IntMap.empty) $ getApp $
@@ -33,7 +63,7 @@ createStatusMap opts tree =
   where
     runSingleTest opts _ test = AppMonoid $ do
       statusVar <- liftIO $ atomically $ newTVar NotStarted
-      let act = runTestM (run opts test) statusVar
+      let act = executeTest (run opts test) statusVar
       StatusMap ix smap <- get
       let
         smap' = IntMap.insert ix (act, statusVar) smap
@@ -45,7 +75,7 @@ launchTests threads (StatusMap _ smap) =
   runInParallel threads $ map fst $ IntMap.elems smap
 
 runUI :: OptionSet -> TestTree -> StatusMap -> IO ()
-runUI opts tree (StatusMap n smap) =
+runUI opts tree (StatusMap _n smap) =
   flip evalStateT 0 $ getApp $
   foldTestTree
     runSingleTest
@@ -56,7 +86,7 @@ runUI opts tree (StatusMap n smap) =
     runSingleTest
       :: IsTest t
       => OptionSet -> TestName -> t -> AppMonoid (StateT Int IO)
-    runSingleTest opts name test = AppMonoid $ do
+    runSingleTest _opts name _test = AppMonoid $ do
       ix <- get
       let
         statusVar =

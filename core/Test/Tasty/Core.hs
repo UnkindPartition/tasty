@@ -3,14 +3,10 @@
 module Test.Tasty.Core where
 
 import Control.Applicative
-import Control.Monad.Reader
-import Control.Concurrent.STM
-import Control.Exception
 import Test.Tasty.Options
 import Test.Tasty.Patterns
 import Data.Foldable
 import Data.Monoid
-import Data.Tagged
 
 data Result = Result
   { resultSuccessful :: Bool
@@ -23,43 +19,13 @@ data Progress = Progress
   }
 
 class OptionList (TestOptions t) => IsTest t where
-  run :: OptionSet -> t -> TestM Result
+  run
+    :: OptionSet -- ^ options
+    -> t -- ^ the test to run
+    -> (Progress -> IO ()) -- ^ a callback to report progress
+    -> IO Result
 
   type TestOptions t
-
-newtype TestM a = TestM
-  { unTestM :: ReaderT (TVar Status) IO a }
-  deriving (Functor, Monad, Applicative, MonadIO)
-
-data Status
-  = NotStarted
-  | Executing Progress
-  | Exception SomeException
-  | Done Result
-
-yieldProgress :: Progress -> TestM ()
-yieldProgress p = TestM $ do
-  v <- ask
-  liftIO $ atomically $ writeTVar v $ Executing p
-
-runTestM :: TestM Result -> TVar Status -> IO ()
-runTestM action statusVar = do
-  result <-
-    handleExceptions $
-      runReaderT (unTestM action) statusVar
-  atomically $ writeTVar statusVar result
-  where
-    handleExceptions a = do
-      resultOrException <- try a
-      case resultOrException of
-        Left e
-          | Just async <- fromException e
-          -> throwIO (async :: AsyncException) -- user interrupt, etc
-
-          | otherwise
-          -> return $ Exception e
-
-        Right result -> return $ Done result
 
 -- | The name of a test or a group of tests
 type TestName = String
