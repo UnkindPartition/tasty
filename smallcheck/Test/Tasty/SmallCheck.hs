@@ -22,6 +22,7 @@ import qualified Test.SmallCheck as SC
 import qualified Test.SmallCheck.Drivers as SC
 import Test.SmallCheck.Drivers
 import Data.Typeable
+import Data.Proxy
 import Control.Concurrent.Chan
 import Control.Concurrent.Async
 
@@ -47,7 +48,7 @@ instance IsOption SmallCheckDepth where
   optionName = return "SmallCheck depth"
 
 instance IsTest (SC.Property IO) where
-  type TestOptions (SC.Property IO) = SmallCheckDepth
+  testOptions = return [Option (Proxy :: Proxy SmallCheckDepth)]
 
   run opts prop yieldProgress = do
     let
