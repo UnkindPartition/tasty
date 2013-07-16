@@ -1,13 +1,13 @@
+-- | Running tests
 {-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
-module Test.Tasty.Run where
+module Test.Tasty.Run (Status(..), launchTestTree, NumThreads(..)) where
 
 import qualified Data.IntMap as IntMap
 import Data.Maybe
 import Data.Typeable
-import Control.Concurrent.STM
 import Control.Monad.State
+import Control.Concurrent.STM
 import Control.Exception
-import Text.Printf
 import Test.Tasty.Core
 import Test.Tasty.Parallel
 import Test.Tasty.Options
@@ -18,7 +18,7 @@ data Status
   | Exception SomeException
   | Done Result
 
-data StatusMap = StatusMap
+data TestMap = TestMap
     !Int
     !(IntMap.IntMap (IO (), TVar Status))
       -- ^ Int is the first free index
@@ -63,9 +63,9 @@ executeTest action statusVar = do
         Right result -> return $ Done result
 
 -- | Prepare the test tree to be run
-createStatusMap :: OptionSet -> TestTree -> IO StatusMap
-createStatusMap opts tree =
-  flip execStateT (StatusMap 0 IntMap.empty) $ getApp $
+createTestMap :: OptionSet -> TestTree -> IO TestMap
+createTestMap opts tree =
+  flip execStateT (TestMap 0 IntMap.empty) $ getApp $
   foldTestTree
     runSingleTest
     (const id)
@@ -75,53 +75,28 @@ createStatusMap opts tree =
     runSingleTest opts _ test = AppMonoid $ do
       statusVar <- liftIO $ atomically $ newTVar NotStarted
       let act = executeTest (run opts test) statusVar
-      StatusMap ix smap <- get
+      TestMap ix tmap <- get
       let
-        smap' = IntMap.insert ix (act, statusVar) smap
+        tmap' = IntMap.insert ix (act, statusVar) tmap
         ix' = ix+1
-      put $! StatusMap ix' smap'
+      put $! TestMap ix' tmap'
 
--- | Start running all the tests, in parallel
-launchTests :: Int -> StatusMap -> IO ()
-launchTests threads (StatusMap _ smap) =
-  runInParallel threads $ map fst $ IntMap.elems smap
+-- | Start running all the tests in the TestMap in parallel
+launchTests :: Int -> TestMap -> IO ()
+launchTests threads (TestMap _ tmap) =
+  runInParallel threads $ map fst $ IntMap.elems tmap
 
-runUI :: OptionSet -> TestTree -> StatusMap -> IO ()
-runUI opts tree (StatusMap _n smap) =
-  flip evalStateT 0 $ getApp $
-  foldTestTree
-    runSingleTest
-    (const id)
-    opts
-    tree
-  where
-    runSingleTest
-      :: IsTest t
-      => OptionSet -> TestName -> t -> AppMonoid (StateT Int IO)
-    runSingleTest _opts name _test = AppMonoid $ do
-      ix <- get
-      let
-        statusVar =
-          snd $
-          fromMaybe (error "internal error: index out of bounds") $
-          IntMap.lookup ix smap
-      ok <- liftIO $ atomically $ do
-        status <- readTVar statusVar
-        case status of
-          Done r -> return $ resultSuccessful r
-          Exception _ -> return False
-          _ -> retry
-      liftIO $ printf "%s: %s\n" name
-        (if ok then "OK" else "FAIL")
-      let ix' = ix+1
-      put $! ix'
-
-runTestTree :: OptionSet -> TestTree -> IO ()
-runTestTree opts tree = do
-  smap <- createStatusMap opts tree
+-- | Start running all the tests in a test tree in parallel. The number of
+-- threads is determined by the 'NumThreads' option.
+--
+-- Return a map from the test number (starting from 0) to its status
+-- variable.
+launchTestTree :: OptionSet -> TestTree -> IO (IntMap.IntMap (TVar Status))
+launchTestTree opts tree = do
+  tmap@(TestMap _ smap) <- createTestMap opts tree
   let NumThreads numTheads = lookupOption opts
-  launchTests numTheads smap
-  runUI opts tree smap
+  launchTests numTheads tmap
+  return $ fmap snd smap
 
 newtype NumThreads = NumThreads { getNumThreads :: Int }
   deriving (Eq, Ord, Num, Typeable)
