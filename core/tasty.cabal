@@ -20,7 +20,8 @@ library
     Test.Tasty,
     Test.Tasty.Options,
     Test.Tasty.Providers,
-    Test.Tasty.Run
+    Test.Tasty.Run,
+    Test.Tasty.UI
   other-modules:
     Test.Tasty.Parallel,
     Test.Tasty.Core,
