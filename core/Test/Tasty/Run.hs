@@ -12,11 +12,16 @@ import Test.Tasty.Core
 import Test.Tasty.Parallel
 import Test.Tasty.Options
 
+-- | Current status of a test
 data Status
   = NotStarted
+    -- ^ test has not started running yet
   | Executing Progress
+    -- ^ test is being run
   | Exception SomeException
+    -- ^ test threw an exception and was aborted
   | Done Result
+    -- ^ test finished with a given result
 
 data TestMap = TestMap
     !Int
@@ -98,6 +103,7 @@ launchTestTree opts tree = do
   launchTests numTheads tmap
   return $ fmap snd smap
 
+-- | Number of parallel threads to use for running tests
 newtype NumThreads = NumThreads { getNumThreads :: Int }
   deriving (Eq, Ord, Num, Typeable)
 instance IsOption NumThreads where
