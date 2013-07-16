@@ -20,23 +20,33 @@ data Status
 
 data StatusMap = StatusMap
     !Int
-      -- total number of tests
     !(IntMap.IntMap (IO (), TVar Status))
       -- ^ Int is the first free index
       --
       -- IntMap maps test indices to:
       --
       --    * the action to launch the test
+      --
       --    * the status variable of the launched test
 
+-- | Start executing a test
 executeTest
   :: ((Progress -> IO ()) -> IO Result)
-  -> TVar Status
+    -- ^ the action to execute the test, which takes a progress callback as
+    -- a parameter
+  -> TVar Status -- ^ variable to write status to
   -> IO ()
 executeTest action statusVar = do
-  result <- handleExceptions $ action yieldProgress
+  result <- handleExceptions $
+    -- pass our callback (which updates the status variable) to the test
+    -- action
+    action yieldProgress
+
+  -- when the test is finished, write its result to the status variable
   atomically $ writeTVar statusVar result
+
   where
+    -- the callback
     yieldProgress progress =
       atomically $ writeTVar statusVar $ Executing progress
 
@@ -52,6 +62,7 @@ executeTest action statusVar = do
 
         Right result -> return $ Done result
 
+-- | Prepare the test tree to be run
 createStatusMap :: OptionSet -> TestTree -> IO StatusMap
 createStatusMap opts tree =
   flip execStateT (StatusMap 0 IntMap.empty) $ getApp $
@@ -70,6 +81,7 @@ createStatusMap opts tree =
         ix' = ix+1
       put $! StatusMap ix' smap'
 
+-- | Start running all the tests, in parallel
 launchTests :: Int -> StatusMap -> IO ()
 launchTests threads (StatusMap _ smap) =
   runInParallel threads $ map fst $ IntMap.elems smap
