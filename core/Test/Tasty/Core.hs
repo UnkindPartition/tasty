@@ -8,6 +8,8 @@ import Test.Tasty.Patterns
 import Data.Foldable
 import Data.Monoid
 import Data.Typeable
+import qualified Data.Map as Map
+import Data.Tagged
 
 data Result = Result
   { resultSuccessful :: Bool
@@ -71,3 +73,24 @@ newtype AppMonoid f = AppMonoid { getApp :: f () }
 instance Applicative f => Monoid (AppMonoid f) where
   mempty = AppMonoid $ pure ()
   AppMonoid f1 `mappend` AppMonoid f2 = AppMonoid $ f1 *> f2
+
+-- | Get the list of options that are relevant for a given test tree
+getTreeOptions :: TestTree -> [OptionDescription]
+getTreeOptions =
+
+  Prelude.concat .
+  Map.elems .
+
+  foldTestTree
+    (\_ _ -> getTestOptions)
+    (const id)
+    mempty
+
+  where
+    getTestOptions
+      :: forall t . IsTest t
+      => t -> Map.Map TypeRep [OptionDescription]
+    getTestOptions t =
+      Map.singleton (typeOf t) $
+        untag $
+          (optionList :: Tagged (TestOptions t) [OptionDescription])
