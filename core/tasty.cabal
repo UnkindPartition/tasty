@@ -21,11 +21,19 @@ library
     Test.Tasty.Options,
     Test.Tasty.Providers,
     Test.Tasty.Run,
-    Test.Tasty.UI
+    Test.Tasty.UI,
+    Test.Tasty.CmdLine
   other-modules:
     Test.Tasty.Parallel,
     Test.Tasty.Core,
     Test.Tasty.Patterns
-  build-depends:       base ==4.*, stm, containers, mtl, tagged, regex-posix
+  build-depends:
+    base ==4.*,
+    stm,
+    containers,
+    mtl,
+    tagged,
+    regex-posix,
+    optparse-applicative
   -- hs-source-dirs:      
   default-language:    Haskell2010
