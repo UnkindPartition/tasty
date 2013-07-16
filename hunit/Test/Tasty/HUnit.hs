@@ -35,7 +35,7 @@ instance IsTest TestCase where
   run _ (TestCase assertion) _ =
     myPerformTestCase assertion
 
-  type TestOptions TestCase = ()
+  testOptions = return []
 
 myPerformTestCase :: Assertion -> IO Result
 myPerformTestCase assertion = do
