@@ -12,6 +12,7 @@
              GeneralizedNewtypeDeriving #-}
 module Test.Tasty.SmallCheck
   ( testProperty
+  , SmallCheckDepth(..)
 --, withDepth
   ) where
 
@@ -28,14 +29,15 @@ import Control.Concurrent.Async
 testProperty :: SC.Testable IO a => TestName -> a -> TestTree
 testProperty name prop = singleTest name $ (SC.test prop :: SC.Property IO)
 
+{- TODO
 -- | Change the default maximum test depth for a given 'Test'.
 --
 -- This is a simple wrapper around 'plusTestOptions'.
-{- TODO
 withDepth :: SC.Depth -> Test -> Test
 withDepth d = plusTestOptions mempty { topt_maximum_test_depth = Just d }
 -}
 
+-- | The \"depth\" parameter for SmallCheck
 newtype SmallCheckDepth = SmallCheckDepth Int
   deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
 
