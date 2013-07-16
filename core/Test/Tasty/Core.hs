@@ -7,6 +7,7 @@ import Test.Tasty.Options
 import Test.Tasty.Patterns
 import Data.Foldable
 import Data.Monoid
+import Data.Typeable
 
 data Result = Result
   { resultSuccessful :: Bool
@@ -18,7 +19,7 @@ data Progress = Progress
   , progressPercent :: Float
   }
 
-class OptionList (TestOptions t) => IsTest t where
+class (Typeable t, OptionList (TestOptions t)) => IsTest t where
   run
     :: OptionSet -- ^ options
     -> t -- ^ the test to run
