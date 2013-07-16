@@ -19,10 +19,10 @@ library
   exposed-modules:
     Test.Tasty,
     Test.Tasty.Options,
-    Test.Tasty.Providers
+    Test.Tasty.Providers,
+    Test.Tasty.Run
   other-modules:
     Test.Tasty.Parallel,
-    Test.Tasty.Run,
     Test.Tasty.Core,
     Test.Tasty.Patterns
   build-depends:       base ==4.*, stm, containers, mtl, tagged, regex-posix
