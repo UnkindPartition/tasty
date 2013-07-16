@@ -69,7 +69,7 @@ changeOption f s = setOption (f $ lookupOption s) s
 -- | The purpose of this data type is to capture the dictionary
 -- corresponding to a particular option.
 data OptionDescription where
-  Describe :: IsOption v => Proxy v -> OptionDescription
+  Option :: IsOption v => Proxy v -> OptionDescription
 
 -- | Safe read function. Defined here for convenience to use for
 -- 'parseValue'.

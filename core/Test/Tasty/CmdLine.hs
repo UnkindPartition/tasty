@@ -22,7 +22,7 @@ treeOptionParser = optionParser . getTreeOptions
 optionParser :: [OptionDescription] -> Parser OptionSet
 optionParser = foldr addOption (pure mempty) where
   addOption :: OptionDescription -> Parser OptionSet -> Parser OptionSet
-  addOption (Describe px) p =
+  addOption (Option px) p =
     let
       name = proxy optionName px
       deflt = defaultValue `asProxyTypeOf` px
