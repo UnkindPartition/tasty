@@ -14,11 +14,6 @@ module Test.Tasty.Options
   , setOption
   , changeOption
   , lookupOption
-    -- * Option lists
-    -- | Option lists are needed in order to know which options are
-    -- relevant for a particular test suite.
-  , OptionList(..)
-  , (:&)
   , OptionDescription(..)
     -- * Utilities
   , safeRead
@@ -75,29 +70,6 @@ changeOption f s = setOption (f $ lookupOption s) s
 -- corresponding to a particular option.
 data OptionDescription where
   Describe :: IsOption v => Proxy v -> OptionDescription
-
-class OptionList l where
-  optionList :: Tagged l [OptionDescription]
-
--- | A singleton option list
-instance IsOption a => OptionList a where
-  optionList =
-    Tagged [Describe (Proxy :: Proxy a)] :: Tagged a [OptionDescription]
-
-data a :& b
-infixr 1 :&
-
--- | Concatenation of option lists
-instance (OptionList a, OptionList b) => OptionList (a :& b) where
-  optionList =
-    let
-      Tagged l1 = optionList :: Tagged a [OptionDescription]
-      Tagged l2 = optionList :: Tagged b [OptionDescription]
-    in Tagged $ l1 ++ l2
-
--- | An empty option list
-instance OptionList () where
-  optionList = return []
 
 -- | Safe read function. Defined here for convenience to use for
 -- 'parseValue'.

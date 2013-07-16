@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, GeneralizedNewtypeDeriving, FlexibleContexts,
+{-# LANGUAGE GeneralizedNewtypeDeriving, FlexibleContexts,
              ExistentialQuantification, RankNTypes #-}
 module Test.Tasty.Core where
 
@@ -21,14 +21,14 @@ data Progress = Progress
   , progressPercent :: Float
   }
 
-class (Typeable t, OptionList (TestOptions t)) => IsTest t where
+class Typeable t => IsTest t where
   run
     :: OptionSet -- ^ options
     -> t -- ^ the test to run
     -> (Progress -> IO ()) -- ^ a callback to report progress
     -> IO Result
 
-  type TestOptions t
+  testOptions :: Tagged t [OptionDescription]
 
 -- | The name of a test or a group of tests
 type TestName = String
@@ -92,5 +92,4 @@ getTreeOptions =
       => t -> Map.Map TypeRep [OptionDescription]
     getTestOptions t =
       Map.singleton (typeOf t) $
-        untag $
-          (optionList :: Tagged (TestOptions t) [OptionDescription])
+          witness testOptions t
