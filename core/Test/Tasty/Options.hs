@@ -29,6 +29,7 @@ import qualified Data.Map as Map
 import Data.Map (Map)
 import Data.Tagged
 import Data.Proxy
+import Data.Monoid
 
 -- | An option is a data type that inhabits the `IsOption` type class.
 class Typeable v => IsOption v where
@@ -46,6 +47,12 @@ data OptionValue = forall v . IsOption v => OptionValue v
 --
 -- If some option has not been explicitly set, the default value is used.
 newtype OptionSet = OptionSet (Map TypeRep OptionValue)
+
+-- | Later options override earlier ones
+instance Monoid OptionSet where
+  mempty = OptionSet mempty
+  OptionSet a `mappend` OptionSet b =
+    OptionSet $ Map.unionWith (flip const) a b
 
 -- | Set the option value
 setOption :: IsOption v => v -> OptionSet -> OptionSet
