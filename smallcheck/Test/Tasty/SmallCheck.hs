@@ -25,7 +25,6 @@ import Control.Concurrent.Chan
 import Control.Concurrent.Async
 
 -- | Create a 'Test' for a SmallCheck 'SC.Testable' property
--- testProperty :: TestName -> (forall m . T.MonadIO m => SC.Testable m a) -> Test
 testProperty :: SC.Testable IO a => TestName -> a -> TestTree
 testProperty name prop = singleTest name $ (SC.test prop :: SC.Property IO)
 
