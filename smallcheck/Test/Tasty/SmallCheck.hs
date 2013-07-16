@@ -45,7 +45,7 @@ newtype SmallCheckDepth = SmallCheckDepth Int
 instance IsOption SmallCheckDepth where
   defaultValue = 5
   parseValue = fmap SmallCheckDepth . safeRead
-  optionName = return "SmallCheck depth"
+  optionName = return "smallcheck-depth"
 
 instance IsTest (SC.Property IO) where
   testOptions = return [Option (Proxy :: Proxy SmallCheckDepth)]
