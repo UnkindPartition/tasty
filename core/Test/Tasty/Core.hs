@@ -68,7 +68,7 @@ foldTestTree fTest fGroup opts tree =
           fGroup name $ foldMap (go pat (path ++ [name]) opts) trees
         PlusTestOptions f tree -> go pat path (f opts) tree
 
--- Useful wrapper for use with foldTestTree
+-- | Useful wrapper for use with foldTestTree
 newtype AppMonoid f = AppMonoid { getApp :: f () }
 instance Applicative f => Monoid (AppMonoid f) where
   mempty = AppMonoid $ pure ()
