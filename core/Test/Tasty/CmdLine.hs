@@ -2,6 +2,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Test.Tasty.CmdLine
   ( treeOptionParser
+  , optionParser
   , defaultMainWithRunner
   ) where
 
@@ -14,13 +15,14 @@ import Data.Typeable
 import Control.Arrow
 
 import Test.Tasty.Core
+import Test.Tasty.CoreOptions
 import Test.Tasty.Run
 import Test.Tasty.Options
 
 -- | Generate a command line parser for all the options relevant for this
--- test tree
+-- test tree. Also includes 'coreOptions'.
 treeOptionParser :: TestTree -> Parser OptionSet
-treeOptionParser = optionParser . getTreeOptions
+treeOptionParser = optionParser . (coreOptions ++) . getTreeOptions
 
 -- | Generate a command line parser from a list of option descriptions
 optionParser :: [OptionDescription] -> Parser OptionSet
