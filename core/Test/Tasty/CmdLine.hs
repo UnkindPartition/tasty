@@ -1,6 +1,9 @@
 -- | Parsing options supplied on the command line
 {-# LANGUAGE ScopedTypeVariables #-}
-module Test.Tasty.CmdLine (treeOptionParser) where
+module Test.Tasty.CmdLine
+  ( treeOptionParser
+  , defaultMainWithRunner
+  ) where
 
 import Options.Applicative
 import Data.Monoid
@@ -11,6 +14,7 @@ import Data.Typeable
 import Control.Arrow
 
 import Test.Tasty.Core
+import Test.Tasty.Run
 import Test.Tasty.Options
 
 -- | Generate a command line parser for all the options relevant for this
@@ -33,3 +37,13 @@ optionParser = foldr addOption (pure mempty) where
       setOption <$>
         nullOption (reader parse <> long name <> value deflt) <*>
         p
+
+defaultMainWithRunner :: Runner -> TestTree -> IO ()
+defaultMainWithRunner runner testTree = do
+  opts <- execParser $
+    info (helper <*> treeOptionParser testTree)
+    ( fullDesc <>
+      progDesc "Print a greeting for TARGET" <>
+      header "hello - a test for optparse-applicative"
+    )
+  runner testTree =<< launchTestTree opts testTree
