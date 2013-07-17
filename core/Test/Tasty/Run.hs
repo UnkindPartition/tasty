@@ -1,6 +1,12 @@
 -- | Running tests
 {-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
-module Test.Tasty.Run (Status(..), launchTestTree, NumThreads(..)) where
+module Test.Tasty.Run
+  ( Status(..)
+  , StatusMap
+  , Runner
+  , launchTestTree
+  , NumThreads(..)
+  ) where
 
 import qualified Data.IntMap as IntMap
 import Data.Maybe
@@ -33,6 +39,14 @@ data TestMap = TestMap
       --    * the action to launch the test
       --
       --    * the status variable of the launched test
+
+-- | Mapping from test numbers (starting from 0) to their status variables.
+--
+-- This is what a runner uses to analyse and display progress, and to
+-- detect when tests finish.
+type StatusMap = IntMap.IntMap (TVar Status)
+
+type Runner = TestTree -> StatusMap -> IO ()
 
 -- | Start executing a test
 executeTest
@@ -96,7 +110,7 @@ launchTests threads (TestMap _ tmap) =
 --
 -- Return a map from the test number (starting from 0) to its status
 -- variable.
-launchTestTree :: OptionSet -> TestTree -> IO (IntMap.IntMap (TVar Status))
+launchTestTree :: OptionSet -> TestTree -> IO StatusMap
 launchTestTree opts tree = do
   tmap@(TestMap _ smap) <- createTestMap opts tree
   let NumThreads numTheads = lookupOption opts
