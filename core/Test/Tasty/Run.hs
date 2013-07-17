@@ -1,5 +1,4 @@
 -- | Running tests
-{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
 module Test.Tasty.Run
   ( Status(..)
   , StatusMap
@@ -116,11 +115,3 @@ launchTestTree opts tree = do
   let NumThreads numTheads = lookupOption opts
   launchTests numTheads tmap
   return $ fmap snd smap
-
--- | Number of parallel threads to use for running tests
-newtype NumThreads = NumThreads { getNumThreads :: Int }
-  deriving (Eq, Ord, Num, Typeable)
-instance IsOption NumThreads where
-  defaultValue = 1
-  parseValue = fmap NumThreads . safeRead
-  optionName  = return "num-threads"

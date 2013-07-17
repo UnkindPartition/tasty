@@ -26,6 +26,7 @@ library
   other-modules:
     Test.Tasty.Parallel,
     Test.Tasty.Core,
+    Test.Tasty.CoreOptions,
     Test.Tasty.Patterns
   build-depends:
     base ==4.*,
