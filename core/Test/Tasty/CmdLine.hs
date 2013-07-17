@@ -48,4 +48,4 @@ defaultMainWithRunner runner testTree = do
       progDesc "Print a greeting for TARGET" <>
       header "hello - a test for optparse-applicative"
     )
-  runner testTree =<< launchTestTree opts testTree
+  runner opts testTree =<< launchTestTree opts testTree

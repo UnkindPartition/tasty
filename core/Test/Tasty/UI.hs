@@ -10,9 +10,8 @@ import qualified Data.IntMap as IntMap
 import Data.Maybe
 
 -- | A simple console UI
-runUI :: OptionSet -> TestTree -> IO ()
-runUI opts tree = do
-  smap <- launchTestTree opts tree
+runUI :: Runner
+runUI opts tree smap = do
   flip evalStateT 0 $ getApp $
     foldTestTree
       (runSingleTest smap)

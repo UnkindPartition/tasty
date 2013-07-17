@@ -46,7 +46,7 @@ data TestMap = TestMap
 -- detect when tests finish.
 type StatusMap = IntMap.IntMap (TVar Status)
 
-type Runner = TestTree -> StatusMap -> IO ()
+type Runner = OptionSet -> TestTree -> StatusMap -> IO ()
 
 -- | Start executing a test
 executeTest
