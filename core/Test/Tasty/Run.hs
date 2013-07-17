@@ -4,7 +4,6 @@ module Test.Tasty.Run
   , StatusMap
   , Runner
   , launchTestTree
-  , NumThreads(..)
   ) where
 
 import qualified Data.IntMap as IntMap
@@ -13,9 +12,11 @@ import Data.Typeable
 import Control.Monad.State
 import Control.Concurrent.STM
 import Control.Exception
+
 import Test.Tasty.Core
 import Test.Tasty.Parallel
 import Test.Tasty.Options
+import Test.Tasty.CoreOptions
 
 -- | Current status of a test
 data Status

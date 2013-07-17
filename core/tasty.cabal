@@ -20,14 +20,15 @@ library
     Test.Tasty,
     Test.Tasty.Options,
     Test.Tasty.Providers,
-    Test.Tasty.Run,
-    Test.Tasty.UI,
-    Test.Tasty.CmdLine
+    Test.Tasty.Runners,
+    Test.Tasty.UI
   other-modules:
     Test.Tasty.Parallel,
     Test.Tasty.Core,
     Test.Tasty.CoreOptions,
-    Test.Tasty.Patterns
+    Test.Tasty.Patterns,
+    Test.Tasty.Run,
+    Test.Tasty.CmdLine
   build-depends:
     base ==4.*,
     stm,
