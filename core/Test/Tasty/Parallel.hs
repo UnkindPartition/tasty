@@ -20,7 +20,9 @@ runInParallel nthreads actions = do
       if caps > 0
         then do
           writeTVar capsVar $! caps - 1
-          return $ forkIO action >> cont
+          let
+            release = atomically $ modifyTVar' capsVar (+1)
+          return $ forkIO (action >> release) >> cont
         else retry
 
   foldr go (return ()) actions
