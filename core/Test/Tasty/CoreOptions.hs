@@ -2,7 +2,6 @@
 {-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
 module Test.Tasty.CoreOptions
   ( NumThreads(..)
-  , TestPattern(..)
   , coreOptions
   )
   where
