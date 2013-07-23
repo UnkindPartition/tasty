@@ -30,6 +30,8 @@ patternTests = testGroup "Pattern tests"
       (o "B/A" @?= ["A.B.A"])
   , testCase "/A"
       (o "/A" @?= ["A.B.A","A.B.B","A.B.C","A.C.Z","A.C.BB"])
+  , testCase "!/*/B"
+      (o "!/*/B" @?= ["A.C.Z","A.C.BB"])
   ]
   where
   -- apply a pattern to tt and get the names of tests that match
