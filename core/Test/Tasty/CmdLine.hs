@@ -40,6 +40,8 @@ optionParser = foldr addOption (pure mempty) where
         nullOption (reader parse <> long name <> value deflt) <*>
         p
 
+-- | Parse the command line arguments and run the tests using the provided
+-- runner
 defaultMainWithRunner :: Runner -> TestTree -> IO ()
 defaultMainWithRunner runner testTree = do
   opts <- execParser $

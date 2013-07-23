@@ -13,5 +13,7 @@ import Test.Tasty.Core
 import Test.Tasty.Runners
 import Test.Tasty.UI
 
+-- | Parse the command line arguments and run the tests using the standard
+-- console runner
 defaultMain :: TestTree -> IO ()
 defaultMain = defaultMainWithRunner runUI
