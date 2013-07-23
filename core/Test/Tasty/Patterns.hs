@@ -133,7 +133,7 @@ regexEscapeChar c | c `elem` "\\*+?|{}[]()^$." = '\\' : [c]
                   | otherwise                  = [c]
 
 pathToString :: [String] -> String
-pathToString path = "/" ++ concat (intersperse "/" path)
+pathToString path = concat (intersperse "/" path)
 
 dropLast :: Int -> [a] -> [a]
 dropLast n = reverse . drop n . reverse
