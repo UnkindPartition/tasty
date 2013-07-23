@@ -8,6 +8,7 @@ import Test.Tasty.Options
 import Text.Printf
 import qualified Data.IntMap as IntMap
 import Data.Maybe
+import System.Exit
 
 data RunnerState = RunnerState
   { ix :: !Int
@@ -63,8 +64,13 @@ runUI opts tree smap = do
   printf "\n"
 
   case failures st of
-    0 -> printf "All %d tests passed\n" (ix st)
-    fs -> printf "%d out of %d tests failed\n" fs (ix st)
+    0 -> do
+      printf "All %d tests passed\n" (ix st)
+      exitSuccess
+
+    fs -> do
+      printf "%d out of %d tests failed\n" fs (ix st)
+      exitFailure
 
   where
     runSingleTest
