@@ -27,7 +27,7 @@ patternTests = testGroup "Pattern tests"
   , testCase "A**B"
       (o "A**B" @?= ["A.B.A","A.B.B","A.B.C","A.C.BB"])
   , testCase "B/A"
-      (o "B/A" @?= ["A.B.A","A.B.B","A.B.C","A.C.BB"])
+      (o "B/A" @?= ["A.B.A"])
   , testCase "/A"
       (o "/A" @?= ["A.B.A","A.B.B","A.B.C","A.C.Z","A.C.BB"])
   ]
