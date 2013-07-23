@@ -1,9 +1,12 @@
 -- | This module defines the main data types and functions needed to use
 -- Tasty.
 module Test.Tasty
-  ( TestName
+  (
+  -- * Organizing tests
+    TestName
   , TestTree
   , testGroup
+  -- * Running tests
   , defaultMain
   , defaultMainWithRunner
   -- * Adjusting options
