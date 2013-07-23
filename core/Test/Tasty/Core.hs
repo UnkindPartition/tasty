@@ -71,7 +71,7 @@ foldTestTree fTest fGroup opts tree =
     go pat path opts tree =
       case tree of
         SingleTest name test
-          | testPatternMatches pat path
+          | testPatternMatches pat (path ++ [name])
             -> fTest opts name test
           | otherwise -> mempty
         TestGroup name trees ->
