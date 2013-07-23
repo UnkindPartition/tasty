@@ -37,6 +37,12 @@ type TestName = String
 --
 -- It consists of individual test cases and properties, organized in named
 -- groups which form a tree-like hierarchy.
+--
+-- There is no generic way to create a test case. Instead, every test
+-- provider (tasty-hunit, tasty-smallcheck etc.) provides a function to
+-- turn a test case into a 'TestTree'.
+--
+-- Groups can be created using 'testGroup'.
 data TestTree
   = forall t . IsTest t => SingleTest TestName t
     -- ^ A single test of some particular type
@@ -44,6 +50,10 @@ data TestTree
     -- ^ Assemble a number of tests into a cohesive group
   | PlusTestOptions (OptionSet -> OptionSet) TestTree
     -- ^ Add some options to child tests
+
+-- | Create a named group of test cases or other groups
+testGroup :: TestName -> [TestTree] -> TestTree
+testGroup = TestGroup
 
 foldTestTree
   :: Monoid b
