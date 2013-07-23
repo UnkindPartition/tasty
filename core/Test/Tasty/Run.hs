@@ -46,6 +46,14 @@ data TestMap = TestMap
 -- detect when tests finish.
 type StatusMap = IntMap.IntMap (TVar Status)
 
+-- | A 'Runner' is responsible for user interaction during the test run.
+--
+-- It is provided with the 'StatusMap', so the tests are already launched
+-- and all it needs to do is notifying the user about the progress and
+-- then displaying the overall results in the end.
+--
+-- It is also the runner's responsibility to exit with an appropriate
+-- exit code.
 type Runner = OptionSet -> TestTree -> StatusMap -> IO ()
 
 -- | Start executing a test
