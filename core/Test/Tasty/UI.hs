@@ -25,6 +25,29 @@ indentSize = 2
 indent :: Int -> String
 indent n = replicate (indentSize * n) ' '
 
+-- handle multi-line result descriptions properly
+formatDesc
+  :: Int -- indent
+  -> String
+  -> String
+formatDesc n desc =
+  let
+    -- remove all trailing linebreaks
+    chomped = reverse . dropWhile (== '\n') . reverse $ desc
+
+    multiline = '\n' `elem` chomped
+
+    -- we add a leading linebreak to the description, to start it on a new
+    -- line and add an indentation
+    paddedDesc = flip concatMap ('\n' : chomped) $ \c ->
+      if c == '\n'
+        then c : indent n
+        else [c]
+  in
+    if multiline
+      then paddedDesc
+      else chomped
+
 -- | A simple console UI
 runUI :: Runner
 runUI opts tree smap = do
@@ -45,14 +68,16 @@ runUI opts tree smap = do
         statusVar =
           fromMaybe (error "internal error: index out of bounds") $
           IntMap.lookup ix smap
-      ok <- liftIO $ atomically $ do
-        status <- readTVar statusVar
-        case status of
-          Done r -> return $ resultSuccessful r
-          Exception _ -> return False
-          _ -> retry
-      liftIO $ printf "%s%s: %s\n" (indent level) name
-        (if ok then "OK" else "FAIL")
+
+      (rOk, rDesc) <-
+        liftIO $ atomically $ do
+          status <- readTVar statusVar
+          case status of
+            Done r -> return $ (resultSuccessful r, resultDescription r)
+            Exception e -> return (False, "Exception: " ++ show e)
+            _ -> retry
+
+      liftIO $ printf "%s%s: %s\n" (indent level) name (formatDesc (level+1) rDesc)
       let ix' = ix+1
       put $! st { ix = ix' }
 
