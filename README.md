@@ -9,4 +9,5 @@ The features include:
 * Filter the tests to be run using patterns specified on the command line
 * Hierarchical, colored display of test results
 * Reporting of test statistics
-* Extensibility: add your own test providers above and beyond those provided
+* Extensibility: add your own test providers and runners above and beyond those
+  provided
