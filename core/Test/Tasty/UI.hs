@@ -12,10 +12,11 @@ import Data.Maybe
 data RunnerState = RunnerState
   { ix :: !Int
   , nestedLevel :: !Int
+  , failures :: !Int
   }
 
 initialState :: RunnerState
-initialState = RunnerState 0 0
+initialState = RunnerState 0 0 0
 
 type M = StateT RunnerState IO
 
@@ -51,12 +52,20 @@ formatDesc n desc =
 -- | A simple console UI
 runUI :: Runner
 runUI opts tree smap = do
-  flip evalStateT initialState $ getApp $
-    foldTestTree
-      (runSingleTest smap)
-      runGroup
-      opts
-      tree
+  st <-
+    flip execStateT initialState $ getApp $
+      foldTestTree
+        (runSingleTest smap)
+        runGroup
+        opts
+        tree
+
+  printf "\n"
+
+  case failures st of
+    0 -> printf "All %d tests passed\n" (ix st)
+    fs -> printf "%d out of %d tests failed\n" fs (ix st)
+
   where
     runSingleTest
       :: IsTest t
@@ -78,8 +87,10 @@ runUI opts tree smap = do
             _ -> retry
 
       liftIO $ printf "%s%s: %s\n" (indent level) name (formatDesc (level+1) rDesc)
-      let ix' = ix+1
-      put $! st { ix = ix' }
+      let
+        ix' = ix+1
+        updateFailures = if rOk then id else (+1)
+      put $! st { ix = ix', failures = updateFailures (failures st) }
 
     runGroup :: TestName -> AppMonoid M -> AppMonoid M
     runGroup name (AppMonoid act) = AppMonoid $ do
