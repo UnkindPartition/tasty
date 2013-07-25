@@ -38,7 +38,6 @@ defaultMainWithRunner runner testTree = do
   opts <- execParser $
     info (helper <*> treeOptionParser testTree)
     ( fullDesc <>
-      progDesc "Print a greeting for TARGET" <>
-      header "hello - a test for optparse-applicative"
+      header "Mmm... tasty test suite"
     )
   runner opts testTree =<< launchTestTree opts testTree
