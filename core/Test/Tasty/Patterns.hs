@@ -78,6 +78,7 @@ instance IsOption TestPattern where
     defaultValue = noPattern
     parseValue = Just . parseTestPattern
     optionName = return "pattern"
+    optionHelp = return "Select only tests that match pattern"
 
 parseTestPattern :: String -> TestPattern
 parseTestPattern string = TestPattern {

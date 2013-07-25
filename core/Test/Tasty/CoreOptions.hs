@@ -19,7 +19,8 @@ newtype NumThreads = NumThreads { getNumThreads :: Int }
 instance IsOption NumThreads where
   defaultValue = 1
   parseValue = fmap NumThreads . safeRead
-  optionName  = return "num-threads"
+  optionName = return "num-threads"
+  optionHelp = return "Number of threads to use for tests execution"
 
 -- | The list of all core options
 coreOptions :: [OptionDescription]

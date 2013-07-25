@@ -46,6 +46,7 @@ instance IsOption SmallCheckDepth where
   defaultValue = 5
   parseValue = fmap SmallCheckDepth . safeRead
   optionName = return "smallcheck-depth"
+  optionHelp = return "Depth to use for smallcheck tests"
 
 instance IsTest (SC.Property IO) where
   testOptions = return [Option (Proxy :: Proxy SmallCheckDepth)]
