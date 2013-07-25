@@ -26,15 +26,43 @@ import Data.Tagged
 import Data.Proxy
 import Data.Monoid
 
+import Options.Applicative
+
 -- | An option is a data type that inhabits the `IsOption` type class.
 class Typeable v => IsOption v where
   -- | The value to use if the option was not supplied explicitly
   defaultValue :: v
   -- | Try to parse an option value from a string
   parseValue :: String -> Maybe v
-  -- | An option name. It is used to form the command line option name, for
-  -- instance.
+  -- | The option name. It is used to form the command line option name, for
+  -- instance. Therefore, it had better not contain spaces or other fancy
+  -- characters. It is recommended to use dashes instead of spaces.
   optionName :: Tagged v String
+  -- | The option description or help string. This can be an arbitrary
+  -- string.
+  optionHelp :: Tagged v String
+  -- | A command-line option parser.
+  --
+  -- It has a default implementation in terms of the other methods.
+  -- You may want to override it in some cases (e.g. add a short flag).
+  --
+  -- Even if you override this, you still should implement all the methods
+  -- above, to allow alternative interfaces.
+  optionCLParser :: Parser v
+  optionCLParser =
+    nullOption
+      (  reader parse
+      <> long name
+      <> value defaultValue
+      <> help helpString
+      )
+    where
+      name = untag (optionName :: Tagged v String)
+      helpString = untag (optionHelp :: Tagged v String)
+      parse =
+        maybe (Left (ErrorMsg $ "Could not parse " ++ name)) Right .
+          parseValue
+
 
 data OptionValue = forall v . IsOption v => OptionValue v
 

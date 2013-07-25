@@ -28,17 +28,8 @@ treeOptionParser = optionParser . (coreOptions ++) . getTreeOptions
 optionParser :: [OptionDescription] -> Parser OptionSet
 optionParser = foldr addOption (pure mempty) where
   addOption :: OptionDescription -> Parser OptionSet -> Parser OptionSet
-  addOption (Option px) p =
-    let
-      name = proxy optionName px
-      deflt = defaultValue `asProxyTypeOf` px
-      parse =
-        maybe (Left (ErrorMsg $ "Could not parse " ++ name)) Right .
-          parseValue 
-    in
-      setOption <$>
-        nullOption (reader parse <> long name <> value deflt) <*>
-        p
+  addOption (Option (px :: Proxy v)) p =
+    setOption <$> (optionCLParser :: Parser v) <*> p
 
 -- | Parse the command line arguments and run the tests using the provided
 -- runner
