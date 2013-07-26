@@ -8,6 +8,7 @@ module Test.Tasty.Runners
   , module Test.Tasty.CmdLine
     -- * Running tests
   , module Test.Tasty.Run
+  , module Test.Tasty.UI
     -- * Core options
   , module Test.Tasty.CoreOptions
     -- ** Patterns
@@ -20,3 +21,4 @@ import Test.Tasty.Run
 import Test.Tasty.CoreOptions
 import Test.Tasty.Patterns
 import Test.Tasty.CmdLine
+import Test.Tasty.UI
