@@ -103,5 +103,5 @@ data OptionDescription where
 -- 'parseValue'.
 safeRead :: Read a => String -> Maybe a
 safeRead s
-  | [(x, "")] <- read s = Just x
+  | [(x, "")] <- reads s = Just x
   | otherwise = Nothing
