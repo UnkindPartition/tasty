@@ -9,6 +9,7 @@ import Text.Printf
 import qualified Data.IntMap as IntMap
 import Data.Maybe
 import System.Exit
+import System.IO
 
 data RunnerState = RunnerState
   { ix :: !Int
@@ -53,6 +54,8 @@ formatDesc n desc =
 -- | A simple console UI
 runUI :: Runner
 runUI opts tree smap = do
+  hSetBuffering stdout NoBuffering
+
   st <-
     flip execStateT initialState $ getApp $
       foldTestTree
