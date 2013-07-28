@@ -31,7 +31,7 @@ data Status
 
 data TestMap = TestMap
     !Int
-    !(IntMap.IntMap (IO (), TVar Status))
+    !(IntMap.IntMap (Action, TVar Status))
       -- ^ Int is the first free index
       --
       -- IntMap maps test indices to:
@@ -90,6 +90,19 @@ executeTest action statusVar = do
         Right result -> return $ Done result
 
 -- | Prepare the test tree to be run
+--
+-- A note about exceptions. Exceptions are caught in two places.
+-- One is in 'executeTest' (synchonous exceptions only). Another is when
+-- the 'handleExn' component of the action is invoked.
+--
+-- It may seem redundant, but it's not. Exception handling in 'executeTest'
+-- is to make sure that an exception from a test cannot propagate
+-- to the testing program.
+--
+-- Exception handling using 'handleExn' is needed to ensure that every
+-- test eventually finishes. Without it, a (possibly asynchonous)
+-- exception could kill the thread executing a test case, and we would
+-- then deadlock waiting on its status var.
 createTestMap :: OptionSet -> TestTree -> IO TestMap
 createTestMap opts tree =
   flip execStateT (TestMap 0 IntMap.empty) $ getApp $
@@ -101,7 +114,11 @@ createTestMap opts tree =
   where
     runSingleTest opts _ test = AppMonoid $ do
       statusVar <- liftIO $ atomically $ newTVar NotStarted
-      let act = executeTest (run opts test) statusVar
+      let
+        act =
+          Action
+            (executeTest (run opts test) statusVar)
+            (atomically . writeTVar statusVar . Exception)
       TestMap ix tmap <- get
       let
         tmap' = IntMap.insert ix (act, statusVar) tmap
