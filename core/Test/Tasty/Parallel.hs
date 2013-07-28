@@ -84,4 +84,6 @@ runInParallel nthreads actions = do
 
         else retry
 
-  foldr go (return ()) actions
+  -- fork here as well, so that we can move to the UI without waiting
+  -- untill all tests have finished
+  forkCarefully $ foldr go (return ()) actions
