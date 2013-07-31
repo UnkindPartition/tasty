@@ -42,7 +42,7 @@ formatDesc n desc =
 
     -- we add a leading linebreak to the description, to start it on a new
     -- line and add an indentation
-    paddedDesc = flip concatMap ('\n' : chomped) $ \c ->
+    paddedDesc = flip concatMap chomped $ \c ->
       if c == '\n'
         then c : indent n
         else [c]
@@ -95,7 +95,10 @@ runUI opts tree smap = do
             Exception e -> return (False, "Exception: " ++ show e)
             _ -> retry
 
-      liftIO $ printf "%s%s: %s\n" (indent level) name (formatDesc (level+1) rDesc)
+      liftIO $ printf "%s%s: %s\n" (indent level) name
+        (if rOk then "OK" else "FAIL")
+      when (not $ null rDesc) $
+        liftIO $ printf "%s%s\n" (indent $ level + 1) (formatDesc (level+1) rDesc)
       let
         ix' = ix+1
         updateFailures = if rOk then id else (+1)
