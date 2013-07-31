@@ -1,3 +1,4 @@
+{-# LANGUAGE TupleSections #-}
 module Test.Tasty.UI (runUI) where
 
 import Control.Monad.State
@@ -79,11 +80,15 @@ computeAlignment opts =
 
 -- | A simple console UI
 runUI :: Runner
+-- We fold the test tree using (AppMonoid m, Any) monoid.
+--
+-- The 'Any' part is needed to know whether a group is empty, in which case
+-- we shouldn't display it.
 runUI opts tree smap = do
   hSetBuffering stdout NoBuffering
 
   st <-
-    flip execStateT initialState $ getApp $
+    flip execStateT initialState $ getApp $ fst $
       foldTestTree
         (runSingleTest smap)
         runGroup
@@ -107,8 +112,8 @@ runUI opts tree smap = do
     runSingleTest
       :: IsTest t
       => IntMap.IntMap (TVar Status)
-      -> OptionSet -> TestName -> t -> AppMonoid M
-    runSingleTest smap _opts name _test = AppMonoid $ do
+      -> OptionSet -> TestName -> t -> (AppMonoid M, Any)
+    runSingleTest smap _opts name _test = (, Any True) $ AppMonoid $ do
       st@RunnerState { ix = ix, nestedLevel = level } <- get
       let
         statusVar =
@@ -134,8 +139,9 @@ runUI opts tree smap = do
         updateFailures = if rOk then id else (+1)
       put $! st { ix = ix', failures = updateFailures (failures st) }
 
-    runGroup :: TestName -> AppMonoid M -> AppMonoid M
-    runGroup name (AppMonoid act) = AppMonoid $ do
+    runGroup :: TestName -> (AppMonoid M, Any) -> (AppMonoid M, Any)
+    runGroup _ (_, Any False) = mempty
+    runGroup name (AppMonoid act, nonEmpty) = (, nonEmpty) $ AppMonoid $ do
       st@RunnerState { nestedLevel = level } <- get
       liftIO $ printf "%s%s\n" (indent level) name
       put $! st { nestedLevel = level + 1 }
