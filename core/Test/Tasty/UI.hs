@@ -1,7 +1,8 @@
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TupleSections, CPP, ImplicitParams #-}
 module Test.Tasty.UI (runUI) where
 
-import Control.Monad.State
+import Prelude hiding (fail)
+import Control.Monad.State hiding (fail)
 import Control.Concurrent.STM
 import Test.Tasty.Core
 import Test.Tasty.Run
@@ -12,6 +13,10 @@ import Data.Maybe
 import Data.Monoid
 import System.Exit
 import System.IO
+
+#ifdef COLORS
+import System.Console.ANSI
+#endif
 
 data RunnerState = RunnerState
   { ix :: !Int
@@ -85,6 +90,9 @@ runUI :: Runner
 -- The 'Any' part is needed to know whether a group is empty, in which case
 -- we shouldn't display it.
 runUI opts tree smap = do
+  let
+    ?colors = True -- FIXME
+
   hSetBuffering stdout NoBuffering
 
   st <-
@@ -99,18 +107,18 @@ runUI opts tree smap = do
 
   case failures st of
     0 -> do
-      printf "All %d tests passed\n" (ix st)
+      ok $ printf "All %d tests passed\n" (ix st)
       exitSuccess
 
     fs -> do
-      printf "%d out of %d tests failed\n" fs (ix st)
+      fail $ printf "%d out of %d tests failed\n" fs (ix st)
       exitFailure
 
   where
     alignment = computeAlignment opts tree
 
     runSingleTest
-      :: IsTest t
+      :: (IsTest t, ?colors :: Bool)
       => IntMap.IntMap (TVar Status)
       -> OptionSet -> TestName -> t -> (AppMonoid M, Any)
     runSingleTest smap _opts name _test = (, Any True) $ AppMonoid $ do
@@ -128,12 +136,16 @@ runUI opts tree smap = do
             Exception e -> return (False, "Exception: " ++ show e)
             _ -> retry
 
-      liftIO $ printf "%s%s: %s%s\n" (indent level) name
+      liftIO $ printf "%s%s: %s" (indent level) name
         (replicate (alignment - indentSize * level - length name) ' ')
-        (if rOk then "OK" else "FAIL")
+      liftIO $
+        if rOk
+          then ok "OK\n"
+          else fail "FAIL\n"
 
       when (not $ null rDesc) $
-        liftIO $ printf "%s%s\n" (indent $ level + 1) (formatDesc (level+1) rDesc)
+        liftIO $ (if rOk then infoOk else infoFail) $
+          printf "%s%s\n" (indent $ level + 1) (formatDesc (level+1) rDesc)
       let
         ix' = ix+1
         updateFailures = if rOk then id else (+1)
@@ -147,3 +159,31 @@ runUI opts tree smap = do
       put $! st { nestedLevel = level + 1 }
       act
       modify $ \st -> st { nestedLevel = level }
+
+-- (Potentially) colorful output
+ok, fail, infoOk, infoFail :: (?colors :: Bool) => String -> IO ()
+#ifdef COLORS
+fail     = output BoldIntensity   Vivid Red
+ok       = output NormalIntensity Dull  Green
+infoOk   = output NormalIntensity Dull  White
+infoFail = output NormalIntensity Dull  Black
+
+output
+  :: (?colors :: Bool)
+  => ConsoleIntensity
+  -> ColorIntensity
+  -> Color
+  -> String
+  -> IO ()
+output bold intensity color str
+  | ?colors = do
+    setSGR [SetColor Foreground intensity color, SetConsoleIntensity bold]
+    putStr str
+    setSGR []
+  | otherwise = putStr str
+#else
+ok       = putStr
+fail     = putStr
+infoOk   = putStr
+infoFail = putStr
+#endif

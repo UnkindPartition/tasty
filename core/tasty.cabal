@@ -15,6 +15,10 @@ build-type:          Simple
 -- extra-source-files:  
 cabal-version:       >=1.10
 
+flag colors
+  description: Enable colorful output
+  default: True
+
 library
   exposed-modules:
     Test.Tasty,
@@ -37,5 +41,9 @@ library
     tagged,
     regex-posix,
     optparse-applicative
+
+  if flag(colors)
+    build-depends: ansi-terminal
+    cpp-options: -DCOLORS
   -- hs-source-dirs:      
   default-language:    Haskell2010
