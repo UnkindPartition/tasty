@@ -20,9 +20,9 @@ data TestCaseResult
 
 describe r =
   case r of
-    TestCasePassed         -> "OK"
+    TestCasePassed         -> ""
     TestCaseFailed message -> message
-    TestCaseError message  -> "ERROR: " ++ message
+    TestCaseError message  -> message
 
 testCaseSucceeded :: TestCaseResult -> Bool
 testCaseSucceeded TestCasePassed = True
