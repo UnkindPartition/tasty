@@ -8,6 +8,7 @@ import Test.Tasty.Options
 import Text.Printf
 import qualified Data.IntMap as IntMap
 import Data.Maybe
+import Data.Monoid
 import System.Exit
 import System.IO
 
@@ -51,6 +52,31 @@ formatDesc n desc =
       then paddedDesc
       else chomped
 
+data Maximum a
+  = Maximum a
+  | MinusInfinity
+
+instance Ord a => Monoid (Maximum a) where
+  mempty = MinusInfinity
+
+  Maximum a `mappend` Maximum b = Maximum (a `max` b)
+  MinusInfinity `mappend` a = a
+  a `mappend` MinusInfinity = a
+
+-- | Compute the amount of space needed to align "OK"s and "FAIL"s
+computeAlignment :: OptionSet -> TestTree -> Int
+computeAlignment opts =
+  fromMonoid .
+  foldTestTree
+    (\_ name _ level -> Maximum (length name + level))
+    (\_ m -> m . (+ indentSize))
+    opts
+  where
+    fromMonoid m =
+      case m 0 of
+        MinusInfinity -> 0
+        Maximum x -> x
+
 -- | A simple console UI
 runUI :: Runner
 runUI opts tree smap = do
@@ -76,6 +102,8 @@ runUI opts tree smap = do
       exitFailure
 
   where
+    alignment = computeAlignment opts tree
+
     runSingleTest
       :: IsTest t
       => IntMap.IntMap (TVar Status)
@@ -95,8 +123,10 @@ runUI opts tree smap = do
             Exception e -> return (False, "Exception: " ++ show e)
             _ -> retry
 
-      liftIO $ printf "%s%s: %s\n" (indent level) name
+      liftIO $ printf "%s%s: %s%s\n" (indent level) name
+        (replicate (alignment - indentSize * level - length name) ' ')
         (if rOk then "OK" else "FAIL")
+
       when (not $ null rDesc) $
         liftIO $ printf "%s%s\n" (indent $ level + 1) (formatDesc (level+1) rDesc)
       let
