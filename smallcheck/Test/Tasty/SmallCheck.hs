@@ -25,6 +25,8 @@ import Data.Typeable
 import Data.Proxy
 import Control.Concurrent.Chan
 import Control.Concurrent.Async
+import Data.IORef
+import Text.Printf
 
 -- | Create a 'Test' for a SmallCheck 'SC.Testable' property
 testProperty :: SC.Testable IO a => TestName -> a -> TestTree
@@ -48,16 +50,36 @@ instance IsTest (SC.Property IO) where
       SmallCheckDepth depth = lookupOption opts
 
     chan <- newChan
+    counter <- newIORef (0 :: Int, 0 :: Int)
 
     let
       -- Execute the test, writing () to the channel after completion of each
       -- individual test
       runSmallCheck :: IO Result
       runSmallCheck = do
-        scResult <- smallCheckWithHook depth (const $ writeChan chan ()) prop
+        let
+          hook quality = do
+            writeChan chan ()
+            let
+              inc (good, bad) =
+                case quality of
+                  GoodTest -> ((,) $! good + 1) bad
+                  BadTest -> (,) good $! bad + 1
+            atomicModifyIORef' counter (\c -> (inc c, ()))
+
+        scResult <- smallCheckWithHook depth hook prop
+
+        (good, bad) <- readIORef counter
+        let
+          desc
+            | bad == 0
+              = printf "%d tests completed" good
+            | otherwise
+              = printf "%d tests completed (but %d did not meet the condition)" good bad
+
         return $
           case scResult of
-            Nothing -> Result { resultSuccessful = True,  resultDescription = "OK" }
+            Nothing -> Result { resultSuccessful = True,  resultDescription = desc }
             Just f ->  Result { resultSuccessful = False, resultDescription = ppFailure f }
 
       -- report progress to tasty
