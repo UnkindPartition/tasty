@@ -4,6 +4,7 @@ module Test.Tasty.UI (runUI) where
 import Prelude hiding (fail)
 import Control.Monad.State hiding (fail)
 import Control.Concurrent.STM
+import Control.Exception
 import Test.Tasty.Core
 import Test.Tasty.Run
 import Test.Tasty.Options
@@ -176,10 +177,14 @@ output
   -> String
   -> IO ()
 output bold intensity color str
-  | ?colors = do
-    setSGR [SetColor Foreground intensity color, SetConsoleIntensity bold]
-    putStr str
-    setSGR []
+  | ?colors =
+    (do
+      setSGR
+        [ SetColor Foreground intensity color
+        , SetConsoleIntensity bold
+        ]
+      putStr str
+    ) `finally` setSGR []
   | otherwise = putStr str
 #else
 ok       = putStr
