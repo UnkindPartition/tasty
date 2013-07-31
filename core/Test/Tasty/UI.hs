@@ -91,8 +91,10 @@ runUI :: Runner
 -- The 'Any' part is needed to know whether a group is empty, in which case
 -- we shouldn't display it.
 runUI opts tree smap = do
+  isTerm <- hIsTerminalDevice stdout
+
   let
-    ?colors = True -- FIXME
+    ?colors = isTerm
 
   hSetBuffering stdout NoBuffering
 
