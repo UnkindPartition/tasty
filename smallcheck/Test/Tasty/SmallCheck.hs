@@ -14,8 +14,6 @@ import qualified Test.SmallCheck.Drivers as SC
 import Test.SmallCheck.Drivers
 import Data.Typeable
 import Data.Proxy
-import Control.Concurrent.Chan
-import Control.Concurrent.Async
 import Data.IORef
 import Text.Printf
 
@@ -40,56 +38,35 @@ instance IsTest (SC.Property IO) where
     let
       SmallCheckDepth depth = lookupOption opts
 
-    chan <- newChan
     counter <- newIORef (0 :: Int, 0 :: Int)
 
     let
-      -- Execute the test, writing () to the channel after completion of each
-      -- individual test
-      runSmallCheck :: IO Result
-      runSmallCheck = do
+      hook quality = do
         let
-          hook quality = do
-            writeChan chan ()
-            let
-              inc (good, bad) =
-                case quality of
-                  GoodTest -> ((,) $! good + 1) bad
-                  BadTest -> (,) good $! bad + 1
-            atomicModifyIORef' counter (\c -> (inc c, ()))
+          inc (total, bad) =
+            case quality of
+              GoodTest -> ((,) $! total + 1) bad
+              BadTest -> ((,) $! total + 1) $! bad + 1
 
-        scResult <- smallCheckWithHook depth hook prop
+        count <- atomicModifyIORef' counter (\c -> let c' = inc c in (c', fst c'))
 
-        (good, bad) <- readIORef counter
-        let
-          desc
-            | bad == 0
-              = printf "%d tests completed" good
-            | otherwise
-              = printf "%d tests completed (but %d did not meet the condition)" good bad
+        -- submit progress data to tasty
+        yieldProgress $ Progress
+          { progressText = show count
+          , progressPercent = 0 -- we don't know the total number of tests
+          }
 
-        return $
-          case scResult of
-            Nothing -> Result { resultSuccessful = True,  resultDescription = desc }
-            Just f ->  Result { resultSuccessful = False, resultDescription = ppFailure f }
+    scResult <- smallCheckWithHook depth hook prop
 
-      -- report progress to tasty
-      reportProgress :: IO ()
-      reportProgress = go 0
-        where
-          go :: Integer -> IO ()
-          go n = do
-            _ <- readChan chan
-            yieldProgress $ Progress
-              { progressText = show n
-              , progressPercent = 0 -- we don't know the total number of tests
-              }
-            go $! n+1
-      
+    (total, bad) <- readIORef counter
+    let
+      desc
+        | bad == 0
+          = printf "%d tests completed" total
+        | otherwise
+          = printf "%d tests completed (but %d did not meet the condition)" total bad
 
-    -- launch a separate thread which will run SmallCheck
-    withAsync runSmallCheck $ \smallCheckAsync ->
-      -- report progress
-      withAsync reportProgress $ \_ ->
-
-      wait smallCheckAsync
+    return $
+      case scResult of
+        Nothing -> Result { resultSuccessful = True,  resultDescription = desc }
+        Just f ->  Result { resultSuccessful = False, resultDescription = ppFailure f }
