@@ -1,0 +1,51 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving, DeriveDataTypeable #-}
+module Test.Tasty.QuickCheck
+  ( testProperty
+  , QuickCheckTests(..)
+  ) where
+
+import Test.Tasty.Providers
+import Test.Tasty.Options
+import qualified Test.QuickCheck as QC
+import Data.Typeable
+import Data.Proxy
+import Text.Printf
+
+newtype QC = QC QC.Property
+  deriving Typeable
+
+-- | Create a 'Test' for a SmallCheck 'SC.Testable' property
+testProperty :: QC.Testable a => TestName -> a -> TestTree
+testProperty name prop = singleTest name $ QC $ QC.property prop
+
+-- | Number of test cases for QuickCheck to generate
+newtype QuickCheckTests = QuickCheckTests Int
+  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+
+instance IsOption QuickCheckTests where
+  defaultValue = 100
+  parseValue = fmap QuickCheckTests . safeRead
+  optionName = return "quickcheck-tests"
+  optionHelp = return "Number of test cases for QuickCheck to generate"
+
+instance IsTest QC where
+  testOptions = return [Option (Proxy :: Proxy QuickCheckTests)]
+
+  run opts (QC prop) yieldProgress = do
+    let
+      QuickCheckTests nTests = lookupOption opts
+      args = QC.stdArgs { QC.maxSuccess = nTests }
+    -- TODO yield progress
+    r <- QC.quickCheckWithResult args prop
+    
+    return $ case r of
+      QC.Success {} ->
+        Result
+          { resultSuccessful = True
+          , resultDescription = printf "%d tests completed" (QC.numTests r)
+          }
+      _ ->
+        Result
+          { resultSuccessful = False
+          , resultDescription = QC.output r
+          }
