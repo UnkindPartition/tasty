@@ -1,19 +1,10 @@
---------------------------------------------------------------------
--- |
--- Module    : Test.Framework.Providers.SmallCheck
--- Copyright : (c) Roman Cheplyaka
--- License   : BSD3
--- Maintainer: Roman Cheplyaka <roma@ro-che.info>
---
--- This module allows to use SmallCheck properties in tasty.
---------------------------------------------------------------------
+-- | This module allows to use SmallCheck properties in tasty.
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FlexibleContexts,
              TypeOperators, DeriveDataTypeable, TypeFamilies,
              GeneralizedNewtypeDeriving #-}
 module Test.Tasty.SmallCheck
   ( testProperty
   , SmallCheckDepth(..)
---, withDepth
   ) where
 
 import Test.Tasty.Providers
