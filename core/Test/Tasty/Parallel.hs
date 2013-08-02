@@ -47,7 +47,7 @@ runInParallel nthreads actions = do
     cleanup = either (\e -> killAll >> throwTo callingThread e) (const $ return ())
 
     forkCarefully :: IO () -> IO ()
-    forkCarefully action = void . flip forkFinally cleanup $ do
+    forkCarefully action = void . flip myForkFinally cleanup $ do
       -- We cannot check liveness and update the pidsVar in one
       -- transaction before forking, because we don't know the new pid yet.
       --
@@ -87,3 +87,9 @@ runInParallel nthreads actions = do
   -- fork here as well, so that we can move to the UI without waiting
   -- untill all tests have finished
   forkCarefully $ foldr go (return ()) actions
+
+-- Copied from base to stay compatible with GHC 7.4.
+myForkFinally :: IO a -> (Either SomeException a -> IO ()) -> IO ThreadId
+myForkFinally action and_then =
+  mask $ \restore ->
+    forkIO $ try (restore action) >>= and_then

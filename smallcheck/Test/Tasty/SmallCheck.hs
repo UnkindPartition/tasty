@@ -48,7 +48,7 @@ instance IsTest (SC.Property IO) where
               GoodTest -> ((,) $! total + 1) bad
               BadTest -> ((,) $! total + 1) $! bad + 1
 
-        count <- atomicModifyIORef' counter (\c -> let c' = inc c in (c', fst c'))
+        count <- myAtomicModifyIORef' counter (\c -> let c' = inc c in (c', fst c'))
 
         -- submit progress data to tasty
         yieldProgress $ Progress
@@ -70,3 +70,11 @@ instance IsTest (SC.Property IO) where
       case scResult of
         Nothing -> Result { resultSuccessful = True,  resultDescription = desc }
         Just f ->  Result { resultSuccessful = False, resultDescription = ppFailure f }
+
+-- Copied from base to stay compatible with GHC 7.4.
+myAtomicModifyIORef' :: IORef a -> (a -> (a,b)) -> IO b
+myAtomicModifyIORef' ref f = do
+    b <- atomicModifyIORef ref
+            (\x -> let (a, b) = f x
+                    in (a, a `seq` b))
+    b `seq` return b
