@@ -15,6 +15,10 @@ build-type:          Simple
 -- extra-source-files:  
 cabal-version:       >=1.10
 
+Source-repository head
+  type:     git
+  location: git://github.com/feuerbach/tasty.git
+
 flag colors
   description: Enable colorful output
   default: True
