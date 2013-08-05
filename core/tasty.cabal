@@ -4,7 +4,7 @@
 name:                tasty
 version:             0.1
 synopsis:            Modern and extensible testing framework
--- description:         
+description:         See <http://documentup.com/feuerbach/tasty>
 license:             MIT
 license-file:        LICENSE
 author:              Roman Cheplyaka
