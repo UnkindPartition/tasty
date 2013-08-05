@@ -11,23 +11,49 @@ import Data.Typeable
 import qualified Data.Map as Map
 import Data.Tagged
 
+-- | A test result
 data Result = Result
   { resultSuccessful :: Bool
+    -- ^
+    -- 'resultSuccessful' should be 'True' for a passed test and 'False' for
+    -- a failed one.
   , resultDescription :: String
+    -- ^
+    -- 'resultDescription' may contain some details about the test. For
+    -- a passed test it's ok to leave it empty. Providers like SmallCheck and
+    -- QuickCheck use it to provide information about how many tests were
+    -- generated.
+    --
+    -- For a failed test, 'resultDescription' should typically provide more
+    -- information about the failure.
   }
 
+-- | Test progress information.
+--
+-- This may be used by a runner to provide some feedback to the user while
+-- a long-running test is executing.
 data Progress = Progress
   { progressText :: String
+    -- ^ textual information about the test's progress
   , progressPercent :: Float
+    -- ^
+    -- 'progressPercent' should be a value between 0 and 1. If it's impossible
+    -- to compute the estimate, use 0.
   }
 
+-- | The interface to be implemented by a test provider.
+--
+-- The type @t@ is the concrete representation of the test which is used by
+-- the provider.
 class Typeable t => IsTest t where
+  -- | Run the test
   run
     :: OptionSet -- ^ options
     -> t -- ^ the test to run
     -> (Progress -> IO ()) -- ^ a callback to report progress
     -> IO Result
 
+  -- | The list of options that affect execution of tests of this type
   testOptions :: Tagged t [OptionDescription]
 
 -- | The name of a test or a group of tests

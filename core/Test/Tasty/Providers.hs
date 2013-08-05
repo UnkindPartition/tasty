@@ -10,5 +10,6 @@ module Test.Tasty.Providers
 
 import Test.Tasty.Core
 
+-- | Convert a test to a leaf of the 'TestTree'
 singleTest :: IsTest t => TestName -> t -> TestTree
 singleTest = SingleTest
