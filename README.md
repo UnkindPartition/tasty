@@ -71,3 +71,6 @@ Here's how your `test.hs` might look like:
 And here is the output of the above program:
 
 ![](https://raw.github.com/feuerbach/tasty/master/screenshot.png)
+
+(Note that whether QuickCheck finds a counterexample to the third property is
+determined by chance.)
