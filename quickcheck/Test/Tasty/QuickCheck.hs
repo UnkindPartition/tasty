@@ -34,7 +34,7 @@ instance IsTest QC where
   run opts (QC prop) yieldProgress = do
     let
       QuickCheckTests nTests = lookupOption opts
-      args = QC.stdArgs { QC.maxSuccess = nTests }
+      args = QC.stdArgs { QC.chatty = False, QC.maxSuccess = nTests }
     -- TODO yield progress
     r <- QC.quickCheckWithResult args prop
     
