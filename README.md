@@ -77,8 +77,10 @@ determined by chance.)
 
 ## Packages
 
-`tasty` is the core package. It contains basic definitions and APIs and a
+[tasty][] is the core package. It contains basic definitions and APIs and a
 console runner.
+
+[tasty]: http://hackage.haskell.org/package/tasty
 
 By default the console runner produces colorful output (when output goes to the
 terminal), hence the dependency on `ansi-terminal`. But it is also possible to
