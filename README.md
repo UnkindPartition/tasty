@@ -123,3 +123,29 @@ In order to run tests in parallel, you have to do the following:
 * Compile (or, more precisely, *link*) your test program with the `-threaded`
   flag;
 * Launch the program with `--num-threads 4 +RTS -N4 -RTS` (to use 4 threads).
+
+## Using patterns
+
+It is possible to restrict the set of executed tests using the `--pattern`
+option. The syntax of patterns is the same as for test-framework, namely:
+
+-   An optional prefixed bang `!` negates the pattern.
+-   If the pattern ends with a slash, it is removed for the purpose of
+    the following description, but it would only find a match with a
+    test group. In other words, `foo/` will match a group called `foo`
+    and any tests underneath it, but will not match a regular test
+    `foo`.
+-   If the pattern does not contain a slash `/`, the framework checks
+    for a match against any single component of the path.
+-   Otherwise, the pattern is treated as a glob, where:
+    -   The wildcard `*` matches anything within a single path component
+        (i.e. `foo` but not `foo/bar`).
+    -   Two wildcards `**` matches anything (i.e. `foo` and `foo/bar`).
+    -   Anything else matches exactly that text in the path (i.e. `foo`
+        would only match a component of the test path called `foo` (or a
+        substring of that form).
+
+For example, `group/*1` matches `group/test1` but not
+`group/subgroup/test1`, whereas both examples would be matched by
+`group/**1`. A leading slash matches the beginning of the test path; for
+example, `/test*` matches `test1` but not `group/test1`.
