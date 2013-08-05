@@ -3,9 +3,9 @@
 **Tasty** is a modern testing framework for Haskell.
 
 It lets you combine your unit tests, golden tests, QuickCheck/SmallCheck
-properties and any other types of tests into a single test suite.
+properties, and any other types of tests into a single test suite.
 
-The features include:
+Features:
 
 * Run tests in parallel but report results in a deterministic order
 * Filter the tests to be run using patterns specified on the command line
