@@ -4,7 +4,7 @@
 name:                tasty-quickcheck
 version:             0.1
 synopsis:            QuickCheck support for the Tasty test framework.
--- description:         
+description:         QuickCheck support for the Tasty test framework.
 license:             MIT
 license-file:        LICENSE
 author:              Roman Cheplyaka
