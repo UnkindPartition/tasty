@@ -70,4 +70,4 @@ Here's how your `test.hs` might look like:
 
 And here is the output of the above program:
 
-![](http://ro-che.info/img/tasty.png)
+![](https://raw.github.com/feuerbach/tasty/master/screenshot.png)
