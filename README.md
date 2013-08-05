@@ -86,7 +86,7 @@ compile the `tasty` package with the `-f-colors` cabal flag, in which case the
 colorful output will be disabled and the extra dependency dropped. This may be
 useful for CI systems.
 
-In order to create a test suite you also need to install one or more «providers» (see
+In order to create a test suite, you also need to install one or more «providers» (see
 below).
 
 ### Providers
