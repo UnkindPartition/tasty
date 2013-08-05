@@ -149,3 +149,23 @@ For example, `group/*1` matches `group/test1` but not
 `group/subgroup/test1`, whereas both examples would be matched by
 `group/**1`. A leading slash matches the beginning of the test path; for
 example, `/test*` matches `test1` but not `group/test1`.
+
+## Background
+
+Tasty is heavily influenced by [test-framework][].
+
+The problems with test-framework are:
+
+* Poor code style (some lines of the code wouldn't even fit in a twitter message!)
+* Poor architecture — e.g. relying on laziness for IO and control flow. The
+  whole story with `:~>` and `ImprovingIO` is really obscure.
+* Non-extensible options. For example, when I integrated SmallCheck with
+  test-framework (in the form of the `test-framework-smallcheck` package), I
+  still had to submit patches to the main package to make SmallCheck depth
+  customizable by the user.
+* The project is effectively unmaintained.
+
+So I decided to recreate everything that I liked in test-framework from scratch
+in this package.
+
+[test-framework]: http://batterseapower.github.io/test-framework/
