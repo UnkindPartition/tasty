@@ -1,4 +1,5 @@
 {-# LANGUAGE TupleSections, CPP, ImplicitParams #-}
+-- | Console runner
 module Test.Tasty.UI (runUI) where
 
 import Prelude hiding (fail)

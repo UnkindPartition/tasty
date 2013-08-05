@@ -1,3 +1,4 @@
+-- | Core types and definitions
 {-# LANGUAGE GeneralizedNewtypeDeriving, FlexibleContexts,
              ExistentialQuantification, RankNTypes #-}
 module Test.Tasty.Core where
@@ -81,6 +82,21 @@ data TestTree
 testGroup :: TestName -> [TestTree] -> TestTree
 testGroup = TestGroup
 
+-- | Fold a test tree into a single value.
+--
+-- Apart from pure convenience, this function also does the following
+-- useful things:
+--
+-- 1. Keeping track of the current options (which may change due to
+-- `PlusTestOptions` nodes)
+--
+-- 2. Filtering out the tests which do not match the patterns
+--
+-- Thus, it is preferred to an explicit recursive traversal of the tree.
+--
+-- Note: right now, the patterns are looked up only once, and won't be
+-- affected by the subsequent option changes. This shouldn't be a problem
+-- in practice; OTOH, this behaviour may be changed later.
 foldTestTree
   :: Monoid b
   => (forall t . IsTest t => OptionSet -> TestName -> t -> b)

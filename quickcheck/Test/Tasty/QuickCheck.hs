@@ -1,3 +1,4 @@
+-- | This module allows to use QuickCheck properties in tasty.
 {-# LANGUAGE GeneralizedNewtypeDeriving, DeriveDataTypeable #-}
 module Test.Tasty.QuickCheck
   ( testProperty

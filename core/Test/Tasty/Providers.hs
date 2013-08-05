@@ -1,3 +1,4 @@
+-- | API for test providers
 module Test.Tasty.Providers
   ( IsTest(..)
   , Result(..)

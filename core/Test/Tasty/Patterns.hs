@@ -24,6 +24,10 @@ IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISI
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
+-- | Test patterns
+--
+-- (Most of the code borrowed from the test-framework)
+
 {-# LANGUAGE DeriveDataTypeable #-}
 
 module Test.Tasty.Patterns
@@ -59,6 +63,8 @@ tokenize []             = []
 data TestPatternMatchMode = TestMatchMode
                           | PathMatchMode
 
+-- | A pattern to filter tests. For the syntax description, see
+-- <http://documentup.com/feuerbach/tasty#using-patterns>
 data TestPattern = TestPattern {
         tp_categories_only :: Bool,
         tp_negated :: Bool,
@@ -80,6 +86,7 @@ instance IsOption TestPattern where
     optionName = return "pattern"
     optionHelp = return "Select only tests that match pattern"
 
+-- | Parse a pattern
 parseTestPattern :: String -> TestPattern
 parseTestPattern string = TestPattern {
         tp_categories_only = categories_only,
@@ -100,6 +107,8 @@ parseTestPattern string = TestPattern {
       | otherwise                = TestMatchMode
 
 
+-- | Test a path (which is the sequence of group titles, possibly followed
+-- by the test title) against a pattern
 testPatternMatches :: TestPattern -> [String] -> Bool
 testPatternMatches NoPattern _ = True
 testPatternMatches test_pattern path = not_maybe $ any (=~ tokens_regex) things_to_match
@@ -109,7 +118,7 @@ testPatternMatches test_pattern path = not_maybe $ any (=~ tokens_regex) things_
     path_to_consider | tp_categories_only test_pattern = dropLast 1 path
                      | otherwise                       = path
     tokens_regex = buildTokenRegex (tp_tokens test_pattern)
-    
+
     things_to_match = case tp_match_mode test_pattern of
         -- See if the tokens match any single path component
         TestMatchMode -> path_to_consider
@@ -123,7 +132,7 @@ buildTokenRegex (token:tokens) = concat (firstTokenToRegex token : map tokenToRe
   where
     firstTokenToRegex SlashToken = "^"
     firstTokenToRegex other = tokenToRegex other
-      
+
     tokenToRegex SlashToken = "/"
     tokenToRegex WildcardToken = "[^/]*"
     tokenToRegex DoubleWildcardToken = "*"
