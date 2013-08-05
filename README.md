@@ -57,17 +57,4 @@ Here's how your `test.hs` might look like:
 And here is the output of the above program:
 
 
-    Tests
-      Properties
-        sort == sort . reverse: OK
-        Fermat's little theorem: OK
-        Fermat's last theorem:
-          there exist 0 0 0 3 such that
-            condition is false
-      Unit tests
-        List comparison (different length): OK
-        List comparison (same length):
-          expected: LT
-           but got: GT
-
-    2 out of 5 tests failed
+![](http://ro-che.info/img/tasty.png)
