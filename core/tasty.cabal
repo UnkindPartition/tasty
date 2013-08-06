@@ -2,7 +2,7 @@
 --  see http://haskell.org/cabal/users-guide/
 
 name:                tasty
-version:             0.1
+version:             0.1.1
 synopsis:            Modern and extensible testing framework
 description:         See <http://documentup.com/feuerbach/tasty>
 license:             MIT
@@ -44,7 +44,7 @@ library
     mtl,
     tagged,
     regex-posix,
-    optparse-applicative
+    optparse-applicative >= 0.5
 
   if flag(colors)
     build-depends: ansi-terminal
