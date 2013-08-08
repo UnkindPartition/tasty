@@ -5,12 +5,14 @@
 module Test.Tasty.SmallCheck
   ( testProperty
   , SmallCheckDepth(..)
+  , module Test.SmallCheck
   ) where
 
 import Test.Tasty.Providers
 import Test.Tasty.Options
 import qualified Test.SmallCheck as SC
 import qualified Test.SmallCheck.Drivers as SC
+import Test.SmallCheck hiding (smallCheck) -- for re-export
 import Test.SmallCheck.Drivers
 import Data.Typeable
 import Data.Proxy
