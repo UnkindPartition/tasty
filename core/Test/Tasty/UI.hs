@@ -13,7 +13,6 @@ import Text.Printf
 import qualified Data.IntMap as IntMap
 import Data.Maybe
 import Data.Monoid
-import System.Exit
 import System.IO
 
 #ifdef COLORS
@@ -112,11 +111,11 @@ runUI opts tree smap = do
   case failures st of
     0 -> do
       ok $ printf "All %d tests passed\n" (ix st)
-      exitSuccess
+      return True
 
     fs -> do
       fail $ printf "%d out of %d tests failed\n" fs (ix st)
-      exitFailure
+      return False
 
   where
     alignment = computeAlignment opts tree

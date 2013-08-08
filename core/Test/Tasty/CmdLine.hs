@@ -13,6 +13,7 @@ import Data.Tagged
 import qualified Data.Map as Map
 import Data.Typeable
 import Control.Arrow
+import System.Exit
 
 import Test.Tasty.Core
 import Test.Tasty.CoreOptions
@@ -40,4 +41,5 @@ defaultMainWithRunner runner testTree = do
     ( fullDesc <>
       header "Mmm... tasty test suite"
     )
-  runner opts testTree =<< launchTestTree opts testTree
+  ok <- execRunner runner opts testTree
+  if ok then exitSuccess else exitFailure

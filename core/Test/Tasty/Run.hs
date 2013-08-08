@@ -53,9 +53,8 @@ type StatusMap = IntMap.IntMap (TVar Status)
 -- and all it needs to do is notifying the user about the progress and
 -- then displaying the overall results in the end.
 --
--- It is also the runner's responsibility to exit with an appropriate
--- exit code.
-type Runner = OptionSet -> TestTree -> StatusMap -> IO ()
+-- The function's result should indicate whether all the tests passed.
+type Runner = OptionSet -> TestTree -> StatusMap -> IO Bool
 
 -- | Start executing a test
 executeTest
@@ -131,6 +130,6 @@ launchTestTree opts tree = do
 -- | Execute a 'Runner'.
 --
 -- This is a shortcut which runs 'launchTestTree' behind the scenes.
-execRunner :: Runner -> OptionSet -> TestTree -> IO ()
+execRunner :: Runner -> OptionSet -> TestTree -> IO Bool
 execRunner runner opts testTree =
   runner opts testTree =<< launchTestTree opts testTree
