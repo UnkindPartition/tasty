@@ -3,6 +3,7 @@ module Test.Tasty.Run
   ( Status(..)
   , StatusMap
   , Runner
+  , execRunner
   , launchTestTree
   ) where
 
@@ -126,3 +127,10 @@ launchTestTree opts tree = do
   let NumThreads numTheads = lookupOption opts
   launchTests numTheads tmap
   return $ fmap snd smap
+
+-- | Execute a 'Runner'.
+--
+-- This is a shortcut which runs 'launchTestTree' behind the scenes.
+execRunner :: Runner -> OptionSet -> TestTree -> IO ()
+execRunner runner opts testTree =
+  runner opts testTree =<< launchTestTree opts testTree
