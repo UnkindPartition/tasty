@@ -3,11 +3,27 @@
 module Test.Tasty.QuickCheck
   ( testProperty
   , QuickCheckTests(..)
+  , module Test.QuickCheck
   ) where
 
 import Test.Tasty.Providers
 import Test.Tasty.Options
 import qualified Test.QuickCheck as QC
+import Test.QuickCheck hiding -- for re-export
+  ( quickCheck
+  , Args(..)
+  , Result
+  , stdArgs
+  , quickCheckWith
+  , quickCheckWithResult
+  , quickCheckResult
+  , verboseCheck
+  , verboseCheckWith
+  , verboseCheckWithResult
+  , verboseCheckResult
+  , verbose
+  , Gen
+  )
 import Data.Typeable
 import Data.Proxy
 import Text.Printf
