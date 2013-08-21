@@ -4,6 +4,7 @@ module Test.Tasty.QuickCheck
   ( testProperty
   , QuickCheckTests(..)
   , module Test.QuickCheck
+  , module Test.QuickCheck.Monadic
   ) where
 
 import Test.Tasty.Providers
@@ -24,6 +25,7 @@ import Test.QuickCheck hiding -- for re-export
   , verbose
   , Gen
   )
+import Test.QuickCheck.Monadic
 import Data.Typeable
 import Data.Proxy
 import Text.Printf
@@ -54,7 +56,7 @@ instance IsTest QC where
       args = QC.stdArgs { QC.chatty = False, QC.maxSuccess = nTests }
     -- TODO yield progress
     r <- QC.quickCheckWithResult args prop
-    
+
     return $ case r of
       QC.Success {} ->
         Result
