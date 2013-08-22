@@ -39,7 +39,7 @@ library
     Test.Tasty.UI
   build-depends:
     base ==4.*,
-    stm,
+    stm >= 2.3,
     containers,
     mtl,
     tagged >= 0.5,
