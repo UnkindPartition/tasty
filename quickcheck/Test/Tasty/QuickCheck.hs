@@ -67,7 +67,7 @@ instance IsOption QuickCheckReplay where
   defaultValue = QuickCheckReplay Nothing
   parseValue v = QuickCheckReplay . Just <$> replay
     -- Reads a replay token in the form "{size} {seed}" 
-    where replay = (,) <$> safeRead (concat size) <*> safeRead (intercalate " " seed)
+    where replay = (,) <$> safeRead (intercalate " " seed) <*> safeRead (concat size)
           (size, seed) = splitAt 1 $ words v
   optionName = return "quickcheck-replay"
   optionHelp = return "Replay token to use for replaying a previous test run"
@@ -107,6 +107,14 @@ instance IsTest QC where
         Result
           { resultSuccessful = True
           , resultDescription = printf "%d tests completed" (QC.numTests r)
+          }
+      QC.Failure {} ->
+        Result
+          { resultSuccessful = False
+          , resultDescription = intercalate "\n" $
+              [ printf "(Replay token: %d %s)" (QC.usedSize r) $ show $ QC.usedSeed r
+              , QC.output r
+              ]
           }
       _ ->
         Result
