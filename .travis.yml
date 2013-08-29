@@ -1,0 +1,3 @@
+language: haskell
+install: /bin/true
+script: ./ci-test
