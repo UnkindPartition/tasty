@@ -3,6 +3,9 @@
 module Test.Tasty.QuickCheck
   ( testProperty
   , QuickCheckTests(..)
+  , QuickCheckReplay(..)
+  , QuickCheckMaxSize(..)
+  , QuickCheckMaxRatio(..)
   , module Test.QuickCheck
   ) where
 
@@ -26,17 +29,32 @@ import Test.QuickCheck hiding -- for re-export
   )
 import Data.Typeable
 import Data.Proxy
+import Data.List
 import Text.Printf
+import System.Random
+import Control.Applicative
 
 newtype QC = QC QC.Property
   deriving Typeable
 
--- | Create a 'Test' for a SmallCheck 'SC.Testable' property
+-- | Create a 'Test' for a QuickCheck 'QC.Testable' property
 testProperty :: QC.Testable a => TestName -> a -> TestTree
 testProperty name prop = singleTest name $ QC $ QC.property prop
 
 -- | Number of test cases for QuickCheck to generate
 newtype QuickCheckTests = QuickCheckTests Int
+  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+
+-- | Replay a previous test using a replay token
+newtype QuickCheckReplay = QuickCheckReplay (Maybe (StdGen, Int))
+  deriving (Typeable)
+
+-- | Size of the biggest test cases
+newtype QuickCheckMaxSize = QuickCheckMaxSize Int
+  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+
+-- | Maximum number of of discarded tests per successful test before giving up.
+newtype QuickCheckMaxRatio = QuickCheckMaxRatio Int
   deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
 
 instance IsOption QuickCheckTests where
@@ -45,13 +63,42 @@ instance IsOption QuickCheckTests where
   optionName = return "quickcheck-tests"
   optionHelp = return "Number of test cases for QuickCheck to generate"
 
+instance IsOption QuickCheckReplay where
+  defaultValue = QuickCheckReplay Nothing
+  parseValue v = QuickCheckReplay . Just <$> replay
+    -- Reads a replay token in the form "{size} {seed}" 
+    where replay = (,) <$> safeRead (intercalate " " seed) <*> safeRead (concat size)
+          (size, seed) = splitAt 1 $ words v
+  optionName = return "quickcheck-replay"
+  optionHelp = return "Replay token to use for replaying a previous test run"
+
+instance IsOption QuickCheckMaxSize where
+  defaultValue = fromIntegral $ QC.maxSize QC.stdArgs
+  parseValue = fmap QuickCheckMaxSize . safeRead
+  optionName = return "quickcheck-max-size"
+  optionHelp = return "Size of the biggest test cases quickcheck generates"
+
+instance IsOption QuickCheckMaxRatio where
+  defaultValue = fromIntegral $ QC.maxDiscardRatio QC.stdArgs
+  parseValue = fmap QuickCheckMaxRatio . safeRead
+  optionName = return "quickcheck-max-ratio"
+  optionHelp = return "Maximum number of discared tests per successful test before giving up"
+
 instance IsTest QC where
-  testOptions = return [Option (Proxy :: Proxy QuickCheckTests)]
+  testOptions = return
+    [ Option (Proxy :: Proxy QuickCheckTests)
+    , Option (Proxy :: Proxy QuickCheckReplay)
+    , Option (Proxy :: Proxy QuickCheckMaxSize)
+    , Option (Proxy :: Proxy QuickCheckMaxRatio)
+    ]
 
   run opts (QC prop) yieldProgress = do
     let
-      QuickCheckTests nTests = lookupOption opts
-      args = QC.stdArgs { QC.chatty = False, QC.maxSuccess = nTests }
+      QuickCheckTests    nTests   = lookupOption opts
+      QuickCheckReplay   replay   = lookupOption opts
+      QuickCheckMaxSize  maxSize  = lookupOption opts
+      QuickCheckMaxRatio maxRatio = lookupOption opts
+      args = QC.stdArgs { QC.chatty = False, QC.maxSuccess = nTests, QC.maxSize = maxSize, QC.replay = replay, QC.maxDiscardRatio = maxRatio}
     -- TODO yield progress
     r <- QC.quickCheckWithResult args prop
     
@@ -60,6 +107,14 @@ instance IsTest QC where
         Result
           { resultSuccessful = True
           , resultDescription = printf "%d tests completed" (QC.numTests r)
+          }
+      QC.Failure {} ->
+        Result
+          { resultSuccessful = False
+          , resultDescription = intercalate "\n" $
+              [ printf "(Replay token: %d %s)" (QC.usedSize r) $ show $ QC.usedSeed r
+              , QC.output r
+              ]
           }
       _ ->
         Result
