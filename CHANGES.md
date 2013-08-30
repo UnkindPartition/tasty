@@ -1,6 +1,13 @@
 Changes
 =======
 
+Version 0.3
+-----------
+
+* Restrict dependency versions
+* Fix a bug where non-terminating test would lead to a deadlock (#15)
+* QuickCheck: add options for maximum size and maximum ratio; support replay.
+
 Version 0.2
 -----------
 
