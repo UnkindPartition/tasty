@@ -5,6 +5,7 @@ import Control.Monad
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Exception
+import Foreign.StablePtr
 
 -- | Take a list of actions and execute them in parallel, no more than @n@
 -- at the same time
@@ -20,6 +21,13 @@ runInParallel
 -- threads are by definition unexpected.
 runInParallel nthreads actions = do
   callingThread <- myThreadId
+
+  -- Don't let the main thread be garbage-collected
+  -- Otherwise we may get a "thread blocked indefinitely in an STM
+  -- transaction" exception when a child thread is blocked and GC'd.
+  -- (See e.g. https://github.com/feuerbach/tasty/issues/15)
+  _ <- newStablePtr callingThread
+
   -- A variable containing all ThreadIds of forked threads.
   --
   -- These are the threads we'll need to kill if something wrong happens.
