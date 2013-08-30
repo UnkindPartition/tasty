@@ -3,7 +3,6 @@ import Test.Tasty.HUnit
 import Test.Tasty.Runners
 import Test.Tasty.Providers
 import Test.Tasty.Options
-import Test.HUnit
 import Data.Monoid
 
 main = defaultMain mainGroup
