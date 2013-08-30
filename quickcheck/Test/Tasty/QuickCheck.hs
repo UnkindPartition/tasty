@@ -66,7 +66,7 @@ instance IsOption QuickCheckTests where
 instance IsOption QuickCheckReplay where
   defaultValue = QuickCheckReplay Nothing
   parseValue v = QuickCheckReplay . Just <$> replay
-    -- Reads a replay token in the form "{size} {seed}" 
+    -- Reads a replay token in the form "{size} {seed}"
     where replay = (,) <$> safeRead (intercalate " " seed) <*> safeRead (concat size)
           (size, seed) = splitAt 1 $ words v
   optionName = return "quickcheck-replay"
@@ -101,7 +101,7 @@ instance IsTest QC where
       args = QC.stdArgs { QC.chatty = False, QC.maxSuccess = nTests, QC.maxSize = maxSize, QC.replay = replay, QC.maxDiscardRatio = maxRatio}
     -- TODO yield progress
     r <- QC.quickCheckWithResult args prop
-    
+
     return $ case r of
       QC.Success {} ->
         Result
@@ -111,10 +111,9 @@ instance IsTest QC where
       QC.Failure {} ->
         Result
           { resultSuccessful = False
-          , resultDescription = intercalate "\n" $
-              [ printf "(Replay token: %d %s)" (QC.usedSize r) $ show $ QC.usedSeed r
-              , QC.output r
-              ]
+          , resultDescription =
+              QC.output r ++
+              printf "Use --quickcheck-replay '%d %s' to reproduce." (QC.usedSize r) (show $ QC.usedSeed r)
           }
       _ ->
         Result
