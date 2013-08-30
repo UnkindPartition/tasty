@@ -2,13 +2,11 @@
 
 set -e
 
-for i in core hunit quickcheck smallcheck
+for i in core hunit quickcheck smallcheck core-tests
 do
   cd $i
   cabal install
   cd ..
 done
 
-cd core-tests
-cabal run
-cd ..
+tasty-core-tests
