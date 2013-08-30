@@ -42,7 +42,7 @@ library
     stm,
     containers,
     mtl,
-    tagged,
+    tagged >= 0.5,
     regex-posix,
     optparse-applicative >= 0.5
 
