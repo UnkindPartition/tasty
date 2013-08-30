@@ -1,4 +1,14 @@
 #!/bin/sh
 
-cd core
-cabal install
+set -e
+
+for i in core hunit quickcheck smallcheck
+do
+  cd $i
+  cabal install
+  cd ..
+done
+
+cd core-tests
+cabal run
+cd ..
