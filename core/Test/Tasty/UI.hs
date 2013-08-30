@@ -98,6 +98,9 @@ runUI opts tree smap = do
 
   hSetBuffering stdout NoBuffering
 
+  -- Do not retain the reference to the tree more than necessary
+  _ <- evaluate alignment
+
   st <-
     flip execStateT initialState $ getApp $ fst $
       foldTestTree
