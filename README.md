@@ -14,6 +14,8 @@ Features:
 * Extensibility: add your own test providers and runners above and beyond those
   provided
 
+[![Build Status](https://travis-ci.org/feuerbach/tasty.png?branch=master)](https://travis-ci.org/feuerbach/tasty)
+
 ## Example
 
 Here's how your `test.hs` might look like:
