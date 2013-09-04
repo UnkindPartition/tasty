@@ -7,6 +7,7 @@ module Test.Tasty.QuickCheck
   , QuickCheckMaxSize(..)
   , QuickCheckMaxRatio(..)
   , module Test.QuickCheck
+  , module Test.QuickCheck.Monadic
   ) where
 
 import Test.Tasty.Providers
@@ -27,6 +28,7 @@ import Test.QuickCheck hiding -- for re-export
   , verbose
   , Gen
   )
+import Test.QuickCheck.Monadic
 import Data.Typeable
 import Data.Proxy
 import Data.List
