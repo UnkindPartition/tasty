@@ -102,21 +102,30 @@ instance IsTest QC where
     -- TODO yield progress
     r <- QC.quickCheckWithResult args prop
 
-    return $ case r of
-      QC.Success {} ->
-        Result
-          { resultSuccessful = True
-          , resultDescription = printf "%d tests completed" (QC.numTests r)
-          }
-      QC.Failure {} ->
-        Result
-          { resultSuccessful = False
-          , resultDescription =
-              QC.output r ++
-              printf "Use --quickcheck-replay '%d %s' to reproduce." (QC.usedSize r) (show $ QC.usedSeed r)
-          }
-      _ ->
-        Result
-          { resultSuccessful = False
-          , resultDescription = QC.output r
-          }
+    return $
+      Result
+        { resultSuccessful = successful r
+        , resultDescription =
+            if unexpected r
+              then QC.output r ++ reproduceMsg r
+              else QC.output r
+        }
+
+successful :: QC.Result -> Bool
+successful r =
+  case r of
+    QC.Success {} -> True
+    _ -> False
+
+unexpected :: QC.Result -> Bool
+unexpected r =
+  case r of
+    QC.Failure {} -> True
+    QC.NoExpectedFailure {} -> True
+    _ -> False
+
+reproduceMsg :: QC.Result -> String
+reproduceMsg r =
+  printf "Use --quickcheck-replay '%d %s' to reproduce."
+    (QC.usedSize r)
+    (show $ QC.usedSeed r)
