@@ -27,6 +27,7 @@ import Data.Proxy
 import Data.Monoid
 
 import Options.Applicative
+import Options.Applicative.Types
 
 -- | An option is a data type that inhabits the `IsOption` type class.
 class Typeable v => IsOption v where
@@ -60,8 +61,9 @@ class Typeable v => IsOption v where
       name = untag (optionName :: Tagged v String)
       helpString = untag (optionHelp :: Tagged v String)
       parse =
+        ReadM .
         maybe (Left (ErrorMsg $ "Could not parse " ++ name)) Right .
-          parseValue
+        parseValue
 
 
 data OptionValue = forall v . IsOption v => OptionValue v
