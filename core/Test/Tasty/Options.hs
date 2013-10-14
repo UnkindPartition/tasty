@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable,
              ExistentialQuantification, GADTs,
              OverlappingInstances, FlexibleInstances, UndecidableInstances,
@@ -27,6 +28,9 @@ import Data.Proxy
 import Data.Monoid
 
 import Options.Applicative
+#if MIN_VERSION_optparse_applicative(0,6,0)
+import Options.Applicative.Types
+#endif
 
 -- | An option is a data type that inhabits the `IsOption` type class.
 class Typeable v => IsOption v where
@@ -60,7 +64,11 @@ class Typeable v => IsOption v where
       name = untag (optionName :: Tagged v String)
       helpString = untag (optionHelp :: Tagged v String)
       parse =
+#if MIN_VERSION_optparse_applicative(0,6,0)
+        ReadM . maybe (Left (ErrorMsg $ "Could not parse " ++ name)) Right .
+#else
         maybe (Left (ErrorMsg $ "Could not parse " ++ name)) Right .
+#endif
           parseValue
 
 
