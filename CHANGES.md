@@ -1,6 +1,13 @@
 Changes
 =======
 
+Version 0.3.1
+-------------
+
+* Proper reporting of (some) non-terminating tests (#15)
+* Upgrade to optparse-applicative 0.6
+* QuickCheck: use the original QuickCheck's output format
+
 Version 0.3
 -----------
 
