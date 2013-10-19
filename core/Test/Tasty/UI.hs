@@ -134,6 +134,11 @@ runUI opts tree smap = do
           fromMaybe (error "internal error: index out of bounds") $
           IntMap.lookup ix smap
 
+      -- Print the test name before waiting for the test. This is useful
+      -- for long-running tests.
+      liftIO $ printf "%s%s: %s" (indent level) name
+        (replicate (alignment - indentSize * level - length name) ' ')
+
       (rOk, rDesc) <-
         liftIO $ atomically $ do
           status <- readTVar statusVar
@@ -142,8 +147,6 @@ runUI opts tree smap = do
             Exception e -> return (False, "Exception: " ++ show e)
             _ -> retry
 
-      liftIO $ printf "%s%s: %s" (indent level) name
-        (replicate (alignment - indentSize * level - length name) ' ')
       liftIO $
         if rOk
           then ok "OK\n"
