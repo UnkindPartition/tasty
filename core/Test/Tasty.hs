@@ -8,7 +8,7 @@ module Test.Tasty
   , testGroup
   -- * Running tests
   , defaultMain
-  , defaultMainWithRunner
+  , defaultMainWithIngredients
   -- * Adjusting options
   -- | Normally options are specified on the command line. But you can
   -- also have different options for different subtrees in the same tree,
@@ -26,7 +26,7 @@ import Test.Tasty.Options
 -- | Parse the command line arguments and run the tests using the standard
 -- console runner
 defaultMain :: TestTree -> IO ()
-defaultMain = defaultMainWithRunner runUI
+defaultMain = defaultMainWithIngredients [consoleTestReporter]
 
 -- | Locally adjust the option value for the given test subtree
 adjustOption :: IsOption v => (v -> v) -> TestTree -> TestTree

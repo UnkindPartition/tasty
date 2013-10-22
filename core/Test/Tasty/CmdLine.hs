@@ -3,7 +3,7 @@
 module Test.Tasty.CmdLine
   ( treeOptionParser
   , optionParser
-  , defaultMainWithRunner
+  , defaultMainWithIngredients
   ) where
 
 import Options.Applicative
@@ -34,12 +34,18 @@ optionParser = foldr addOption (pure mempty) where
 
 -- | Parse the command line arguments and run the tests using the provided
 -- runner
-defaultMainWithRunner :: Runner -> TestTree -> IO ()
-defaultMainWithRunner runner testTree = do
+defaultMainWithIngredients :: [Ingredient] -> TestTree -> IO ()
+defaultMainWithIngredients ins testTree = do
   opts <- execParser $
     info (helper <*> treeOptionParser testTree)
     ( fullDesc <>
       header "Mmm... tasty test suite"
     )
-  ok <- execRunner runner opts testTree
-  if ok then exitSuccess else exitFailure
+
+  case tryIngredients ins opts testTree of
+    Nothing ->
+      putStrLn
+        "This doesn't taste right. Check your ingredients — did you forget a test reporter?"
+    Just act -> do
+      ok <- act
+      if ok then exitSuccess else exitFailure

@@ -1,6 +1,6 @@
 {-# LANGUAGE TupleSections, CPP, ImplicitParams #-}
 -- | Console runner
-module Test.Tasty.UI (runUI) where
+module Test.Tasty.UI (consoleTestReporter) where
 
 import Prelude hiding (fail)
 import Control.Monad.State hiding (fail)
@@ -85,42 +85,18 @@ computeAlignment opts =
         Maximum x -> x
 
 -- | A simple console UI
-runUI :: Runner
+consoleTestReporter :: Ingredient
 -- We fold the test tree using (AppMonoid m, Any) monoid.
 --
 -- The 'Any' part is needed to know whether a group is empty, in which case
 -- we shouldn't display it.
-runUI opts tree smap = do
+consoleTestReporter = TestReporter $ \opts tree -> Just $ \smap -> do
   isTerm <- hIsTerminalDevice stdout
 
   let
     ?colors = isTerm
 
-  hSetBuffering stdout NoBuffering
-
-  -- Do not retain the reference to the tree more than necessary
-  _ <- evaluate alignment
-
-  st <-
-    flip execStateT initialState $ getApp $ fst $
-      foldTestTree
-        (runSingleTest smap)
-        runGroup
-        opts
-        tree
-
-  printf "\n"
-
-  case failures st of
-    0 -> do
-      ok $ printf "All %d tests passed\n" (ix st)
-      return True
-
-    fs -> do
-      fail $ printf "%d out of %d tests failed\n" fs (ix st)
-      return False
-
-  where
+  let
     alignment = computeAlignment opts tree
 
     runSingleTest
@@ -168,6 +144,30 @@ runUI opts tree smap = do
       put $! st { nestedLevel = level + 1 }
       act
       modify $ \st -> st { nestedLevel = level }
+
+  hSetBuffering stdout NoBuffering
+
+  -- Do not retain the reference to the tree more than necessary
+  _ <- evaluate alignment
+
+  st <-
+    flip execStateT initialState $ getApp $ fst $
+      foldTestTree
+        (runSingleTest smap)
+        runGroup
+        opts
+        tree
+
+  printf "\n"
+
+  case failures st of
+    0 -> do
+      ok $ printf "All %d tests passed\n" (ix st)
+      return True
+
+    fs -> do
+      fail $ printf "%d out of %d tests failed\n" fs (ix st)
+      return False
 
 -- (Potentially) colorful output
 ok, fail, infoOk, infoFail :: (?colors :: Bool) => String -> IO ()

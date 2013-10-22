@@ -4,11 +4,17 @@ module Test.Tasty.Runners
     -- * Working with the test tree
     TestTree(..)
   , foldTestTree
+    -- * Ingredients
+  , Ingredient(..)
+  , tryIngredients
+    -- * Standard console ingredients
+  , consoleTestReporter
     -- * Command line handling
   , module Test.Tasty.CmdLine
     -- * Running tests
-  , module Test.Tasty.Run
-  , module Test.Tasty.UI
+  , Status(..)
+  , StatusMap
+  , launchTestTree
     -- * Core options
   , module Test.Tasty.CoreOptions
     -- ** Patterns
