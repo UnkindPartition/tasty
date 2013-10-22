@@ -10,7 +10,6 @@ import Data.Typeable
 import Data.Proxy
 
 import Test.Tasty.Options
-import Test.Tasty.Options
 import Test.Tasty.Patterns
 
 -- | Number of parallel threads to use for running tests

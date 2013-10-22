@@ -6,13 +6,9 @@ module Test.Tasty.Run
   ) where
 
 import qualified Data.IntMap as IntMap
-import Data.Maybe
-import Data.Typeable
-import Control.Monad
 import Control.Monad.State
 import Control.Concurrent.STM
 import Control.Exception
-import Control.Applicative
 
 import Test.Tasty.Core
 import Test.Tasty.Parallel
