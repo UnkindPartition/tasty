@@ -18,6 +18,7 @@ import System.Exit
 import Test.Tasty.Core
 import Test.Tasty.CoreOptions
 import Test.Tasty.Run
+import Test.Tasty.Ingredients
 import Test.Tasty.Options
 
 -- | Generate a command line parser for all the options relevant for this

@@ -24,6 +24,7 @@ module Test.Tasty.Runners
 
 import Test.Tasty.Core
 import Test.Tasty.Run
+import Test.Tasty.Ingredients
 import Test.Tasty.CoreOptions
 import Test.Tasty.Patterns
 import Test.Tasty.CmdLine

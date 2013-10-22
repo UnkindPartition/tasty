@@ -8,6 +8,7 @@ import Control.Concurrent.STM
 import Control.Exception
 import Test.Tasty.Core
 import Test.Tasty.Run
+import Test.Tasty.Ingredients
 import Test.Tasty.Options
 import Text.Printf
 import qualified Data.IntMap as IntMap

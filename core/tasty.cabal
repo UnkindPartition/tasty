@@ -35,6 +35,7 @@ library
     Test.Tasty.CoreOptions,
     Test.Tasty.Patterns,
     Test.Tasty.Run,
+    Test.Tasty.Ingredients,
     Test.Tasty.CmdLine,
     Test.Tasty.ConsoleTestReporter
   build-depends:
