@@ -1,6 +1,6 @@
 {-# LANGUAGE TupleSections, CPP, ImplicitParams #-}
 -- | Console runner
-module Test.Tasty.UI (consoleTestReporter) where
+module Test.Tasty.ConsoleTestReporter (consoleTestReporter) where
 
 import Prelude hiding (fail)
 import Control.Monad.State hiding (fail)

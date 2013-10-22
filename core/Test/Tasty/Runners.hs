@@ -27,4 +27,4 @@ import Test.Tasty.Run
 import Test.Tasty.CoreOptions
 import Test.Tasty.Patterns
 import Test.Tasty.CmdLine
-import Test.Tasty.UI
+import Test.Tasty.ConsoleTestReporter

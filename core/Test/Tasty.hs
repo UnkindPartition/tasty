@@ -20,7 +20,7 @@ module Test.Tasty
 
 import Test.Tasty.Core
 import Test.Tasty.Runners
-import Test.Tasty.UI
+import Test.Tasty.ConsoleTestReporter
 import Test.Tasty.Options
 
 -- | Parse the command line arguments and run the tests using the standard
