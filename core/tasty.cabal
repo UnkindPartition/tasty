@@ -38,6 +38,7 @@ library
     Test.Tasty.Ingredients,
     Test.Tasty.CmdLine,
     Test.Tasty.Ingredients.ConsoleReporter
+    Test.Tasty.Ingredients.ListTests
   build-depends:
     base ==4.*,
     stm >= 2.3,
