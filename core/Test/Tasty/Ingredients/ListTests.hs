@@ -14,6 +14,8 @@ import Test.Tasty.Core
 import Test.Tasty.Options
 import Test.Tasty.Ingredients
 
+-- | This option, when set to 'True', specifies that we should run in the
+-- «list tests» mode
 newtype ListTests = ListTests Bool
   deriving (Eq, Ord, Typeable)
 instance IsOption ListTests where
@@ -29,12 +31,14 @@ instance IsOption ListTests where
       <> help (untag (optionHelp :: Tagged ListTests String))
       )
 
+-- | Obtain the list of all tests in the suite
 testsNames :: OptionSet -> TestTree -> [TestName]
 testsNames {- opts -} {- tree -} =
   foldTestTree
     (\_opts name _test -> [name])
     (\groupName names -> map ((groupName ++ "/") ++) names)
 
+-- | The ingredient that provides the test listing functionality
 testsList :: Ingredient
 testsList = TestManager [Option (Proxy :: Proxy ListTests)] $
   \opts tree ->
