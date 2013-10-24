@@ -1,7 +1,7 @@
 -- | Parsing options supplied on the command line
 {-# LANGUAGE ScopedTypeVariables #-}
 module Test.Tasty.CmdLine
-  ( treeOptionParser
+  ( suiteOptionParser
   , optionParser
   , defaultMainWithIngredients
   ) where
@@ -18,9 +18,14 @@ import Test.Tasty.Ingredients
 import Test.Tasty.Options
 
 -- | Generate a command line parser for all the options relevant for this
--- test tree. Also includes 'coreOptions'.
-treeOptionParser :: TestTree -> Parser OptionSet
-treeOptionParser = optionParser . (coreOptions ++) . getTreeOptions
+-- test suite. Includes the options for the test tree and ingredients, and
+-- the core options.
+suiteOptionParser :: [Ingredient] -> TestTree -> Parser OptionSet
+suiteOptionParser ins tree =
+  optionParser $
+    coreOptions ++
+    ingredientsOptions ins ++
+    treeOptions tree
 
 -- | Generate a command line parser from a list of option descriptions
 optionParser :: [OptionDescription] -> Parser OptionSet
@@ -34,7 +39,7 @@ optionParser = foldr addOption (pure mempty) where
 defaultMainWithIngredients :: [Ingredient] -> TestTree -> IO ()
 defaultMainWithIngredients ins testTree = do
   opts <- execParser $
-    info (helper <*> treeOptionParser testTree)
+    info (helper <*> suiteOptionParser ins testTree)
     ( fullDesc <>
       header "Mmm... tasty test suite"
     )

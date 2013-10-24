@@ -127,8 +127,8 @@ instance Applicative f => Monoid (AppMonoid f) where
   AppMonoid f1 `mappend` AppMonoid f2 = AppMonoid $ f1 *> f2
 
 -- | Get the list of options that are relevant for a given test tree
-getTreeOptions :: TestTree -> [OptionDescription]
-getTreeOptions =
+treeOptions :: TestTree -> [OptionDescription]
+treeOptions =
 
   Prelude.concat .
   Map.elems .
