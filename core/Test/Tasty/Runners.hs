@@ -12,14 +12,17 @@ module Test.Tasty.Runners
     -- * Standard console ingredients
   , consoleTestReporter
     -- * Command line handling
-  , module Test.Tasty.CmdLine
+  , optionParser
+  , suiteOptionParser
+  , defaultMainWithIngredients
     -- * Running tests
   , Status(..)
   , StatusMap
   , launchTestTree
   , NumThreads(..)
-    -- * Core options
-  , module Test.Tasty.CoreOptions
+    -- * Options
+  , suiteOptions
+  , coreOptions
     -- ** Patterns
   , module Test.Tasty.Patterns
   )
