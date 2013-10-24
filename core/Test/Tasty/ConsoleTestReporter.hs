@@ -91,7 +91,7 @@ consoleTestReporter :: Ingredient
 --
 -- The 'Any' part is needed to know whether a group is empty, in which case
 -- we shouldn't display it.
-consoleTestReporter = TestReporter $ \opts tree -> Just $ \smap -> do
+consoleTestReporter = TestReporter [] $ \opts tree -> Just $ \smap -> do
   isTerm <- hIsTerminalDevice stdout
 
   let

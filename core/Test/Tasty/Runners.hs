@@ -7,6 +7,7 @@ module Test.Tasty.Runners
     -- * Ingredients
   , Ingredient(..)
   , tryIngredients
+  , ingredientOptions
     -- * Standard console ingredients
   , consoleTestReporter
     -- * Command line handling
@@ -15,6 +16,7 @@ module Test.Tasty.Runners
   , Status(..)
   , StatusMap
   , launchTestTree
+  , NumThreads(..)
     -- * Core options
   , module Test.Tasty.CoreOptions
     -- ** Patterns

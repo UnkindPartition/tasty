@@ -1,13 +1,16 @@
 module Test.Tasty.Ingredients
   ( Ingredient(..)
   , tryIngredients
+  , ingredientOptions
   ) where
 
 import Control.Monad
+import Data.Proxy
 
 import Test.Tasty.Core
 import Test.Tasty.Run
 import Test.Tasty.Options
+import Test.Tasty.CoreOptions
 
 -- | 'Ingredient's make your test suite tasty.
 --
@@ -17,6 +20,10 @@ import Test.Tasty.Options
 --
 -- Another standard ingredient is one that simply prints the names of all
 -- tests.
+--
+-- Similar to test providers (see 'IsTest'), every ingredient may specify
+-- which options it cares about, so that those options are presented to
+-- the user if the ingredient is included in the test suite.
 --
 -- An ingredient can choose, typically based on the 'OptionSet', whether to
 -- run. That's what the 'Maybe' is for. The first ingredient that agreed to
@@ -49,20 +56,32 @@ import Test.Tasty.Options
 -- makes sense to return 'True'.
 data Ingredient
   = TestReporter
+      [OptionDescription]
       (OptionSet -> TestTree -> Maybe (StatusMap -> IO Bool))
   | TestManager
+      [OptionDescription]
       (OptionSet -> TestTree -> Maybe (IO Bool))
 
 -- | Execute a 'Runner'.
 --
 -- This is a shortcut which runs 'launchTestTree' behind the scenes.
 tryIngredient :: Ingredient -> OptionSet -> TestTree -> Maybe (IO Bool)
-tryIngredient (TestReporter report) opts testTree = do -- Maybe monad
+tryIngredient (TestReporter _ report) opts testTree = do -- Maybe monad
   reportFn <- report opts testTree
   return $ reportFn =<< launchTestTree opts testTree
-tryIngredient (TestManager manage) opts testTree =
+tryIngredient (TestManager _ manage) opts testTree =
   manage opts testTree
 
 tryIngredients :: [Ingredient] -> OptionSet -> TestTree -> Maybe (IO Bool)
 tryIngredients ins opts tree =
   msum $ map (\i -> tryIngredient i opts tree) ins
+
+-- | Return the options which are relevant for the given ingredient.
+--
+-- Note that this isn't the same as simply pattern-matching on
+-- 'Ingredient'. E.g. options for a 'TestReporter' automatically include
+-- 'NumThreads'.
+ingredientOptions :: Ingredient -> [OptionDescription]
+ingredientOptions (TestReporter opts _) =
+  Option (Proxy :: Proxy NumThreads) : opts
+ingredientOptions (TestManager opts _) = opts
