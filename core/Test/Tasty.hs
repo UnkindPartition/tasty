@@ -25,7 +25,7 @@ import Test.Tasty.Options
 -- | Parse the command line arguments and run the tests using the standard
 -- console runner
 defaultMain :: TestTree -> IO ()
-defaultMain = defaultMainWithIngredients [testsList, consoleTestReporter]
+defaultMain = defaultMainWithIngredients [listingTests, consoleTestReporter]
 
 -- | Locally adjust the option value for the given test subtree
 adjustOption :: IsOption v => (v -> v) -> TestTree -> TestTree

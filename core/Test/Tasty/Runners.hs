@@ -13,7 +13,7 @@ module Test.Tasty.Runners
     -- ** Console test reporter
   , consoleTestReporter
     -- ** Tests list
-  , testsList
+  , listingTests
   , ListTests(..)
   , testsNames
     -- * Command line handling

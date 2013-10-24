@@ -2,7 +2,7 @@
 module Test.Tasty.Ingredients.ListTests
   ( ListTests(..)
   , testsNames
-  , testsList
+  , listingTests
   ) where
 
 import Options.Applicative
@@ -39,8 +39,8 @@ testsNames {- opts -} {- tree -} =
     (\groupName names -> map ((groupName ++ "/") ++) names)
 
 -- | The ingredient that provides the test listing functionality
-testsList :: Ingredient
-testsList = TestManager [Option (Proxy :: Proxy ListTests)] $
+listingTests :: Ingredient
+listingTests = TestManager [Option (Proxy :: Proxy ListTests)] $
   \opts tree ->
     case lookupOption opts of
       ListTests False -> Nothing
