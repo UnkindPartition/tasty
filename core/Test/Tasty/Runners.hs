@@ -34,4 +34,4 @@ import Test.Tasty.Ingredients
 import Test.Tasty.CoreOptions
 import Test.Tasty.Patterns
 import Test.Tasty.CmdLine
-import Test.Tasty.ConsoleTestReporter
+import Test.Tasty.Ingredients.ConsoleReporter
