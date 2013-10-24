@@ -2,10 +2,12 @@ module Test.Tasty.Ingredients
   ( Ingredient(..)
   , tryIngredients
   , ingredientOptions
+  , ingredientsOptions
   ) where
 
 import Control.Monad
 import Data.Proxy
+import qualified Data.Foldable as F
 
 import Test.Tasty.Core
 import Test.Tasty.Run
@@ -85,3 +87,7 @@ ingredientOptions :: Ingredient -> [OptionDescription]
 ingredientOptions (TestReporter opts _) =
   Option (Proxy :: Proxy NumThreads) : opts
 ingredientOptions (TestManager opts _) = opts
+
+-- | Like 'ingredientOption', but folds over multiple ingredients.
+ingredientsOptions :: [Ingredient] -> [OptionDescription]
+ingredientsOptions = F.foldMap ingredientOptions

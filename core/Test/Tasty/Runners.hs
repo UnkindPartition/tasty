@@ -8,6 +8,7 @@ module Test.Tasty.Runners
   , Ingredient(..)
   , tryIngredients
   , ingredientOptions
+  , ingredientsOptions
     -- * Standard console ingredients
   , consoleTestReporter
     -- * Command line handling
