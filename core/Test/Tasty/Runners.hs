@@ -10,7 +10,12 @@ module Test.Tasty.Runners
   , ingredientOptions
   , ingredientsOptions
     -- * Standard console ingredients
+    -- ** Console test reporter
   , consoleTestReporter
+    -- ** Tests list
+  , testsList
+  , ListTests(..)
+  , testsNames
     -- * Command line handling
   , optionParser
   , suiteOptionParser
@@ -35,3 +40,4 @@ import Test.Tasty.CoreOptions
 import Test.Tasty.Patterns
 import Test.Tasty.CmdLine
 import Test.Tasty.Ingredients.ConsoleReporter
+import Test.Tasty.Ingredients.ListTests
