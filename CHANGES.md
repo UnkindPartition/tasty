@@ -1,6 +1,33 @@
 Changes
 =======
 
+Version 0.4
+-----------
+
+The big change in this release is introduction of ingredients, which is a
+replacement for runners. But unless you have a custom runner, this is unlikely
+to affect you much.
+
+The `Ingredient` data type has replaced the `Runner` type.
+
+The following functions have been renamed and possibly changed their types:
+
+* `defaultMainWithRunner` → `defaultMainWithIngredients`
+* `treeOptionParser` → `suiteOptionParser`
+* `getTreeOptions` → `treeOptions`
+* `runUI` → `consoleTestReporter`
+
+Added in this release:
+
+* `suiteOptions`
+* `optionParser`
+* functions operating on ingredients
+* `testsNames`
+* the `listingTests` ingredient and its option, `ListTests`
+
+`NumThreads` is no longer a core option, but is automatically included in the
+test reporting ingredients (see its haddock).
+
 Version 0.3.1
 -------------
 
