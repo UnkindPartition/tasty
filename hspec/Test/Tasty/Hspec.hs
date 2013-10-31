@@ -1,6 +1,11 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 
-module HspecProvider (testCase) where
+module HspecProvider
+    ( testCase
+    , module Test.Hspec
+    ) where
+
+import Test.Hspec -- for re-export
 
 import Data.Typeable        (Typeable)
 import Test.Tasty           (TestName, TestTree)
