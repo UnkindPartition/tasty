@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 
-module HspecProvider
+module Test.Tasty.Hspec
     ( testCase
     , module Test.Hspec
     ) where
