@@ -64,9 +64,13 @@ data Ingredient
       [OptionDescription]
       (OptionSet -> TestTree -> Maybe (IO Bool))
 
--- | Execute a 'Runner'.
+-- | Try to run an 'Ingredient'.
 --
--- This is a shortcut which runs 'launchTestTree' behind the scenes.
+-- If the ingredient refuses to run (usually based on the 'OptionSet'),
+-- the function returns 'Nothing'.
+--
+-- For a 'TestReporter', this function automatically starts running the
+-- tests in the background.
 tryIngredient :: Ingredient -> OptionSet -> TestTree -> Maybe (IO Bool)
 tryIngredient (TestReporter _ report) opts testTree = do -- Maybe monad
   reportFn <- report opts testTree
@@ -74,6 +78,10 @@ tryIngredient (TestReporter _ report) opts testTree = do -- Maybe monad
 tryIngredient (TestManager _ manage) opts testTree =
   manage opts testTree
 
+-- | Run the first 'Ingredient' that agrees to be run.
+--
+-- If no one accepts the task, return 'Nothing'. This is usually a sign of
+-- misconfiguration.
 tryIngredients :: [Ingredient] -> OptionSet -> TestTree -> Maybe (IO Bool)
 tryIngredients ins opts tree =
   msum $ map (\i -> tryIngredient i opts tree) ins
