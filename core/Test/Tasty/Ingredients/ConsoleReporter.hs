@@ -1,5 +1,5 @@
 {-# LANGUAGE TupleSections, CPP, ImplicitParams #-}
--- | Console runner
+-- | Console reporter ingredient
 module Test.Tasty.Ingredients.ConsoleReporter (consoleTestReporter) where
 
 import Prelude hiding (fail)

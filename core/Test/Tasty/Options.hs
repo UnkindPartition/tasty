@@ -3,8 +3,7 @@
              OverlappingInstances, FlexibleInstances, UndecidableInstances,
              TypeOperators #-}
 -- | Extensible options. They are used for provider-specific settings,
--- runner-specific settings and core settings (number of threads, test
--- pattern).
+-- ingredient-specific settings and core settings (such as the test name pattern).
 module Test.Tasty.Options
   (
     -- * IsOption class

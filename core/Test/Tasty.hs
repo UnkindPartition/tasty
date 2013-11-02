@@ -22,8 +22,7 @@ import Test.Tasty.Core
 import Test.Tasty.Runners
 import Test.Tasty.Options
 
--- | Parse the command line arguments and run the tests using the standard
--- console runner
+-- | Parse the command line arguments and run the tests
 defaultMain :: TestTree -> IO ()
 defaultMain = defaultMainWithIngredients [listingTests, consoleTestReporter]
 

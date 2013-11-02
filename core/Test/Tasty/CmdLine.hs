@@ -41,7 +41,7 @@ suiteOptionParser :: [Ingredient] -> TestTree -> Parser OptionSet
 suiteOptionParser ins tree = optionParser $ suiteOptions ins tree
 
 -- | Parse the command line arguments and run the tests using the provided
--- runner
+-- ingredient list
 defaultMainWithIngredients :: [Ingredient] -> TestTree -> IO ()
 defaultMainWithIngredients ins testTree = do
   opts <- execParser $

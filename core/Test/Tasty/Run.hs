@@ -39,7 +39,7 @@ data TestMap = TestMap
 
 -- | Mapping from test numbers (starting from 0) to their status variables.
 --
--- This is what a runner uses to analyse and display progress, and to
+-- This is what an ingredient uses to analyse and display progress, and to
 -- detect when tests finish.
 type StatusMap = IntMap.IntMap (TVar Status)
 
