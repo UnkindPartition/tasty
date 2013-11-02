@@ -105,6 +105,8 @@ The following standard providers are available:
   (based on [smallcheck](http://hackage.haskell.org/package/smallcheck))
 * [tasty-quickcheck](http://hackage.haskell.org/package/tasty-quickcheck) — for randomized
   property-based testing (based on [QuickCheck](http://hackage.haskell.org/package/QuickCheck))
+* [tasty-hspec](http://hackage.haskell.org/package/tasty-hspec) — for
+  [Hspec](http://hspec.github.io/) tests
 
 It's easy to create custom providers using the API from `Test.Tasty.Providers`.
 
