@@ -11,8 +11,8 @@ Features:
 * Filter the tests to be run using patterns specified on the command line
 * Hierarchical, colored display of test results
 * Reporting of test statistics
-* Extensibility: add your own test providers and runners above and beyond those
-  provided
+* Extensibility: add your own test providers and ingredients (runners) above and
+  beyond those provided
 
 [![Build Status](https://travis-ci.org/feuerbach/tasty.png?branch=master)](https://travis-ci.org/feuerbach/tasty)
 
@@ -110,16 +110,18 @@ The following standard providers are available:
 
 It's easy to create custom providers using the API from `Test.Tasty.Providers`.
 
-### Runners
+### Ingredients
 
-It is possible to use alternative runners. For example, `tasty-golden` provides
-its own console runner which adds golden test management features.
+Ingredients represent different actions that you can perform on your test suite.
+One obvious ingredient that you want to include is one that runs tests and
+reports the progress and results.
 
-Another example would be a runner that produces machine-readable test result
-descriptions, e.g. in the JUnit XML format. This one is not written yet, but
-contributions are welcome!
+Another standard ingredient is one that simply prints the names of all tests.
 
-You can create your own custom runner using the API from `Test.Tasty.Runners`.
+It is possible to write and use custom ingredients. For example, `tasty-golden`
+provides a new ingredient which adds golden test management features.
+
+You can create your own ingredients using the API from `Test.Tasty.Runners`.
 
 ## Running tests in parallel
 
