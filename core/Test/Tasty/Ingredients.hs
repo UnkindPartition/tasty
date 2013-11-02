@@ -40,7 +40,7 @@ import Test.Tasty.CoreOptions
 -- That's all you need to know from an (advanced) user perspective. Read
 -- on if you want to create a new ingredient.
 --
--- There are two kinds of ingredient. 'TestReporter', if it agrees to run,
+-- There are two kinds of ingredients. 'TestReporter', if it agrees to run,
 -- automatically launches tests execution, and gets the 'StatusMap' which
 -- it uses to report the progress and results to the user.
 --
