@@ -6,6 +6,8 @@ import Prelude hiding (fail)
 import Control.Monad.State hiding (fail)
 import Control.Concurrent.STM
 import Control.Exception
+import Control.DeepSeq
+import Control.Applicative
 import Test.Tasty.Core
 import Test.Tasty.Run
 import Test.Tasty.Ingredients
@@ -124,6 +126,8 @@ consoleTestReporter = TestReporter [] $ \opts tree -> Just $ \smap -> do
             Exception e -> return (False, "Exception: " ++ show e)
             _ -> retry
 
+      rDesc <- liftIO $ formatMessage rDesc
+
       liftIO $
         if rOk
           then ok "OK\n"
@@ -169,6 +173,23 @@ consoleTestReporter = TestReporter [] $ \opts tree -> Just $ \smap -> do
     fs -> do
       fail $ printf "%d out of %d tests failed\n" fs (ix st)
       return False
+
+
+-- | Printing exceptions or other messages is tricky — in the process we
+-- can get new exceptions!
+--
+-- See e.g. https://github.com/feuerbach/tasty/issues/25
+formatMessage :: String -> IO String
+formatMessage msg = go 3 msg
+  where
+    -- to avoid infinite recursion, we introduce the recursion limit
+    go :: Int -> String -> IO String
+    go 0        _ = return "exceptions keep throwing other exceptions!"
+    go recLimit msg = do
+      mbStr <- try $ evaluate $ force msg
+      case mbStr of
+        Right str -> return str
+        Left e' -> printf "message threw an exception: %s" <$> go (recLimit-1) (show (e' :: SomeException))
 
 -- (Potentially) colorful output
 ok, fail, infoOk, infoFail :: (?colors :: Bool) => String -> IO ()
