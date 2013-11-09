@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.4.0.1
+---------------
+
+Fix a bug ([#25](https://github.com/feuerbach/tasty/issues/25))
+
 Version 0.4
 -----------
 
