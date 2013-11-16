@@ -13,6 +13,7 @@ import qualified Test.HUnit.Base
 import Test.HUnit.Lang
 import Test.HUnit.Base hiding -- for re-export
   ( Test(..)
+  , Testable(..)
   , (~=?)
   , (~?=)
   , (~:)
