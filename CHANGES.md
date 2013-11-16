@@ -1,6 +1,17 @@
 Changes
 =======
 
+This is the common changelog for the packages `tasty`, `tasty-smallcheck`,
+`tasty-quickcheck` and `tasty-hunit`.
+
+Versioning across these packages is monotonic.
+Multiple packages can get the same version if they are released together.
+
+Version 0.4.1
+-------------
+
+tasty-hunit: do not re-export HUnit's `Testable` class
+
 Version 0.4.0.1
 ---------------
 
