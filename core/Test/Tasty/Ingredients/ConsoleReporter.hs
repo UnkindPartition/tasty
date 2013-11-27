@@ -197,7 +197,7 @@ ok, fail, infoOk, infoFail :: (?colors :: Bool) => String -> IO ()
 fail     = output BoldIntensity   Vivid Red
 ok       = output NormalIntensity Dull  Green
 infoOk   = output NormalIntensity Dull  White
-infoFail = output NormalIntensity Dull  Black
+infoFail = output NormalIntensity Dull  Red
 
 output
   :: (?colors :: Bool)
