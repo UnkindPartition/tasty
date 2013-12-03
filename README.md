@@ -98,7 +98,7 @@ The following standard providers are available:
 
 * [tasty-hunit](http://hackage.haskell.org/package/tasty-hunit) — for unit tests
   (based on [HUnit](http://hackage.haskell.org/package/HUnit))
-* [tasty-golden](http://hackage.haskell.org/package/tasty-golden) — for golden
+* [tasty-golden][] — for golden
   tests, which are unit tests whose results are kept in files
 * [tasty-smallcheck](http://hackage.haskell.org/package/tasty-smallcheck) —
   exhaustive property-based testing
@@ -107,6 +107,8 @@ The following standard providers are available:
   property-based testing (based on [QuickCheck](http://hackage.haskell.org/package/QuickCheck))
 * [tasty-hspec](http://hackage.haskell.org/package/tasty-hspec) — for
   [Hspec](http://hspec.github.io/) tests
+
+[tasty-golden]: http://hackage.haskell.org/package/tasty-golden
 
 It's easy to create custom providers using the API from `Test.Tasty.Providers`.
 
@@ -118,10 +120,21 @@ reports the progress and results.
 
 Another standard ingredient is one that simply prints the names of all tests.
 
-It is possible to write and use custom ingredients. For example, `tasty-golden`
-provides a new ingredient which adds golden test management features.
+It is possible to write custom ingredients using the API from `Test.Tasty.Runners`.
 
-You can create your own ingredients using the API from `Test.Tasty.Runners`.
+Some ingredients that can enhance your test suite are:
+
+* [tasty-ant-xml](http://hackage.haskell.org/package/tasty-ant-xml) adds a
+  possibility to write the test results in a machine-readable XML format, which
+  is understood by various CI systems and IDEs
+* If you use [tasty-golden][] to write unit tests, there's an ingredient in
+  `Test.Tasty.Golden.Manage` that helps you manage your golden files
+
+### Other packages
+
+[tasty-th](http://hackage.haskell.org/package/tasty-th) can automatically
+discover tests based on the function names and generate the boilerplate code for
+you.
 
 ## Running tests in parallel
 
