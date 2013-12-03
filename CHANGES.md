@@ -7,6 +7,11 @@ This is the common changelog for the packages `tasty`, `tasty-smallcheck`,
 Versioning across these packages is monotonic.
 Multiple packages can get the same version if they are released together.
 
+Version 0.4.1.1
+---------------
+
+Print the failure description in red
+
 Version 0.4.1
 -------------
 
