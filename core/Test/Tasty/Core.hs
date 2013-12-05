@@ -60,6 +60,17 @@ class Typeable t => IsTest t where
 -- | The name of a test or a group of tests
 type TestName = String
 
+-- | The name of a resource
+type ResourceName = String
+
+data ResourceSpec =
+  forall a . Typeable a => ResourceSpec
+    -- name of the resource; if Nothing, the resource value doesn't
+    -- matter and won't be accessed by the tests
+    (Maybe ResourceName)
+    (IO a) -- create/initialize the resource
+    (a -> IO ()) -- free the resource
+
 -- | The main data structure defining a test suite.
 --
 -- It consists of individual test cases and properties, organized in named
@@ -77,6 +88,7 @@ data TestTree
     -- ^ Assemble a number of tests into a cohesive group
   | PlusTestOptions (OptionSet -> OptionSet) TestTree
     -- ^ Add some options to child tests
+  | WithResource ResourceSpec TestTree
 
 -- | Create a named group of test cases or other groups
 testGroup :: TestName -> [TestTree] -> TestTree
@@ -103,10 +115,12 @@ foldTestTree
      -- ^ interpret a single test
   -> (TestName -> b -> b)
      -- ^ interpret a test group
+  -> (ResourceSpec -> b -> b)
+     -- ^ deal with the resource
   -> OptionSet
      -- ^ initial options
   -> TestTree -> b
-foldTestTree fTest fGroup opts tree =
+foldTestTree fTest fGroup fResource opts tree =
   let pat = lookupOption opts
   in go pat [] opts tree
   where
@@ -119,6 +133,7 @@ foldTestTree fTest fGroup opts tree =
         TestGroup name trees ->
           fGroup name $ foldMap (go pat (path ++ [name]) opts) trees
         PlusTestOptions f tree -> go pat path (f opts) tree
+        WithResource res tree -> fResource res (go pat path opts tree)
 
 -- | Useful wrapper for use with foldTestTree
 newtype AppMonoid f = AppMonoid { getApp :: f () }
@@ -135,6 +150,7 @@ treeOptions =
 
   foldTestTree
     (\_ _ -> getTestOptions)
+    (const id)
     (const id)
     mempty
 

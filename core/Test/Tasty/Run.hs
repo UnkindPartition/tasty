@@ -83,6 +83,7 @@ createTestMap opts tree =
   foldTestTree
     runSingleTest
     (const id)
+    (const id)
     opts
     tree
   where

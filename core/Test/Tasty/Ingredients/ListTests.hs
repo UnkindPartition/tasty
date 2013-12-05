@@ -37,6 +37,7 @@ testsNames {- opts -} {- tree -} =
   foldTestTree
     (\_opts name _test -> [name])
     (\groupName names -> map ((groupName ++ "/") ++) names)
+    (const id)
 
 -- | The ingredient that provides the test listing functionality
 listingTests :: Ingredient

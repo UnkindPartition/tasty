@@ -80,6 +80,7 @@ computeAlignment opts =
   foldTestTree
     (\_ name _ level -> Maximum (length name + level))
     (\_ m -> m . (+ indentSize))
+    (const id)
     opts
   where
     fromMonoid m =
@@ -160,6 +161,7 @@ consoleTestReporter = TestReporter [] $ \opts tree -> Just $ \smap -> do
       foldTestTree
         (runSingleTest smap)
         runGroup
+        (const id)
         opts
         tree
 
