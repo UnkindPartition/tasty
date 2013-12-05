@@ -60,14 +60,8 @@ class Typeable t => IsTest t where
 -- | The name of a test or a group of tests
 type TestName = String
 
--- | The name of a resource
-type ResourceName = String
-
 data ResourceSpec =
   forall a . Typeable a => ResourceSpec
-    -- name of the resource; if Nothing, the resource value doesn't
-    -- matter and won't be accessed by the tests
-    (Maybe ResourceName)
     (IO a) -- create/initialize the resource
     (a -> IO ()) -- free the resource
 
