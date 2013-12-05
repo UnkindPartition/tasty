@@ -7,8 +7,10 @@ module Test.Tasty.Run
 
 import qualified Data.IntMap as IntMap
 import Control.Monad.State
+import Control.Monad.Writer
 import Control.Concurrent.STM
 import Control.Exception
+import Control.Applicative
 
 import Test.Tasty.Core
 import Test.Tasty.Parallel
@@ -25,17 +27,6 @@ data Status
     -- ^ test threw an exception and was aborted
   | Done Result
     -- ^ test finished with a given result
-
-data TestMap = TestMap
-    !Int
-    !(IntMap.IntMap (IO (), TVar Status))
-      -- ^ Int is the first free index
-      --
-      -- IntMap maps test indices to:
-      --
-      --    * the action to launch the test
-      --
-      --    * the status variable of the launched test
 
 -- | Mapping from test numbers (starting from 0) to their status variables.
 --
@@ -77,9 +68,8 @@ executeTest action statusVar = do
         Right result -> return $ Done result
 
 -- | Prepare the test tree to be run
-createTestMap :: OptionSet -> TestTree -> IO TestMap
-createTestMap opts tree =
-  flip execStateT (TestMap 0 IntMap.empty) $ getApp $
+createTestActions :: OptionSet -> TestTree -> IO [(IO (), TVar Status)]
+createTestActions opts tree = execWriterT $ getApp $
   foldTestTree
     runSingleTest
     (const id)
@@ -92,16 +82,7 @@ createTestMap opts tree =
       let
         act =
           executeTest (run opts test) statusVar
-      TestMap ix tmap <- get
-      let
-        tmap' = IntMap.insert ix (act, statusVar) tmap
-        ix' = ix+1
-      put $! TestMap ix' tmap'
-
--- | Start running all the tests in the TestMap in parallel
-launchTests :: Int -> TestMap -> IO ()
-launchTests threads (TestMap _ tmap) =
-  runInParallel threads $ map fst $ IntMap.elems tmap
+      tell [(act, statusVar)]
 
 -- | Start running all the tests in a test tree in parallel. The number of
 -- threads is determined by the 'NumThreads' option.
@@ -110,7 +91,7 @@ launchTests threads (TestMap _ tmap) =
 -- variable.
 launchTestTree :: OptionSet -> TestTree -> IO StatusMap
 launchTestTree opts tree = do
-  tmap@(TestMap _ smap) <- createTestMap opts tree
+  testActions <- createTestActions opts tree
   let NumThreads numTheads = lookupOption opts
-  launchTests numTheads tmap
-  return $ fmap snd smap
+  runInParallel numTheads (fst <$> testActions)
+  return $ IntMap.fromList $ zip [0..] (snd <$> testActions)
