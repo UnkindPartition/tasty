@@ -9,6 +9,7 @@ module Test.Tasty
   -- * Running tests
   , defaultMain
   , defaultMainWithIngredients
+  , defaultIngredients
   -- * Adjusting options
   -- | Normally options are specified on the command line. But you can
   -- also have different options for different subtrees in the same tree,
@@ -22,9 +23,15 @@ import Test.Tasty.Core
 import Test.Tasty.Runners
 import Test.Tasty.Options
 
+-- | List of the default ingredients. This is what 'defaultMain' uses.
+--
+-- At the moment it consists of 'listingTests' and 'consoleTestReporter'.
+defaultIngredients :: [Ingredient]
+defaultIngredients = [listingTests, consoleTestReporter]
+
 -- | Parse the command line arguments and run the tests
 defaultMain :: TestTree -> IO ()
-defaultMain = defaultMainWithIngredients [listingTests, consoleTestReporter]
+defaultMain = defaultMainWithIngredients defaultIngredients
 
 -- | Locally adjust the option value for the given test subtree
 adjustOption :: IsOption v => (v -> v) -> TestTree -> TestTree
