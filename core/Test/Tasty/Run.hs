@@ -8,9 +8,11 @@ module Test.Tasty.Run
 import qualified Data.IntMap as IntMap
 import Control.Monad.State
 import Control.Monad.Writer
+import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Exception
 import Control.Applicative
+import Control.Arrow
 
 import Test.Tasty.Core
 import Test.Tasty.Parallel
@@ -73,7 +75,7 @@ createTestActions opts tree = execWriterT $ getApp $
   foldTestTree
     runSingleTest
     (const id)
-    (const id)
+    addInitAndRelease
     opts
     tree
   where
@@ -83,6 +85,27 @@ createTestActions opts tree = execWriterT $ getApp $
         act =
           executeTest (run opts test) statusVar
       tell [(act, statusVar)]
+    addInitAndRelease (ResourceSpec doInit doRelease) a =
+      AppMonoid . WriterT . fmap ((,) ()) $ do
+        tests <- execWriterT $ getApp a
+        let ntests = length tests
+        initVar <- newMVar Nothing
+        finishVar <- newMVar ntests
+        let
+          init = do
+            modifyMVar initVar $ \mbRes  ->
+              case mbRes of
+                Nothing -> do
+                  res <- doInit
+                  return (Just res, res)
+                Just res -> return (mbRes, res)
+          release x = do
+            modifyMVar_ finishVar $ \nUsers -> do
+              let nUsers' = nUsers - 1
+              when (nUsers' == 0) $
+                doRelease x
+              return nUsers'
+        return $ map (first $ \t -> bracket init release (const t)) tests
 
 -- | Start running all the tests in a test tree in parallel. The number of
 -- threads is determined by the 'NumThreads' option.
