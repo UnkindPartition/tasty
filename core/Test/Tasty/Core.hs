@@ -61,7 +61,7 @@ class Typeable t => IsTest t where
 type TestName = String
 
 data ResourceSpec =
-  forall a . Typeable a => ResourceSpec
+  forall a . ResourceSpec
     (IO a) -- create/initialize the resource
     (a -> IO ()) -- free the resource
 
