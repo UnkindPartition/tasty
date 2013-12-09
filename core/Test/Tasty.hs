@@ -16,6 +16,11 @@ module Test.Tasty
   -- using the functions below.
   , adjustOption
   , localOption
+  -- * Resources
+  -- | Sometimes several tests need to access the same resource — say,
+  -- a file or a socket. We want to create or grab the resource before
+  -- the tests are run, and destroy or release afterwards.
+  , withResource
   )
   where
 
@@ -41,3 +46,11 @@ adjustOption f = PlusTestOptions $ \opts ->
 -- | Locally set the option value for the given test subtree
 localOption :: IsOption v => v -> TestTree -> TestTree
 localOption v = PlusTestOptions (setOption v)
+
+-- | Add resource initialization and finalization to the test tree
+withResource
+  :: IO a -- ^ initialize the resource
+  -> (a -> IO ()) -- ^ free the resource
+  -> TestTree
+  -> TestTree
+withResource acq rel = WithResource (ResourceSpec acq rel)
