@@ -170,6 +170,16 @@ For example, `group/*1` matches `group/test1` but not
 `group/**1`. A leading slash matches the beginning of the test path; for
 example, `/test*` matches `test1` but not `group/test1`.
 
+## Press
+
+Blog posts and other publications related to tasty. If you wrote or just found
+something not mentioned here, send a pull request!
+
+* [Holy Haskell Project Starter](http://yannesposito.com/Scratch/en/blog/Holy-Haskell-Starter/)
+* [First time testing, also with FP Complete](http://levischuck.com/posts/2013-11-13-first-testing-and-fpcomplete.html)
+  (tasty has been added to stackage since then)
+* [24 Days of Hackage: tasty](http://ocharles.org.uk/blog/posts/2013-12-03-24-days-of-hackage-tasty.html)
+
 ## Background
 
 Tasty is heavily influenced by [test-framework][].
