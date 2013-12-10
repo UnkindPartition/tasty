@@ -38,7 +38,7 @@ patternTests = testGroup "Pattern tests"
 
 getTestNames :: OptionSet -> TestTree -> [String]
 getTestNames opts =
-  foldTestTree (\_ name _ -> [name]) (\n l -> map ((n ++ ".") ++) l) opts
+  foldTestTree (\_ name _ -> [name]) (\n l -> map ((n ++ ".") ++) l) (const id) opts
 
 -- the tree being tested
 tt =
