@@ -179,6 +179,7 @@ something not mentioned here, send a pull request!
 * [First time testing, also with FP Complete](http://levischuck.com/posts/2013-11-13-first-testing-and-fpcomplete.html)
   (tasty has been added to stackage since then)
 * [24 Days of Hackage: tasty](http://ocharles.org.uk/blog/posts/2013-12-03-24-days-of-hackage-tasty.html)
+* [Resources in Tasty](http://ro-che.info/articles/2013-12-10-tasty-resources.html)
 
 ## Background
 
