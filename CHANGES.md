@@ -7,6 +7,22 @@ This is the common changelog for the packages `tasty`, `tasty-smallcheck`,
 Versioning across these packages is monotonic.
 Multiple packages can get the same version if they are released together.
 
+Version 0.5.1
+-------------
+
+Export `ResourceSpec` from `Test.Tasty.Runners`
+
+Version 0.5
+-----------
+
+Add a capability to acquire and release resources. See the «Resources» section
+in the `Test.Tasty` docs.
+
+For the end users, the API is backwards-compatible.
+
+Test runners may have to be adjusted — there is a new constructor of `TestTree`
+and a new argument of `foldTestTree`.
+
 Version 0.4.2
 -------------
 
