@@ -37,20 +37,26 @@ data Status
 type StatusMap = IntMap.IntMap (TVar Status)
 
 -- | Start executing a test
+--
+-- Note: we take the finalizer as an argument because it's important that
+-- it's run *before* we write the status var and signal to other threads
+-- that we're finished
 executeTest
   :: ((Progress -> IO ()) -> IO Result)
     -- ^ the action to execute the test, which takes a progress callback as
     -- a parameter
   -> TVar Status -- ^ variable to write status to
+  -> IO () -- ^ finalizer
   -> IO ()
-executeTest action statusVar = do
+executeTest action statusVar fin = do
   result <- handleExceptions $
     -- pass our callback (which updates the status variable) to the test
     -- action
     action yieldProgress
 
-  -- when the test is finished, write its result to the status variable
-  atomically $ writeTVar statusVar result
+  fin `finally`
+    -- when the test is finished, write its result to the status variable
+    (atomically $ writeTVar statusVar result)
 
   where
     -- the callback
@@ -71,7 +77,9 @@ executeTest action statusVar = do
 
 -- | Prepare the test tree to be run
 createTestActions :: OptionSet -> TestTree -> IO [(IO (), TVar Status)]
-createTestActions opts tree = execWriterT $ getApp $
+createTestActions opts tree =
+  liftM (map $ first $ ($ return ())) $ -- no more finalizers will be added
+  execWriterT $ getApp $
   foldTestTree
     runSingleTest
     (const id)
@@ -105,7 +113,7 @@ createTestActions opts tree = execWriterT $ getApp $
               when (nUsers' == 0) $
                 doRelease x
               return nUsers'
-        return $ map (first $ \t -> bracket init release (const t)) tests
+        return $ map (first $ \t fin' -> init >>= \r -> t (release r >> fin')) tests
 
 -- | Start running all the tests in a test tree in parallel. The number of
 -- threads is determined by the 'NumThreads' option.
