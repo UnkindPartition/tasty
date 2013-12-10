@@ -21,6 +21,9 @@ module Test.Tasty
   -- a file or a socket. We want to create or grab the resource before
   -- the tests are run, and destroy or release afterwards.
   , withResource
+
+  -- ** Accessing the resource
+  -- $example
   )
   where
 
@@ -54,3 +57,34 @@ withResource
   -> TestTree
   -> TestTree
 withResource acq rel = WithResource (ResourceSpec acq rel)
+
+-- $example
+--
+-- If you need to access the resource in your tests, just put it in an
+-- IORef during initialization, and get it from there in the tests.
+--
+-- Here's an example:
+--
+-- >import Test.Tasty
+-- >import Test.Tasty.HUnit
+-- >import Data.IORef
+-- >
+-- >-- assumed defintions
+-- >data Foo
+-- >acquire :: IO Foo
+-- >release :: Foo -> IO ()
+-- >testWithFoo :: Foo -> Assertion
+-- >
+-- >main = do
+-- >  ref <- newIORef $
+-- >    -- If you get this error, then either you forgot to actually write to
+-- >    -- the IORef, or it's a bug in tasty
+-- >    error "Resource isn't accessible"
+-- >  defaultMain $
+-- >    withResource (do r <- acquire; writeIORef ref r; return r) release (tests ref)
+-- >
+-- >tests :: IORef Foo -> TestTree
+-- >tests ref =
+-- >  testGroup "Tests"
+-- >    [ testCase "x" $ readIORef ref >>= testWithFoo
+-- >    ]
