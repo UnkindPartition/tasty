@@ -4,10 +4,18 @@ import Test.Tasty.Runners
 import Test.Tasty.Providers
 import Test.Tasty.Options
 import Data.Monoid
+import Data.IORef
 
-main = defaultMain mainGroup
+import Resources
 
-mainGroup = testGroup "Tests" [patternTests]
+main = do
+  resource <- newIORef False
+  defaultMain $ mainGroup resource
+
+mainGroup resource = testGroup "Tests"
+  [ patternTests
+  , testResources resource
+  ]
 
 patternTests = testGroup "Pattern tests"
   [ testCase "Absent pattern matches anything"
