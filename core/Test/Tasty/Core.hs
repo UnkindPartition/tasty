@@ -60,10 +60,12 @@ class Typeable t => IsTest t where
 -- | The name of a test or a group of tests
 type TestName = String
 
+-- | 'ResourceSpec' describes how to acquire a resource (the first field)
+-- and how to release it (the second field).
 data ResourceSpec =
   forall a . ResourceSpec
-    (IO a) -- create/initialize the resource
-    (a -> IO ()) -- free the resource
+    (IO a)
+    (a -> IO ())
 
 -- | The main data structure defining a test suite.
 --
