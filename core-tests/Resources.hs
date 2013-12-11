@@ -4,7 +4,6 @@ import Data.IORef
 import Test.Tasty
 import Test.Tasty.Options
 import Test.Tasty.Runners
-import Test.Tasty.Providers -- XXX
 import Test.Tasty.HUnit
 import Control.Concurrent
 import Control.Concurrent.STM
