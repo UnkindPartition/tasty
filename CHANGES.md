@@ -7,6 +7,12 @@ This is the common changelog for the packages `tasty`, `tasty-smallcheck`,
 Versioning across these packages is monotonic.
 Multiple packages can get the same version if they are released together.
 
+Version 0.5.2
+-------------
+
+* Export `Result` and `Progress` from `Test.Tasty.Runners`
+* Make it clear that only GHC 7.4+ is supported
+
 Version 0.5.1
 -------------
 
