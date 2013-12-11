@@ -23,6 +23,8 @@ module Test.Tasty.Runners
   , defaultMainWithIngredients
     -- * Running tests
   , Status(..)
+  , Result(..)
+  , Progress(..)
   , StatusMap
   , launchTestTree
   , NumThreads(..)
