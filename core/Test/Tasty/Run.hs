@@ -13,6 +13,7 @@ import Control.Concurrent.STM
 import Control.Exception
 import Control.Applicative
 import Control.Arrow
+import Text.Printf
 
 import Test.Tasty.Core
 import Test.Tasty.Parallel
@@ -113,7 +114,30 @@ createTestActions opts tree =
               when (nUsers' == 0) $
                 doRelease x
               return nUsers'
-        return $ map (first $ \t fin' -> init >>= \r -> t (release r >> fin')) tests
+        let
+          -- XXX currently this assumes that we can write to a terminal
+          -- Instead, we should pass this information to the ingredient and
+          -- let the ingredient display this appropriately
+          report :: String -> SomeException -> IO ()
+          report str ex =
+            printf "\nGot an exception during resource %s.\nException was: %s\n"
+              str
+              (show ex)
+
+          wrap t fin' = do
+            mbR <- try init
+            case mbR of
+              Left ex -> report "initialization" ex
+              Right r ->
+                t $ do
+                  mbF <- try $ release r
+                  case mbF of
+                    Left ex -> report "finalization" ex
+                    Right _ -> return ()
+                  fin'
+
+
+        return $ map (first wrap) tests
 
 -- | Start running all the tests in a test tree in parallel. The number of
 -- threads is determined by the 'NumThreads' option.
