@@ -216,7 +216,7 @@ output bold intensity color str
         , SetConsoleIntensity bold
         ]
       putStr str
-    ) `finally` setSGR []
+    ) `finally` setSGR [Reset]
   | otherwise = putStr str
 #else
 ok       = putStr
