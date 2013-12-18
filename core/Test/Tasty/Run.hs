@@ -1,4 +1,5 @@
 -- | Running tests
+{-# LANGUAGE ScopedTypeVariables, ExistentialQuantification #-}
 module Test.Tasty.Run
   ( Status(..)
   , StatusMap
@@ -6,14 +7,17 @@ module Test.Tasty.Run
   ) where
 
 import qualified Data.IntMap as IntMap
+import qualified Data.Sequence as Seq
+import qualified Data.Foldable as F
 import Control.Monad.State
 import Control.Monad.Writer
+import Control.Monad.Reader
+import Control.Monad.Trans.Either
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Exception
 import Control.Applicative
 import Control.Arrow
-import Text.Printf
 
 import Test.Tasty.Core
 import Test.Tasty.Parallel
@@ -37,6 +41,21 @@ data Status
 -- detect when tests finish.
 type StatusMap = IntMap.IntMap (TVar Status)
 
+data Resource r
+  = NotCreated
+  | FailedToCreate SomeException
+  | Created r
+
+data Initializer
+  = forall res . Initializer
+      (IO res)
+      (MVar (Resource res))
+data Finalizer
+  = forall res . Finalizer
+      (res -> IO ())
+      (MVar (Resource res))
+      (MVar Int)
+
 -- | Start executing a test
 --
 -- Note: we take the finalizer as an argument because it's important that
@@ -47,97 +66,101 @@ executeTest
     -- ^ the action to execute the test, which takes a progress callback as
     -- a parameter
   -> TVar Status -- ^ variable to write status to
-  -> IO () -- ^ finalizer
+  -> Seq.Seq Initializer -- ^ initializers (to be executed in this order)
+  -> Seq.Seq Finalizer -- ^ finalizers (to be executed in this order)
   -> IO ()
-executeTest action statusVar fin = do
-  result <- handleExceptions $
-    -- pass our callback (which updates the status variable) to the test
-    -- action
-    action yieldProgress
+executeTest action statusVar inits fins =
+  handle (atomically . writeTVar statusVar . Exception) $ do
+  -- We don't try to protect against async exceptions here.
+  -- This is because we use interruptible modifyMVar and wouldn't be able
+  -- to give any guarantees anyway.
+  -- So all we do is guard actual acquire/test/release actions using 'try'.
+  -- The only thing we guarantee upon catching an async exception is that
+  -- we'll write it to the status var, so that the UI won't be waiting
+  -- infinitely.
+  resultOrExcn <- runEitherT $ do
+    F.forM_ inits $ \(Initializer doInit initVar) -> EitherT $
+      modifyMVar initVar $ \resStatus  ->
+        case resStatus of
+          NotCreated -> do
+            mbRes <- try doInit
+            case mbRes of
+              Right res -> return (Created res, Right ())
+              Left ex -> return (FailedToCreate ex, Left ex)
+          Created {} -> return (resStatus, Right ())
+          FailedToCreate ex -> return (resStatus, Left ex)
 
-  fin `finally`
-    -- when the test is finished, write its result to the status variable
-    (atomically $ writeTVar statusVar result)
+    -- if all initializers ran successfully, actually run the test
+    EitherT . try $
+      -- pass our callback (which updates the status variable) to the test
+      -- action
+      action yieldProgress
+
+  -- no matter what, try to run each finalizer
+  -- remember the first exception that occurred
+  mbExcn <- liftM getFirst . execWriterT . getApp $
+    flip F.foldMap fins $ \(Finalizer doRelease initVar finishVar) ->
+      AppMonoid $ do
+        mbExcn <-
+          liftIO $ modifyMVar finishVar $ \nUsers -> do
+            let nUsers' = nUsers - 1
+            mbExcn <-
+              if nUsers' == 0
+              then do
+                resStatus <- readMVar initVar
+                case resStatus of
+                  Created res ->
+                    either
+                      (\ex -> Just ex)
+                      (\_ -> Nothing)
+                    <$> try (doRelease res)
+                  _ -> return Nothing
+              else return Nothing
+            return (nUsers', mbExcn) -- end of modifyMVar
+
+        tell $ First mbExcn
+
+  atomically . writeTVar statusVar $
+    case resultOrExcn <* maybe (return ()) Left mbExcn of
+      Left ex -> Exception ex
+      Right r -> Done r
 
   where
     -- the callback
     yieldProgress progress =
       atomically $ writeTVar statusVar $ Executing progress
 
-    handleExceptions a = do
-      resultOrException <- try a
-      case resultOrException of
-        Left e
-          | Just async <- fromException e
-          -> throwIO (async :: AsyncException) -- user interrupt, etc
-
-          | otherwise
-          -> return $ Exception e
-
-        Right result -> return $ Done result
+type InitFinPair = (Seq.Seq Initializer, Seq.Seq Finalizer)
 
 -- | Prepare the test tree to be run
 createTestActions :: OptionSet -> TestTree -> IO [(IO (), TVar Status)]
 createTestActions opts tree =
-  liftM (map $ first $ ($ return ())) $ -- no more finalizers will be added
+  liftM (map (first ($ (Seq.empty, Seq.empty)))) $
   execWriterT $ getApp $
-  foldTestTree
+  (foldTestTree
     runSingleTest
     (const id)
     addInitAndRelease
     opts
     tree
+    :: AppMonoid (WriterT [(InitFinPair -> IO (), TVar Status)] IO))
   where
     runSingleTest opts _ test = AppMonoid $ do
       statusVar <- liftIO $ atomically $ newTVar NotStarted
       let
-        act =
-          executeTest (run opts test) statusVar
+        act (inits, fins) =
+          executeTest (run opts test) statusVar inits fins
       tell [(act, statusVar)]
     addInitAndRelease (ResourceSpec doInit doRelease) a =
       AppMonoid . WriterT . fmap ((,) ()) $ do
         tests <- execWriterT $ getApp a
         let ntests = length tests
-        initVar <- newMVar Nothing
+        initVar <- newMVar NotCreated
         finishVar <- newMVar ntests
         let
-          init = do
-            modifyMVar initVar $ \mbRes  ->
-              case mbRes of
-                Nothing -> do
-                  res <- doInit
-                  return (Just res, res)
-                Just res -> return (mbRes, res)
-          release x = do
-            modifyMVar_ finishVar $ \nUsers -> do
-              let nUsers' = nUsers - 1
-              when (nUsers' == 0) $
-                doRelease x
-              return nUsers'
-        let
-          -- XXX currently this assumes that we can write to a terminal
-          -- Instead, we should pass this information to the ingredient and
-          -- let the ingredient display this appropriately
-          report :: String -> SomeException -> IO ()
-          report str ex =
-            printf "\nGot an exception during resource %s.\nException was: %s\n"
-              str
-              (show ex)
-
-          wrap t fin' = do
-            mbR <- try init
-            case mbR of
-              Left ex -> report "initialization" ex
-              Right r ->
-                t $ do
-                  mbF <- try $ release r
-                  case mbF of
-                    Left ex -> report "finalization" ex
-                    Right _ -> return ()
-                  fin'
-
-
-        return $ map (first wrap) tests
+          ini = Initializer doInit initVar
+          fin = Finalizer doRelease initVar finishVar
+        return $ map (first $ local $ (Seq.|> ini) *** (fin Seq.<|)) tests
 
 -- | Start running all the tests in a test tree in parallel. The number of
 -- threads is determined by the 'NumThreads' option.

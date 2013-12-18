@@ -47,7 +47,8 @@ library
     tagged >= 0.5,
     regex-posix,
     optparse-applicative >= 0.6,
-    deepseq >= 1.3
+    deepseq >= 1.3,
+    either >= 4.0
 
   if flag(colors)
     build-depends: ansi-terminal >= 0.6.1
