@@ -7,6 +7,14 @@ This is the common changelog for the packages `tasty`, `tasty-smallcheck`,
 Versioning across these packages is monotonic.
 Multiple packages can get the same version if they are released together.
 
+Version 0.6
+-----------
+
+* Better handling of exceptions that arise during resource creation or
+  disposal
+* Expose the `AppMonoid` wrapper
+* Add `askOption` and `inludingOptions`
+
 Version 0.5.2.1
 ---------------
 
