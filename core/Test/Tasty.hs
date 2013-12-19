@@ -10,12 +10,13 @@ module Test.Tasty
   , defaultMain
   , defaultMainWithIngredients
   , defaultIngredients
-  -- * Adjusting options
+  -- * Adjusting and querying options
   -- | Normally options are specified on the command line. But you can
   -- also have different options for different subtrees in the same tree,
   -- using the functions below.
   , adjustOption
   , localOption
+  , askOption
   -- * Resources
   -- | Sometimes several tests need to access the same resource — say,
   -- a file or a socket. We want to create or grab the resource before
@@ -49,6 +50,9 @@ adjustOption f = PlusTestOptions $ \opts ->
 -- | Locally set the option value for the given test subtree
 localOption :: IsOption v => v -> TestTree -> TestTree
 localOption v = PlusTestOptions (setOption v)
+
+askOption :: IsOption v => (v -> TestTree) -> TestTree
+askOption f = AskOptions $ f . lookupOption
 
 -- | Add resource initialization and finalization to the test tree
 withResource

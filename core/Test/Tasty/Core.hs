@@ -85,6 +85,7 @@ data TestTree
   | PlusTestOptions (OptionSet -> OptionSet) TestTree
     -- ^ Add some options to child tests
   | WithResource ResourceSpec TestTree
+  | AskOptions (OptionSet -> TestTree)
 
 -- | Create a named group of test cases or other groups
 testGroup :: TestName -> [TestTree] -> TestTree
@@ -130,6 +131,7 @@ foldTestTree fTest fGroup fResource opts tree =
           fGroup name $ foldMap (go pat (path ++ [name]) opts) trees
         PlusTestOptions f tree -> go pat path (f opts) tree
         WithResource res tree -> fResource res (go pat path opts tree)
+        AskOptions f -> go pat path opts (f opts)
 
 -- | Useful wrapper for use with foldTestTree
 newtype AppMonoid f = AppMonoid { getApp :: f () }
