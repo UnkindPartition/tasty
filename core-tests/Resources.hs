@@ -7,6 +7,7 @@ import Test.Tasty.Runners
 import Test.Tasty.HUnit
 import Control.Concurrent
 import Control.Concurrent.STM
+import Control.Monad.Writer
 import qualified Data.IntMap as IntMap
 import Data.Monoid
 import qualified Data.Foldable as F
@@ -29,13 +30,19 @@ testResources :: IORef Bool -> TestTree
 testResources ref = testCase "Resources" $ do
   smap <- launchTestTree (setOption (parseTestPattern "aa") mempty) $ testTreeWithResources ref
   assertEqual "Number of tests to run" 2 (IntMap.size smap)
-  r <- atomically $
-    (\f -> F.foldr f (return True) smap) $ \tv cont -> do
-      s <- readTVar tv
-      case s of
-        Done (Result { resultSuccessful = True }) -> cont
-        NotStarted -> retry
-        Executing {} -> retry
-        _ -> return False
-  assertBool "Resource is not available" r
+  rs <- runSMap smap
+  assertBool "Resource is not available" $ getAll $ flip F.foldMap rs $ \r ->
+    case r of
+      Done (Result {resultSuccessful = True}) -> All True
+      _ -> All False
   readIORef ref >>= assertBool "Resource was not released" . not
+
+-- run tests, return successfulness
+runSMap :: StatusMap -> IO [Status]
+runSMap smap = atomically $
+  execWriterT $ getApp $ flip F.foldMap smap $ \tv -> AppMonoid $ do
+    s <- lift readTVar tv
+    case s of
+      NotStarted -> lift retry
+      Executing {} -> lift retry
+      finished -> tell [finished]
