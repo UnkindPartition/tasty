@@ -41,7 +41,7 @@ testResources ref = testCase "Resources" $ do
 runSMap :: StatusMap -> IO [Status]
 runSMap smap = atomically $
   execWriterT $ getApp $ flip F.foldMap smap $ \tv -> AppMonoid $ do
-    s <- lift readTVar tv
+    s <- lift $ readTVar tv
     case s of
       NotStarted -> lift retry
       Executing {} -> lift retry
