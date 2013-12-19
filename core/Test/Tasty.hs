@@ -10,6 +10,7 @@ module Test.Tasty
   , defaultMain
   , defaultMainWithIngredients
   , defaultIngredients
+  , includingOptions
   -- * Adjusting and querying options
   -- | Normally options are specified on the command line. But you can
   -- also have different options for different subtrees in the same tree,
@@ -31,6 +32,7 @@ module Test.Tasty
 import Test.Tasty.Core
 import Test.Tasty.Runners
 import Test.Tasty.Options
+import Test.Tasty.Ingredients.IncludingOptions
 
 -- | List of the default ingredients. This is what 'defaultMain' uses.
 --

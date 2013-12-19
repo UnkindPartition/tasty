@@ -39,6 +39,7 @@ library
     Test.Tasty.CmdLine,
     Test.Tasty.Ingredients.ConsoleReporter
     Test.Tasty.Ingredients.ListTests
+    Test.Tasty.Ingredients.IncludingOptions
   build-depends:
     base >= 4.5 && < 5,
     stm >= 2.3,
