@@ -60,7 +60,7 @@ askOption f = AskOptions $ f . lookupOption
 withResource
   :: IO a -- ^ initialize the resource
   -> (a -> IO ()) -- ^ free the resource
-  -> TestTree
+  -> (IO a -> TestTree)
   -> TestTree
 withResource acq rel = WithResource (ResourceSpec acq rel)
 

@@ -1,9 +1,10 @@
 -- | Core types and definitions
 {-# LANGUAGE GeneralizedNewtypeDeriving, FlexibleContexts,
-             ExistentialQuantification, RankNTypes #-}
+             ExistentialQuantification, RankNTypes, DeriveDataTypeable #-}
 module Test.Tasty.Core where
 
 import Control.Applicative
+import Control.Exception
 import Test.Tasty.Options
 import Test.Tasty.Patterns
 import Data.Foldable
@@ -11,6 +12,7 @@ import Data.Monoid
 import Data.Typeable
 import qualified Data.Map as Map
 import Data.Tagged
+import Text.Printf
 
 -- | A test result
 data Result = Result
@@ -62,10 +64,21 @@ type TestName = String
 
 -- | 'ResourceSpec' describes how to acquire a resource (the first field)
 -- and how to release it (the second field).
-data ResourceSpec =
-  forall a . ResourceSpec
-    (IO a)
-    (a -> IO ())
+data ResourceSpec a = ResourceSpec (IO a) (a -> IO ())
+
+data ResourceError
+  = NotRunningTests
+  | UnexpectedState String
+  deriving Typeable
+
+instance Show ResourceError where
+  show NotRunningTests =
+    "Unhandled resource. Probably a bug in the runner you're using."
+  show (UnexpectedState state) =
+    printf "Unexpected state of the resource (%s). Report as a tasty bug."
+      state
+
+instance Exception ResourceError
 
 -- | The main data structure defining a test suite.
 --
@@ -84,7 +97,7 @@ data TestTree
     -- ^ Assemble a number of tests into a cohesive group
   | PlusTestOptions (OptionSet -> OptionSet) TestTree
     -- ^ Add some options to child tests
-  | WithResource ResourceSpec TestTree
+  | forall a . WithResource (ResourceSpec a) (IO a -> TestTree)
   | AskOptions (OptionSet -> TestTree)
 
 -- | Create a named group of test cases or other groups
@@ -94,19 +107,25 @@ testGroup = TestGroup
 data TreeFold b = TreeFold
   { foldSingle :: forall t . IsTest t => OptionSet -> TestName -> t -> b
   , foldGroup :: TestName -> b -> b
-  , foldResource :: ResourceSpec -> b -> b
+  , foldResource :: forall a . ResourceSpec a -> (IO a -> b) -> b
   }
 
 -- | 'trivialFold' can serve as the basis for custom folds. Just override
 -- the fields you need.
 --
--- It maps single tests to `mempty` (you probably do want to override
--- that), and for recursive nodes it returns the inner result unmodified.
+-- Here's what it does:
+--
+-- * single tests are mapped to `mempty` (you probably do want to override that)
+--
+-- * test group is returned unmodified
+--
+-- * for a resource, an IO action that throws an exception is passed (you
+-- want to override this for runners/ingredients that execute tests)
 trivialFold :: Monoid b => TreeFold b
 trivialFold = TreeFold
   { foldSingle = \_ _ _ -> mempty
   , foldGroup = const id
-  , foldResource = const id
+  , foldResource = \_ f -> f $ throwIO NotRunningTests
   }
 
 -- | Fold a test tree into a single value.
@@ -144,7 +163,7 @@ foldTestTree (TreeFold fTest fGroup fResource) opts tree =
         TestGroup name trees ->
           fGroup name $ foldMap (go pat (path ++ [name]) opts) trees
         PlusTestOptions f tree -> go pat path (f opts) tree
-        WithResource res tree -> fResource res (go pat path opts tree)
+        WithResource res tree -> fResource res $ \res -> go pat path opts (tree res)
         AskOptions f -> go pat path opts (f opts)
 
 -- | Useful wrapper for use with foldTestTree

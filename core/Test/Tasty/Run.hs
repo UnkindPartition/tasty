@@ -154,14 +154,23 @@ createTestActions opts tree =
       tell [(act, statusVar)]
     addInitAndRelease (ResourceSpec doInit doRelease) a =
       AppMonoid . WriterT . fmap ((,) ()) $ do
-        tests <- execWriterT $ getApp a
-        let ntests = length tests
         initVar <- newMVar NotCreated
+        tests <- execWriterT $ getApp $ a (getResource initVar)
+        let ntests = length tests
         finishVar <- newMVar ntests
         let
           ini = Initializer doInit initVar
           fin = Finalizer doRelease initVar finishVar
         return $ map (first $ local $ (Seq.|> ini) *** (fin Seq.<|)) tests
+
+-- | Used to create the IO action which is passed in a WithResource node
+getResource :: MVar (Resource r) -> IO r
+getResource var =
+  readMVar var >>= \rState ->
+    case rState of
+      Created r -> return r
+      NotCreated -> throwIO $ UnexpectedState "not created"
+      FailedToCreate {} -> throwIO $ UnexpectedState "failed to create"
 
 -- | Start running all the tests in a test tree in parallel. The number of
 -- threads is determined by the 'NumThreads' option.
