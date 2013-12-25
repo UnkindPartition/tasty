@@ -4,6 +4,8 @@ module Test.Tasty.Runners
     -- * Working with the test tree
     TestTree(..)
   , foldTestTree
+  , TreeFold(..)
+  , trivialFold
   , AppMonoid(..)
   , ResourceSpec(..)
     -- * Ingredients

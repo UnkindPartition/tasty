@@ -138,9 +138,10 @@ createTestActions opts tree =
   liftM (map (first ($ (Seq.empty, Seq.empty)))) $
   execWriterT $ getApp $
   (foldTestTree
-    runSingleTest
-    (const id)
-    addInitAndRelease
+    trivialFold
+      { foldSingle = runSingleTest
+      , foldResource = addInitAndRelease
+      }
     opts
     tree
     :: AppMonoid (WriterT [(InitFinPair -> IO (), TVar Status)] IO))

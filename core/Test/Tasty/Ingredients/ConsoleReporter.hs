@@ -78,9 +78,10 @@ computeAlignment :: OptionSet -> TestTree -> Int
 computeAlignment opts =
   fromMonoid .
   foldTestTree
-    (\_ name _ level -> Maximum (length name + level))
-    (\_ m -> m . (+ indentSize))
-    (const id)
+    trivialFold
+      { foldSingle = \_ name _ level -> Maximum (length name + level)
+      , foldGroup = \_ m -> m . (+ indentSize)
+      }
     opts
   where
     fromMonoid m =
@@ -159,9 +160,10 @@ consoleTestReporter = TestReporter [] $ \opts tree -> Just $ \smap -> do
   st <-
     flip execStateT initialState $ getApp $ fst $
       foldTestTree
-        (runSingleTest smap)
-        runGroup
-        (const id)
+        trivialFold
+          { foldSingle = runSingleTest smap
+          , foldGroup = runGroup
+          }
         opts
         tree
 

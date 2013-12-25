@@ -35,9 +35,10 @@ instance IsOption ListTests where
 testsNames :: OptionSet -> TestTree -> [TestName]
 testsNames {- opts -} {- tree -} =
   foldTestTree
-    (\_opts name _test -> [name])
-    (\groupName names -> map ((groupName ++ "/") ++) names)
-    (const id)
+    trivialFold
+      { foldSingle = \_opts name _test -> [name]
+      , foldGroup = \groupName names -> map ((groupName ++ "/") ++) names
+      }
 
 -- | The ingredient that provides the test listing functionality
 listingTests :: Ingredient

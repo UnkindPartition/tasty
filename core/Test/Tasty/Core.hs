@@ -91,6 +91,24 @@ data TestTree
 testGroup :: TestName -> [TestTree] -> TestTree
 testGroup = TestGroup
 
+data TreeFold b = TreeFold
+  { foldSingle :: forall t . IsTest t => OptionSet -> TestName -> t -> b
+  , foldGroup :: TestName -> b -> b
+  , foldResource :: ResourceSpec -> b -> b
+  }
+
+-- | 'trivialFold' can serve as the basis for custom folds. Just override
+-- the fields you need.
+--
+-- It maps single tests to `mempty` (you probably do want to override
+-- that), and for recursive nodes it returns the inner result unmodified.
+trivialFold :: Monoid b => TreeFold b
+trivialFold = TreeFold
+  { foldSingle = \_ _ _ -> mempty
+  , foldGroup = const id
+  , foldResource = const id
+  }
+
 -- | Fold a test tree into a single value.
 --
 -- Apart from pure convenience, this function also does the following
@@ -108,16 +126,12 @@ testGroup = TestGroup
 -- in practice; OTOH, this behaviour may be changed later.
 foldTestTree
   :: Monoid b
-  => (forall t . IsTest t => OptionSet -> TestName -> t -> b)
-     -- ^ interpret a single test
-  -> (TestName -> b -> b)
-     -- ^ interpret a test group
-  -> (ResourceSpec -> b -> b)
-     -- ^ deal with the resource
+  => TreeFold b
+     -- ^ the algebra
   -> OptionSet
      -- ^ initial options
   -> TestTree -> b
-foldTestTree fTest fGroup fResource opts tree =
+foldTestTree (TreeFold fTest fGroup fResource) opts tree =
   let pat = lookupOption opts
   in go pat [] opts tree
   where
@@ -147,9 +161,7 @@ treeOptions =
   Map.elems .
 
   foldTestTree
-    (\_ _ -> getTestOptions)
-    (const id)
-    (const id)
+    trivialFold { foldSingle = \_ _ -> getTestOptions }
     mempty
 
   where
