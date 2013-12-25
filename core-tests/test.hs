@@ -9,12 +9,11 @@ import Data.IORef
 import Resources
 
 main = do
-  resource <- newIORef False
-  defaultMain $ mainGroup resource
+  defaultMain mainGroup
 
-mainGroup resource = testGroup "Tests"
+mainGroup = testGroup "Tests"
   [ patternTests
-  , testResources resource
+  , testResources
   ]
 
 patternTests = testGroup "Pattern tests"
@@ -45,8 +44,12 @@ patternTests = testGroup "Pattern tests"
   o s = getTestNames (setOption (parseTestPattern s) mempty) tt
 
 getTestNames :: OptionSet -> TestTree -> [String]
-getTestNames opts =
-  foldTestTree (\_ name _ -> [name]) (\n l -> map ((n ++ ".") ++) l) (const id) opts
+getTestNames =
+  foldTestTree
+    trivialFold
+      { foldSingle = \_ name _ -> [name]
+      , foldGroup = \n l -> map ((n ++ ".") ++) l
+      }
 
 -- the tree being tested
 tt =

@@ -10,24 +10,26 @@ import Control.Concurrent.STM
 import Control.Monad.Writer
 import qualified Data.IntMap as IntMap
 import Data.Monoid
+import Control.Applicative
 import qualified Data.Foldable as F
 
 -- this is a dummy tree we use for testing
 testTreeWithResources :: IORef Bool -> TestTree
 testTreeWithResources ref =
-  withResource (writeIORef ref True) (const $ writeIORef ref False) $
+  withResource (ref <$ writeIORef ref True) (\ref -> writeIORef ref False) $ \ioRef ->
   testGroup "dummy"
-    [ testCase "aaa" check
-    , testCase "bbb" check
-    , testCase "aab" $ threadDelay (10^5) >> check
+    [ testCase "aaa" $ check ioRef
+    , testCase "bbb" $ check ioRef
+    , testCase "aab" $ threadDelay (10^5) >> check ioRef
     ]
 
   where
-    check = readIORef ref >>= assertBool "ref is false!"
+    check ioRef = ioRef >>= readIORef >>= assertBool "ref is false!"
 
 -- this is the actual test
-testResources :: IORef Bool -> TestTree
-testResources ref = testCase "Resources" $ do
+testResources :: TestTree
+testResources = testCase "Resources" $ do
+  ref <- newIORef False
   smap <- launchTestTree (setOption (parseTestPattern "aa") mempty) $ testTreeWithResources ref
   assertEqual "Number of tests to run" 2 (IntMap.size smap)
   rs <- runSMap smap
