@@ -7,6 +7,16 @@ This is the common changelog for the packages `tasty`, `tasty-smallcheck`,
 Versioning across these packages is monotonic.
 Multiple packages can get the same version if they are released together.
 
+Version 0.7
+-----------
+
+* Use `regex-tdfa` instead of `regex-posix` (which is a native
+  implementation, and as such is more portable)
+* `foldTestTree` now takes the algebra in the form of a record rather than
+  multiple arguments, to minimize breakage when new nodes are added or
+  existing ones change
+* `withResource` now passes the IO action to get the resource to the inner test tree
+
 Version 0.6
 -----------
 
