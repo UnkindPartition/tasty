@@ -23,9 +23,6 @@ module Test.Tasty
   -- a file or a socket. We want to create or grab the resource before
   -- the tests are run, and destroy or release afterwards.
   , withResource
-
-  -- ** Accessing the resource
-  -- $example
   )
   where
 
@@ -53,44 +50,18 @@ adjustOption f = PlusTestOptions $ \opts ->
 localOption :: IsOption v => v -> TestTree -> TestTree
 localOption v = PlusTestOptions (setOption v)
 
+-- | Customize the test tree based on the run-time options
 askOption :: IsOption v => (v -> TestTree) -> TestTree
 askOption f = AskOptions $ f . lookupOption
 
--- | Add resource initialization and finalization to the test tree
+-- | Acquire the resource to run this test (sub)tree and release it
+-- afterwards
 withResource
   :: IO a -- ^ initialize the resource
   -> (a -> IO ()) -- ^ free the resource
   -> (IO a -> TestTree)
+    -- ^ @'IO' a@ is an action which returns the acquired resource.
+    -- Despite it being an 'IO' action, the resource it returns will be
+    -- acquired only once and shared across all the tests in the tree.
   -> TestTree
 withResource acq rel = WithResource (ResourceSpec acq rel)
-
--- $example
---
--- If you need to access the resource in your tests, just put it in an
--- IORef during initialization, and get it from there in the tests.
---
--- Here's an example:
---
--- >import Test.Tasty
--- >import Test.Tasty.HUnit
--- >import Data.IORef
--- >
--- >-- assumed defintions
--- >data Foo
--- >acquire :: IO Foo
--- >release :: Foo -> IO ()
--- >testWithFoo :: Foo -> Assertion
--- >
--- >main = do
--- >  ref <- newIORef $
--- >    -- If you get this error, then either you forgot to actually write to
--- >    -- the IORef, or it's a bug in tasty
--- >    error "Resource isn't accessible"
--- >  defaultMain $
--- >    withResource (do r <- acquire; writeIORef ref r; return r) release (tests ref)
--- >
--- >tests :: IORef Foo -> TestTree
--- >tests ref =
--- >  testGroup "Tests"
--- >    [ testCase "x" $ readIORef ref >>= testWithFoo
--- >    ]

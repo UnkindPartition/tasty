@@ -98,12 +98,22 @@ data TestTree
   | PlusTestOptions (OptionSet -> OptionSet) TestTree
     -- ^ Add some options to child tests
   | forall a . WithResource (ResourceSpec a) (IO a -> TestTree)
+    -- ^ Acquire the resource before the tests in the inner tree start and
+    -- release it after they finish. The tree gets an `IO` action which
+    -- yields the resource, although the resource is shared across all the
+    -- tests.
   | AskOptions (OptionSet -> TestTree)
+    -- ^ Ask for the options and customize the tests based on them
 
 -- | Create a named group of test cases or other groups
 testGroup :: TestName -> [TestTree] -> TestTree
 testGroup = TestGroup
 
+-- | An algebra for folding a `TestTree`.
+--
+-- Instead of constructing fresh records, build upon `trivialFold`
+-- instead. This way your code won't break when new nodes/fields are
+-- indroduced.
 data TreeFold b = TreeFold
   { foldSingle :: forall t . IsTest t => OptionSet -> TestName -> t -> b
   , foldGroup :: TestName -> b -> b
@@ -117,7 +127,7 @@ data TreeFold b = TreeFold
 --
 -- * single tests are mapped to `mempty` (you probably do want to override that)
 --
--- * test group is returned unmodified
+-- * test groups are returned unmodified
 --
 -- * for a resource, an IO action that throws an exception is passed (you
 -- want to override this for runners/ingredients that execute tests)
@@ -129,6 +139,9 @@ trivialFold = TreeFold
   }
 
 -- | Fold a test tree into a single value.
+--
+-- The fold result type should be a monoid. This is used to fold multiple
+-- results in a test group. In particular, empty groups get folded into 'mempty'.
 --
 -- Apart from pure convenience, this function also does the following
 -- useful things:
@@ -146,10 +159,12 @@ trivialFold = TreeFold
 foldTestTree
   :: Monoid b
   => TreeFold b
-     -- ^ the algebra
+     -- ^ the algebra (i.e. how to fold a tree)
   -> OptionSet
      -- ^ initial options
-  -> TestTree -> b
+  -> TestTree
+     -- ^ the tree to fold
+  -> b
 foldTestTree (TreeFold fTest fGroup fResource) opts tree =
   let pat = lookupOption opts
   in go pat [] opts tree
