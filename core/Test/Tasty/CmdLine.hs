@@ -17,6 +17,7 @@ import Test.Tasty.Core
 import Test.Tasty.CoreOptions
 import Test.Tasty.Ingredients
 import Test.Tasty.Options
+import Test.Tasty.Compat.Monoid
 
 -- | Generate a command line parser from a list of option descriptions
 optionParser :: [OptionDescription] -> Parser OptionSet

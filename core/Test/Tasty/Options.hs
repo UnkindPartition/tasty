@@ -28,6 +28,8 @@ import Data.Monoid
 import Options.Applicative
 import Options.Applicative.Types
 
+import Test.Tasty.Compat.Monoid
+
 -- | An option is a data type that inhabits the `IsOption` type class.
 class Typeable v => IsOption v where
   -- | The value to use if the option was not supplied explicitly

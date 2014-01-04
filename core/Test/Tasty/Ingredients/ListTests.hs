@@ -13,6 +13,7 @@ import Data.Tagged
 import Test.Tasty.Core
 import Test.Tasty.Options
 import Test.Tasty.Ingredients
+import Test.Tasty.Compat.Monoid
 
 -- | This option, when set to 'True', specifies that we should run in the
 -- «list tests» mode
