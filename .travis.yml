@@ -1,3 +1,5 @@
-language: haskell
+env:
+ - GHCVER=7.4.2
+ - GHCVER=7.6.3
 install: /bin/true
 script: ./ci-test
