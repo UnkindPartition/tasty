@@ -170,6 +170,62 @@ For example, `group/*1` matches `group/test1` but not
 `group/**1`. A leading slash matches the beginning of the test path; for
 example, `/test*` matches `test1` but not `group/test1`.
 
+## Project organization and integration with Cabal
+
+There may be several ways to organize your project. What follows is not
+Tasty's requirements but my recommendations.
+
+### Tests for a library
+
+
+Place your test suite sources in a dedicated subdirectory (called `tests`
+here) instead of putting them among the main library sources.
+
+The directory structure will be as follows:
+
+    my-project/
+      my-project.cabal
+      src/
+        ...
+      tests/
+        test.hs
+        Mod1.hs
+        Mod2.hs
+        ...
+
+`test.hs` is where your `main` function is defined. The tests may be
+contained in `test.hs` or spread across multiple modules (`Mod1.hs`, `Mod2.hs`,
+...) which are then imported by `test.hs`.
+
+Add the following section to the cabal file (`my-project.cabal`):
+
+    Test-suite test
+      Default-language:
+        Haskell2010
+      Type:
+        exitcode-stdio-1.0
+      Hs-source-dirs:
+        tests
+      Main-is:
+        test.hs
+      Build-depends:
+          base >= 4 && < 5
+        , tasty >= 0.7 -- insert the current version here
+        , my-project   -- depend on the library we're testing
+        , ...
+
+### Tests for a program
+
+All the above applies, except you can't depend on the library if there's no
+library. You have to options:
+
+* Re-organize the project into a library and a program, so that both the
+  program and the test suite depend on this new library. The library can be
+  declared in the same cabal file.
+* Add your program sources directory to the `Hs-source-dirs`. Note that this
+  will lead to double compilation (once for the program and once for the test
+  suite).
+
 ## Press
 
 Blog posts and other publications related to tasty. If you wrote or just found
