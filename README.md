@@ -217,7 +217,7 @@ Add the following section to the cabal file (`my-project.cabal`):
 ### Tests for a program
 
 All the above applies, except you can't depend on the library if there's no
-library. You have to options:
+library. You have two options:
 
 * Re-organize the project into a library and a program, so that both the
   program and the test suite depend on this new library. The library can be
