@@ -241,6 +241,7 @@ something not mentioned here, send a pull request!
 * [24 Days of Hackage: tasty](http://ocharles.org.uk/blog/posts/2013-12-03-24-days-of-hackage-tasty.html)
 * [Resources in Tasty](http://ro-che.info/articles/2013-12-10-tasty-resources.html)
 * [Resources in Tasty (update)](http://ro-che.info/articles/2013-12-29-tasty-resources-2.html)
+* [Announcing tasty-rerun](http://ocharles.org.uk/blog/posts/2014-01-20-announcing-tasty-rerun.html)
 
 ## Background
 
