@@ -129,6 +129,10 @@ Some ingredients that can enhance your test suite are:
   is understood by various CI systems and IDEs
 * If you use [tasty-golden][] to write unit tests, there's an ingredient in
   `Test.Tasty.Golden.Manage` that helps you manage your golden files
+* [tasty-rerun](http://hackage.haskell.org/package/tasty-rerun) adds support for
+  minimal test reruns by recording previous test runs and using this information
+  to filter the test tree. For example, you can use this ingredient to only run
+  failed tests, or only run tests that threw an exception.
 
 ### Other packages
 
@@ -237,6 +241,7 @@ something not mentioned here, send a pull request!
 * [24 Days of Hackage: tasty](http://ocharles.org.uk/blog/posts/2013-12-03-24-days-of-hackage-tasty.html)
 * [Resources in Tasty](http://ro-che.info/articles/2013-12-10-tasty-resources.html)
 * [Resources in Tasty (update)](http://ro-che.info/articles/2013-12-29-tasty-resources-2.html)
+* [Announcing tasty-rerun](http://ocharles.org.uk/blog/posts/2014-01-20-announcing-tasty-rerun.html)
 
 ## Background
 
