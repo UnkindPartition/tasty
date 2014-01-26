@@ -16,6 +16,8 @@ Features:
 
 [![Build Status](https://travis-ci.org/feuerbach/tasty.png?branch=master)](https://travis-ci.org/feuerbach/tasty)
 
+To find out what's new, see the [change log](https://github.com/feuerbach/tasty/blob/master/CHANGES.md).
+
 ## Example
 
 Here's how your `test.hs` might look like:
