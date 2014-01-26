@@ -11,6 +11,7 @@ Maintainer:          Roman Cheplyaka <roma@ro-che.info>
 Homepage:            https://github.com/feuerbach/tasty
 Bug-reports:         https://github.com/feuerbach/tasty/issues
 Build-Type:          Simple
+extra-source-files:  CHANGELOG
 
 Library
         Exposed-Modules:        Test.Tasty.SmallCheck

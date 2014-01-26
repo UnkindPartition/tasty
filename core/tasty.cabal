@@ -12,7 +12,7 @@ maintainer:          roma@ro-che.info
 -- copyright:           
 category:            Testing
 build-type:          Simple
--- extra-source-files:  
+extra-source-files:  CHANGELOG
 cabal-version:       >=1.10
 
 Source-repository head
