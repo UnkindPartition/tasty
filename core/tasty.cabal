@@ -30,13 +30,14 @@ library
     Test.Tasty.Options,
     Test.Tasty.Providers,
     Test.Tasty.Runners
+    Test.Tasty.Ingredients,
+    Test.Tasty.Ingredients.Basic
   other-modules:
     Test.Tasty.Parallel,
     Test.Tasty.Core,
     Test.Tasty.CoreOptions,
     Test.Tasty.Patterns,
     Test.Tasty.Run,
-    Test.Tasty.Ingredients,
     Test.Tasty.CmdLine,
     Test.Tasty.Ingredients.ConsoleReporter
     Test.Tasty.Ingredients.ListTests

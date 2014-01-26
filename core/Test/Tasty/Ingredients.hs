@@ -1,3 +1,7 @@
+-- | This module contains the core definitions related to ingredients.
+--
+-- Ingredients themselves are provided by other modules (usually under
+-- the @Test.Tasty.Ingredients.*@ hierarchy).
 module Test.Tasty.Ingredients
   ( Ingredient(..)
   , tryIngredients

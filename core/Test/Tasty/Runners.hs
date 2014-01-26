@@ -14,6 +14,10 @@ module Test.Tasty.Runners
   , ingredientOptions
   , ingredientsOptions
     -- * Standard console ingredients
+    -- | NOTE: the exports in this section are deprecated and will be
+    -- removed in the future. Please import "Test.Tasty.Ingredients.Basic"
+    -- if you need them.
+
     -- ** Console test reporter
   , consoleTestReporter
     -- ** Tests list
@@ -45,5 +49,4 @@ import Test.Tasty.Ingredients
 import Test.Tasty.CoreOptions
 import Test.Tasty.Patterns
 import Test.Tasty.CmdLine
-import Test.Tasty.Ingredients.ConsoleReporter
-import Test.Tasty.Ingredients.ListTests
+import Test.Tasty.Ingredients.Basic
