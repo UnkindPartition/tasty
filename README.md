@@ -11,6 +11,8 @@ Features:
 * Filter the tests to be run using patterns specified on the command line
 * Hierarchical, colored display of test results
 * Reporting of test statistics
+* Acquire and release resources (sockets, temporary files etc.) that can be
+  shared among several tests
 * Extensibility: add your own test providers and ingredients (runners) above and
   beyond those provided
 
