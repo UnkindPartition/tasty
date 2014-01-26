@@ -15,6 +15,11 @@ build-type:          Simple
 extra-source-files:  CHANGELOG
 cabal-version:       >=1.10
 
+Source-repository head
+  type:     git
+  location: git://github.com/feuerbach/tasty.git
+  subdir:   quickcheck
+
 library
   exposed-modules:     Test.Tasty.QuickCheck
   -- other-modules:       

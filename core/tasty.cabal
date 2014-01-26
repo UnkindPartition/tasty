@@ -18,6 +18,7 @@ cabal-version:       >=1.10
 Source-repository head
   type:     git
   location: git://github.com/feuerbach/tasty.git
+  subdir:   core
 
 flag colors
   description: Enable colorful output
