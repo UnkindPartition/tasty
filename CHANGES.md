@@ -7,6 +7,14 @@ This is the common changelog for the packages `tasty`, `tasty-smallcheck`,
 Versioning across these packages is monotonic.
 Multiple packages can get the same version if they are released together.
 
+Version 0.8
+-----------
+
+* `Test.Tasty.Ingredients` is now exposed
+* `Test.Tasty.Ingredients.Basic` is added, which exports the ingredients defined
+    in the `tasty` package. These exports should now be used instead of ones
+    exported from `Test.Tasty.Runners`
+
 Version 0.7
 -----------
 
