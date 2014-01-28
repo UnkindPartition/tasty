@@ -1,7 +1,7 @@
 -- vim:fdm=marker:foldtext=foldtext()
-{-# LANGUAGE BangPatterns, CPP, ImplicitParams, MultiParamTypeClasses #-}
+{-# LANGUAGE BangPatterns, CPP, ImplicitParams, MultiParamTypeClasses, DeriveDataTypeable #-}
 -- | Console reporter ingredient
-module Test.Tasty.Ingredients.ConsoleReporter (consoleTestReporter) where
+module Test.Tasty.Ingredients.ConsoleReporter (consoleTestReporter, Quiet(..)) where
 
 import Prelude hiding (fail)
 import Control.Monad.State hiding (fail)
@@ -21,7 +21,11 @@ import Data.Monoid
 import qualified Data.Semigroup as Semi
 import Data.Semigroup.Applicative
 import Data.Semigroup.Reducer
+import Data.Tagged
+import Data.Proxy
+import Data.Typeable
 import System.IO
+import Options.Applicative
 
 #ifdef COLORS
 import System.Console.ANSI
@@ -190,20 +194,44 @@ consoleTestReporter :: Ingredient
 --
 -- The 'Any' part is needed to know whether a group is empty, in which case
 -- we shouldn't display it.
-consoleTestReporter = TestReporter [] $ \opts tree -> Just $ \smap -> do
+consoleTestReporter =
+  TestReporter [Option (Proxy :: Proxy Quiet)] $
+  \opts tree -> Just $ \smap ->
+
+  do
   isTerm <- hIsTerminalDevice stdout
   hSetBuffering stdout NoBuffering
 
   let
     ?colors = isTerm
+  let
+    Quiet quiet = lookupOption opts
 
-  consoleOutput (produceOutput opts tree) smap
+  case () of { _
+    | quiet -> return ()
+    | otherwise -> consoleOutput (produceOutput opts tree) smap
+  }
 
   stats <- computeStatistics smap
 
-  printStatistics stats
+  unless quiet $ printStatistics stats
 
   return $ statFailures stats == 0
+
+newtype Quiet = Quiet Bool
+  deriving (Eq, Ord, Typeable)
+instance IsOption Quiet where
+  defaultValue = Quiet False
+  parseValue = fmap Quiet . safeRead
+  optionName = return "quiet"
+  optionHelp = return "Do not produce any output; indicate success only by the exit code"
+  optionCLParser =
+    fmap Quiet $
+    switch
+      (  short 'q'
+      <> long (untag (optionName :: Tagged Quiet String))
+      <> help (untag (optionHelp :: Tagged Quiet String))
+      )
 
 -- }}}
 
