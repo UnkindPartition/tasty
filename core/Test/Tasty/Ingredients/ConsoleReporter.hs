@@ -1,14 +1,16 @@
-{-# LANGUAGE TupleSections, CPP, ImplicitParams #-}
+-- vim:fdm=marker:foldtext=foldtext()
+{-# LANGUAGE BangPatterns, CPP, ImplicitParams, MultiParamTypeClasses #-}
 -- | Console reporter ingredient
 module Test.Tasty.Ingredients.ConsoleReporter (consoleTestReporter) where
 
 import Prelude hiding (fail)
 import Control.Monad.State hiding (fail)
+import Control.Monad.Reader hiding (fail)
 import Control.Concurrent.STM
 import Control.Exception
 import Control.DeepSeq
 import Control.Applicative
-import Test.Tasty.Core
+import Test.Tasty.Core hiding (getApp) -- FIXME
 import Test.Tasty.Run
 import Test.Tasty.Ingredients
 import Test.Tasty.Options
@@ -16,22 +18,220 @@ import Text.Printf
 import qualified Data.IntMap as IntMap
 import Data.Maybe
 import Data.Monoid
+import qualified Data.Semigroup as Semi
+import Data.Semigroup.Applicative
+import Data.Semigroup.Reducer
 import System.IO
 
 #ifdef COLORS
 import System.Console.ANSI
 #endif
 
-data RunnerState = RunnerState
-  { ix :: !Int
-  , nestedLevel :: !Int
-  , failures :: !Int
+--------------------------------------------------
+-- TestOutput base definitions
+--------------------------------------------------
+-- {{{
+-- | 'TestOutput' is an intermediary between output formatting and output
+-- printing. It lets us have several different printing modes (normal; print
+-- failures only; quiet).
+data TestOutput
+  = PrintTest
+      {- print test name   -} (IO ())
+      {- print test result -} (Result -> IO ())
+  | PrintHeading (IO ()) TestOutput
+  | Skip
+  | Seq TestOutput TestOutput
+
+-- The monoid laws should hold observationally w.r.t. the semantics defined
+-- in this module
+instance Monoid TestOutput where
+  mempty = Skip
+  mappend = Seq
+
+type Level = Int
+
+produceOutput :: (?colors :: Bool) => OptionSet -> TestTree -> TestOutput
+produceOutput opts tree =
+  let
+    -- Do not retain the reference to the tree more than necessary
+    !alignment = computeAlignment opts tree
+
+    runSingleTest
+      :: (IsTest t, ?colors :: Bool)
+      => OptionSet -> TestName -> t -> Ap (Reader Level) TestOutput
+    runSingleTest _opts name _test = Ap $ do
+      level <- ask
+
+      let
+        printTestName =
+          printf "%s%s: %s" (indent level) name
+            (replicate (alignment - indentSize * level - length name) ' ')
+
+        printTestResult result = do
+          rDesc <- formatMessage $ resultDescription result
+
+          if resultSuccessful result
+            then ok "OK\n"
+            else fail "FAIL\n"
+
+          when (not $ null rDesc) $
+            (if resultSuccessful result then infoOk else infoFail) $
+              printf "%s%s\n" (indent $ level + 1) (formatDesc (level+1) rDesc)
+
+      return $ PrintTest printTestName printTestResult
+
+    runGroup :: TestName -> Ap (Reader Level) TestOutput -> Ap (Reader Level) TestOutput
+    runGroup name grp = Ap $ do
+      level <- ask
+      let
+        printHeading = printf "%s%s\n" (indent level) name
+        printBody = runReader (getApp grp) (level + 1)
+      return $ PrintHeading printHeading printBody
+
+  in
+    flip runReader 0 $ getApp $
+      foldTestTree
+        trivialFold
+          { foldSingle = runSingleTest
+          , foldGroup = runGroup
+          }
+          opts tree
+
+foldTestOutput
+  :: (?colors :: Bool, Monoid b)
+  => (IO () -> IO Result -> (Result -> IO ()) -> b)
+  -> (IO () -> b -> b)
+  -> TestOutput -> StatusMap -> b
+foldTestOutput foldTest foldHeading outputTree smap =
+  flip evalState 0 $ getApp $ go outputTree where
+  go (PrintTest printName printResult) = Ap $ do
+    ix <- get
+    put $! ix + 1
+    let
+      statusVar =
+        fromMaybe (error "internal error: index out of bounds") $
+        IntMap.lookup ix smap
+      readStatusVar = getResultFromTVar statusVar
+    return $ foldTest printName readStatusVar printResult
+  go (PrintHeading printName printBody) = Ap $
+    foldHeading printName <$> getApp (go printBody)
+  go (Seq a b) = mappend (go a) (go b)
+  go Skip = mempty
+
+-- }}}
+
+--------------------------------------------------
+-- TestOutput modes
+--------------------------------------------------
+-- {{{
+consoleOutput :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
+consoleOutput output smap =
+  getTraversal . fst $ foldTestOutput foldTest foldHeading output smap
+  where
+    foldTest printName getResult printResult =
+      ( Traversal $ do
+          printName
+          r <- getResult
+          printResult r
+      , Any True)
+    foldHeading printHeading (printBody, Any nonempty) =
+      ( Traversal $ do
+          when nonempty $ do printHeading; getTraversal printBody
+      , Any nonempty
+      )
+
+-- }}}
+
+--------------------------------------------------
+-- Statistics
+--------------------------------------------------
+-- {{{
+
+data Statistics = Statistics
+  { statTotal :: !Int
+  , statFailures :: !Int
   }
 
-initialState :: RunnerState
-initialState = RunnerState 0 0 0
+instance Semi.Semigroup Statistics where
+  (<>) = mappend
 
-type M = StateT RunnerState IO
+instance Monoid Statistics where
+  Statistics t1 f1 `mappend` Statistics t2 f2 = Statistics (t1 + t2) (f1 + f2)
+  mempty = Statistics 0 0
+
+instance Reducer Statistics Statistics where unit = id
+
+computeStatistics :: StatusMap -> IO Statistics
+computeStatistics = getApp . foldMapReduce (\var ->
+  (\r -> Statistics 1 (if resultSuccessful r then 0 else 1))
+    <$> getResultFromTVar var)
+
+printStatistics :: (?colors :: Bool) => Statistics -> IO ()
+printStatistics st = do
+  printf "\n"
+
+  case statFailures st of
+    0 -> do
+      ok $ printf "All %d tests passed\n" (statTotal st)
+
+    fs -> do
+      fail $ printf "%d out of %d tests failed\n" fs (statTotal st)
+
+-- }}}
+
+--------------------------------------------------
+-- Console test reporter
+--------------------------------------------------
+-- {{{
+
+-- | A simple console UI
+consoleTestReporter :: Ingredient
+-- We fold the test tree using (AppMonoid m, Any) monoid.
+--
+-- The 'Any' part is needed to know whether a group is empty, in which case
+-- we shouldn't display it.
+consoleTestReporter = TestReporter [] $ \opts tree -> Just $ \smap -> do
+  isTerm <- hIsTerminalDevice stdout
+  hSetBuffering stdout NoBuffering
+
+  let
+    ?colors = isTerm
+
+  consoleOutput (produceOutput opts tree) smap
+
+  stats <- computeStatistics smap
+
+  printStatistics stats
+
+  return $ statFailures stats == 0
+
+-- }}}
+
+--------------------------------------------------
+-- Various utilities
+--------------------------------------------------
+-- {{{
+exceptionToResult :: SomeException -> Result
+exceptionToResult e = Result
+  { resultSuccessful = False
+  , resultDescription = "Exception: " ++ show e
+  }
+
+getResultFromTVar :: TVar Status -> IO Result
+getResultFromTVar var =
+  atomically $ do
+    status <- readTVar var
+    case status of
+      Done r -> return r
+      Exception e -> return $ exceptionToResult e
+      _ -> retry
+
+-- }}}
+
+--------------------------------------------------
+-- Formatting
+--------------------------------------------------
+-- {{{
 
 indentSize :: Int
 indentSize = 2
@@ -89,96 +289,6 @@ computeAlignment opts =
         MinusInfinity -> 0
         Maximum x -> x
 
--- | A simple console UI
-consoleTestReporter :: Ingredient
--- We fold the test tree using (AppMonoid m, Any) monoid.
---
--- The 'Any' part is needed to know whether a group is empty, in which case
--- we shouldn't display it.
-consoleTestReporter = TestReporter [] $ \opts tree -> Just $ \smap -> do
-  isTerm <- hIsTerminalDevice stdout
-
-  let
-    ?colors = isTerm
-
-  let
-    alignment = computeAlignment opts tree
-
-    runSingleTest
-      :: (IsTest t, ?colors :: Bool)
-      => IntMap.IntMap (TVar Status)
-      -> OptionSet -> TestName -> t -> (AppMonoid M, Any)
-    runSingleTest smap _opts name _test = (, Any True) $ AppMonoid $ do
-      st@RunnerState { ix = ix, nestedLevel = level } <- get
-      let
-        statusVar =
-          fromMaybe (error "internal error: index out of bounds") $
-          IntMap.lookup ix smap
-
-      -- Print the test name before waiting for the test. This is useful
-      -- for long-running tests.
-      liftIO $ printf "%s%s: %s" (indent level) name
-        (replicate (alignment - indentSize * level - length name) ' ')
-
-      (rOk, rDesc) <-
-        liftIO $ atomically $ do
-          status <- readTVar statusVar
-          case status of
-            Done r -> return $ (resultSuccessful r, resultDescription r)
-            Exception e -> return (False, "Exception: " ++ show e)
-            _ -> retry
-
-      rDesc <- liftIO $ formatMessage rDesc
-
-      liftIO $
-        if rOk
-          then ok "OK\n"
-          else fail "FAIL\n"
-
-      when (not $ null rDesc) $
-        liftIO $ (if rOk then infoOk else infoFail) $
-          printf "%s%s\n" (indent $ level + 1) (formatDesc (level+1) rDesc)
-      let
-        ix' = ix+1
-        updateFailures = if rOk then id else (+1)
-      put $! st { ix = ix', failures = updateFailures (failures st) }
-
-    runGroup :: TestName -> (AppMonoid M, Any) -> (AppMonoid M, Any)
-    runGroup _ (_, Any False) = mempty
-    runGroup name (AppMonoid act, nonEmpty) = (, nonEmpty) $ AppMonoid $ do
-      st@RunnerState { nestedLevel = level } <- get
-      liftIO $ printf "%s%s\n" (indent level) name
-      put $! st { nestedLevel = level + 1 }
-      act
-      modify $ \st -> st { nestedLevel = level }
-
-  hSetBuffering stdout NoBuffering
-
-  -- Do not retain the reference to the tree more than necessary
-  _ <- evaluate alignment
-
-  st <-
-    flip execStateT initialState $ getApp $ fst $
-      foldTestTree
-        trivialFold
-          { foldSingle = runSingleTest smap
-          , foldGroup = runGroup
-          }
-        opts
-        tree
-
-  printf "\n"
-
-  case failures st of
-    0 -> do
-      ok $ printf "All %d tests passed\n" (ix st)
-      return True
-
-    fs -> do
-      fail $ printf "%d out of %d tests failed\n" fs (ix st)
-      return False
-
-
 -- | Printing exceptions or other messages is tricky — in the process we
 -- can get new exceptions!
 --
@@ -226,3 +336,5 @@ fail     = putStr
 infoOk   = putStr
 infoFail = putStr
 #endif
+
+-- }}}
