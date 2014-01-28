@@ -144,6 +144,28 @@ consoleOutput output smap =
       , Any nonempty
       )
 
+consoleOutputHidingSuccesses :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
+consoleOutputHidingSuccesses output smap =
+  void . getApp $ foldTestOutput foldTest foldHeading output smap
+  where
+    foldTest printName getResult printResult =
+      Ap $ do
+          printName
+          r <- getResult
+          if resultSuccessful r
+            then do clearThisLine; return $ Any False
+            else do printResult r; return $ Any True
+
+    foldHeading printHeading printBody =
+      Ap $ do
+        printHeading
+        Any failed <- getApp printBody
+        unless failed clearAboveLine
+        return $ Any failed
+
+    clearAboveLine = do cursorUpLine 1; clearThisLine
+    clearThisLine = do clearLine; setCursorColumn 0
+
 -- }}}
 
 --------------------------------------------------
@@ -228,7 +250,10 @@ consoleTestReporter :: Ingredient
 -- The 'Any' part is needed to know whether a group is empty, in which case
 -- we shouldn't display it.
 consoleTestReporter =
-  TestReporter [Option (Proxy :: Proxy Quiet)] $
+  TestReporter
+    [ Option (Proxy :: Proxy Quiet)
+    , Option (Proxy :: Proxy HideSuccesses)
+    ] $
   \opts tree -> Just $ \smap ->
 
   do
@@ -239,10 +264,14 @@ consoleTestReporter =
     ?colors = isTerm
   let
     Quiet quiet = lookupOption opts
+    HideSuccesses hideSuccesses = lookupOption opts
+
+    output = produceOutput opts tree
 
   case () of { _
     | quiet -> return ()
-    | otherwise -> consoleOutput (produceOutput opts tree) smap
+    | hideSuccesses && isTerm -> consoleOutputHidingSuccesses output smap
+    | otherwise -> consoleOutput output smap
   }
 
   if quiet
@@ -269,6 +298,20 @@ instance IsOption Quiet where
       (  short 'q'
       <> long (untag (optionName :: Tagged Quiet String))
       <> help (untag (optionHelp :: Tagged Quiet String))
+      )
+
+newtype HideSuccesses = HideSuccesses Bool
+  deriving (Eq, Ord, Typeable)
+instance IsOption HideSuccesses where
+  defaultValue = HideSuccesses False
+  parseValue = fmap HideSuccesses . safeRead
+  optionName = return "hide-successes"
+  optionHelp = return "Do not print tests that passed successfully"
+  optionCLParser =
+    fmap HideSuccesses $
+    switch
+      (  long (untag (optionName :: Tagged HideSuccesses String))
+      <> help (untag (optionHelp :: Tagged HideSuccesses String))
       )
 
 -- }}}
