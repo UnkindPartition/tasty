@@ -166,6 +166,38 @@ consoleOutputHidingSuccesses output smap =
     clearAboveLine = do cursorUpLine 1; clearThisLine
     clearThisLine = do clearLine; setCursorColumn 0
 
+streamOutputHidingSuccesses :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
+streamOutputHidingSuccesses output smap =
+  void . flip evalStateT [] . getApp $
+    foldTestOutput foldTest foldHeading output smap
+  where
+    foldTest printName getResult printResult =
+      Ap $ do
+          r <- liftIO $ getResult
+          if resultSuccessful r
+            then return $ Any False
+            else do
+              stack <- get
+              put []
+
+              liftIO $ do
+                sequence_ $ reverse stack
+                printName
+                printResult r
+
+              return $ Any True
+
+    foldHeading printHeading printBody =
+      Ap $ do
+        modify (printHeading :)
+        Any failed <- getApp printBody
+        unless failed $
+          modify $ \stack ->
+            case stack of
+              _:rest -> rest
+              [] -> [] -- shouldn't happen anyway
+        return $ Any failed
+
 -- }}}
 
 --------------------------------------------------
@@ -270,7 +302,10 @@ consoleTestReporter =
 
   case () of { _
     | quiet -> return ()
-    | hideSuccesses && isTerm -> consoleOutputHidingSuccesses output smap
+    | hideSuccesses && isTerm ->
+        consoleOutputHidingSuccesses output smap
+    | hideSuccesses && not isTerm ->
+        streamOutputHidingSuccesses output smap
     | otherwise -> consoleOutput output smap
   }
 
