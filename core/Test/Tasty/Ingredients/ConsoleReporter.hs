@@ -181,6 +181,39 @@ printStatistics st = do
     fs -> do
       fail $ printf "%d out of %d tests failed\n" fs (statTotal st)
 
+data FailureStatus
+  = Unknown
+  | Failed
+  | OK
+
+instance Semi.Semigroup FailureStatus where
+  (<>) = mappend
+
+instance Monoid FailureStatus where
+  mappend Failed _ = Failed
+  mappend _ Failed = Failed
+
+  mappend OK OK = OK
+
+  mappend _ _ = Unknown
+
+  mempty = OK
+
+instance Reducer FailureStatus FailureStatus where unit = id
+
+failureStatus :: StatusMap -> IO FailureStatus
+failureStatus smap = atomically $ do
+  fst <- getApp $ flip foldMapReduce smap $ \svar -> do
+    status <- readTVar svar
+    return $ case status of
+        Done r ->
+          if resultSuccessful r then OK else Failed
+        Exception {} -> Failed
+        _ -> Unknown
+  case fst of
+    Unknown -> retry
+    _ -> return fst
+
 -- }}}
 
 --------------------------------------------------
@@ -212,11 +245,16 @@ consoleTestReporter =
     | otherwise -> consoleOutput (produceOutput opts tree) smap
   }
 
-  stats <- computeStatistics smap
-
-  unless quiet $ printStatistics stats
-
-  return $ statFailures stats == 0
+  if quiet
+    then do
+      fst <- failureStatus smap
+      return $ case fst of
+        OK -> True
+        _ -> False
+    else do
+      stats <- computeStatistics smap
+      printStatistics stats
+      return $ statFailures stats == 0
 
 newtype Quiet = Quiet Bool
   deriving (Eq, Ord, Typeable)
