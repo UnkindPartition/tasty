@@ -44,7 +44,10 @@ import Text.Regex.TDFA.String()
 
 import Data.List
 import Data.Typeable
+import Data.Tagged
 
+import Options.Applicative
+import Options.Applicative.Types (ReadM(..))
 
 data Token = SlashToken
            | WildcardToken
@@ -81,10 +84,18 @@ instance Read TestPattern where
     readsPrec _ string = [(parseTestPattern string, "")]
 
 instance IsOption TestPattern where
-    defaultValue = noPattern
-    parseValue = Just . parseTestPattern
-    optionName = return "pattern"
-    optionHelp = return "Select only tests that match pattern"
+  defaultValue = noPattern
+  parseValue = Just . parseTestPattern
+  optionName = return "pattern"
+  optionHelp = return "Select only tests that match pattern"
+  optionCLParser =
+    nullOption
+      (  reader (ReadM . Right . parseTestPattern)
+      <> short 'p'
+      <> long (untag (optionName :: Tagged TestPattern String))
+      <> value defaultValue
+      <> help (untag (optionHelp :: Tagged TestPattern String))
+      )
 
 -- | Parse a pattern
 parseTestPattern :: String -> TestPattern

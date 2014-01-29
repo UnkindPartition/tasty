@@ -8,6 +8,9 @@ module Test.Tasty.CoreOptions
 
 import Data.Typeable
 import Data.Proxy
+import Data.Tagged
+import Options.Applicative
+import Options.Applicative.Types (ReadM(..))
 
 import Test.Tasty.Options
 import Test.Tasty.Patterns
@@ -26,6 +29,20 @@ instance IsOption NumThreads where
   parseValue = fmap NumThreads . safeRead
   optionName = return "num-threads"
   optionHelp = return "Number of threads to use for tests execution"
+  optionCLParser =
+    nullOption
+      (  reader parse
+      <> short 'j'
+      <> long name
+      <> value defaultValue
+      <> help (untag (optionHelp :: Tagged NumThreads String))
+      )
+    where
+      name = untag (optionName :: Tagged NumThreads String)
+      parse =
+        ReadM .
+        maybe (Left (ErrorMsg $ "Could not parse " ++ name)) Right .
+        parseValue
 
 -- | The list of all core options, i.e. the options not specific to any
 -- provider or ingredient, but to tasty itself. Currently only contains 'TestPattern'.
