@@ -152,7 +152,70 @@ In order to run tests in parallel, you have to do the following:
   flag;
 * Launch the program with `--num-threads 4 +RTS -N4 -RTS` (to use 4 threads).
 
-## Using patterns
+## Options
+
+Options allow one to customize the run-time behavior of the test suite, such
+as:
+
+* mode of operation (run tests, list tests, run tests quietly etc.)
+* which tests are run (see «Patterns» below)
+* parameters of individual providers (like depth of search for SmallCheck)
+
+### Setting options
+
+There are two main ways to set options:
+
+#### Runtime
+
+When using the standard console runner, the options can be passed through the
+command line. To see the available options, run your test suite with the
+`--help`
+flag. The output will look something like this (depending on which
+ingredients and providers the test suite uses):
+
+```
+% ./test --help
+Mmm... tasty test suite
+
+Usage: ex [--pattern ARG] [-l|--list-tests] [--num-threads ARG] [-q|--quiet]
+          [--hide-successes] [--smallcheck-depth ARG] [--quickcheck-tests ARG]
+          [--quickcheck-replay ARG] [--quickcheck-max-size ARG]
+          [--quickcheck-max-ratio ARG]
+
+Available options:
+  -h,--help                Show this help text
+  --pattern ARG            Select only tests that match pattern
+  -l,--list-tests          Do not run the tests; just print their names
+  --num-threads ARG        Number of threads to use for tests execution
+  -q,--quiet               Do not produce any output; indicate success only by
+                           the exit code
+  --hide-successes         Do not print tests that passed successfully
+  --smallcheck-depth ARG   Depth to use for smallcheck tests
+  --quickcheck-tests ARG   Number of test cases for QuickCheck to generate
+  --quickcheck-replay ARG  Replay token to use for replaying a previous test run
+  --quickcheck-max-size ARG
+                           Size of the biggest test cases quickcheck generates
+  --quickcheck-max-ratio ARG
+                           Maximum number of discared tests per successful test
+                           before giving up
+```
+
+If you're using a non-console runner, please refer to its documentation to find
+out how to configure options during the run time.
+
+#### Compile-time
+
+You can also specify options in the test suite itself, using
+`localOption`. It can be applied not only to the whole test tree, but also to
+individual tests or subgroups, so that different tests can be run with
+different options.
+
+It is possible to combine run-time and compile-time options, too, by using
+`adjustOption`. For example, make the overall testing depth configurable
+during the run time, but increase or decrease it slightly for individual
+tests.
+
+### Patterns
 
 It is possible to restrict the set of executed tests using the `--pattern`
 option. The syntax of patterns is the same as for test-framework, namely:
@@ -184,7 +247,6 @@ There may be several ways to organize your project. What follows is not
 Tasty's requirements but my recommendations.
 
 ### Tests for a library
-
 
 Place your test suite sources in a dedicated subdirectory (called `tests`
 here) instead of putting them among the main library sources.
