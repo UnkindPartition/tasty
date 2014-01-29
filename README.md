@@ -241,6 +241,27 @@ For example, `group/*1` matches `group/test1` but not
 `group/**1`. A leading slash matches the beginning of the test path; for
 example, `/test*` matches `test1` but not `group/test1`.
 
+### Options controlling console output
+
+The following options control behavior of the standard console interface:
+
+<dl>
+<dt><code>-q,--quiet</code></dt>
+<dd>
+  Run the tests but don't output anything. The result is indicated only by the
+  exit code, which is 1 if at least one test has failed, and 0 if all tests
+  have passed. Execution stops when the first failure is detected, so not all
+  tests are necessarily run.
+  This may be useful for various batch systems, such as commit hooks.
+</dd>
+<dt><code>--hide-successes</code></dt>
+<dd>Report only the tests that has failed. Especially useful when the
+number of tests is large.</dd>
+<dt><code>-l,--list-tests</code></dt>
+<dd>Don't run the tests; only list their names, in the format accepted by
+<code>--pattern</code>.</dd>
+</dl>
+
 ## Project organization and integration with Cabal
 
 There may be several ways to organize your project. What follows is not

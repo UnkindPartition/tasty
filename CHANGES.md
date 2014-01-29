@@ -14,8 +14,8 @@ Version 0.8
 * `Test.Tasty.Ingredients.Basic` is added, which exports the ingredients defined
     in the `tasty` package. These exports should now be used instead of ones
     exported from `Test.Tasty.Runners`
-* Add «quiet mode»
-* Add «hide successes» mode
+* Add «quiet mode» (see README)
+* Add «hide successes» mode (see README)
 
 Version 0.7
 -----------
