@@ -1,7 +1,11 @@
 -- vim:fdm=marker:foldtext=foldtext()
 {-# LANGUAGE BangPatterns, CPP, ImplicitParams, MultiParamTypeClasses, DeriveDataTypeable #-}
 -- | Console reporter ingredient
-module Test.Tasty.Ingredients.ConsoleReporter (consoleTestReporter, Quiet(..)) where
+module Test.Tasty.Ingredients.ConsoleReporter
+  ( consoleTestReporter
+  , Quiet(..)
+  , HideSuccesses(..)
+  ) where
 
 import Prelude hiding (fail)
 import Control.Monad.State hiding (fail)

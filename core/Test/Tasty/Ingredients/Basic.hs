@@ -8,6 +8,7 @@ module Test.Tasty.Ingredients.Basic
     -- ** Console test reporter
     consoleTestReporter
   , Quiet(..)
+  , HideSuccesses(..)
     -- ** Listing tests
   , listingTests
   , ListTests(..)
