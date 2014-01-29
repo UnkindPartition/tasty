@@ -262,6 +262,19 @@ number of tests is large.</dd>
 <code>--pattern</code>.</dd>
 </dl>
 
+### Custom options
+
+It is possible to add custom options, too.
+
+To do that,
+
+1. Define a datatype to represent the option, and make it an instance of
+   `IsOption`
+2. Register the options with the `includingOptions` ingredient
+3. To query the option value, use `askOption`.
+
+See the [Custom options in Tasty][custom-options-article] article for some examples.
+
 ## Project organization and integration with Cabal
 
 There may be several ways to organize your project. What follows is not
@@ -327,8 +340,11 @@ something not mentioned here, send a pull request!
   (tasty has been added to stackage since then)
 * [24 Days of Hackage: tasty](http://ocharles.org.uk/blog/posts/2013-12-03-24-days-of-hackage-tasty.html)
 * [Resources in Tasty](http://ro-che.info/articles/2013-12-10-tasty-resources.html)
+* [Custom options in Tasty][custom-options-article]
 * [Resources in Tasty (update)](http://ro-che.info/articles/2013-12-29-tasty-resources-2.html)
 * [Announcing tasty-rerun](http://ocharles.org.uk/blog/posts/2014-01-20-announcing-tasty-rerun.html)
+
+[custom-options-article]: http://ro-che.info/articles/2013-12-20-tasty-custom-options.html
 
 ## Background
 
