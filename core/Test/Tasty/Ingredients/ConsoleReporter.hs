@@ -324,6 +324,7 @@ consoleTestReporter =
       printStatistics stats
       return $ statFailures stats == 0
 
+-- | Do not print test results (see README for details)
 newtype Quiet = Quiet Bool
   deriving (Eq, Ord, Typeable)
 instance IsOption Quiet where
@@ -339,6 +340,7 @@ instance IsOption Quiet where
       <> help (untag (optionHelp :: Tagged Quiet String))
       )
 
+-- | Report only the tests that has failed
 newtype HideSuccesses = HideSuccesses Bool
   deriving (Eq, Ord, Typeable)
 instance IsOption HideSuccesses where
