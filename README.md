@@ -177,16 +177,16 @@ ingredients and providers the test suite uses):
 % ./test --help
 Mmm... tasty test suite
 
-Usage: ex [--pattern ARG] [-l|--list-tests] [--num-threads ARG] [-q|--quiet]
-          [--hide-successes] [--smallcheck-depth ARG] [--quickcheck-tests ARG]
-          [--quickcheck-replay ARG] [--quickcheck-max-size ARG]
-          [--quickcheck-max-ratio ARG]
+Usage: ex [-p|--pattern ARG] [-l|--list-tests] [-j|--num-threads ARG]
+          [-q|--quiet] [--hide-successes] [--smallcheck-depth ARG]
+          [--quickcheck-tests ARG] [--quickcheck-replay ARG]
+          [--quickcheck-max-size ARG] [--quickcheck-max-ratio ARG]
 
 Available options:
   -h,--help                Show this help text
-  --pattern ARG            Select only tests that match pattern
+  -p,--pattern ARG         Select only tests that match pattern
   -l,--list-tests          Do not run the tests; just print their names
-  --num-threads ARG        Number of threads to use for tests execution
+  -j,--num-threads ARG     Number of threads to use for tests execution
   -q,--quiet               Do not produce any output; indicate success only by
                            the exit code
   --hide-successes         Do not print tests that passed successfully

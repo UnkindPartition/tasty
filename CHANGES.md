@@ -16,6 +16,7 @@ Version 0.8
     exported from `Test.Tasty.Runners`
 * Add «quiet mode» (see README)
 * Add «hide successes» mode (see README)
+* Add short command-line options: `-j` for `--num-threads`, `-p` for `--pattern`
 
 Version 0.7
 -----------
