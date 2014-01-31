@@ -14,6 +14,9 @@ Version 0.8
 * `Test.Tasty.Ingredients.Basic` is added, which exports the ingredients defined
     in the `tasty` package. These exports should now be used instead of ones
     exported from `Test.Tasty.Runners`
+* The `Result` type is now structured a bit differently. Providers now should
+  use `testPassed` and `testFailed` functions instead of constructing `Result`s
+  directly.
 * Add «quiet mode» (see README)
 * Add «hide successes» mode (see README)
 * Add short command-line options: `-j` for `--num-threads`, `-p` for `--pattern`
