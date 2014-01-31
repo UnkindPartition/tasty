@@ -56,11 +56,7 @@ data Finalizer
       (MVar (Resource res))
       (MVar Int)
 
--- | Start executing a test
---
--- Note: we take the finalizer as an argument because it's important that
--- it's run *before* we write the status var and signal to other threads
--- that we're finished
+-- | Execute a test taking care of resources
 executeTest
   :: ((Progress -> IO ()) -> IO Result)
     -- ^ the action to execute the test, which takes a progress callback as
@@ -136,7 +132,8 @@ executeTest action statusVar inits fins =
 
 type InitFinPair = (Seq.Seq Initializer, Seq.Seq Finalizer)
 
--- | Prepare the test tree to be run
+-- | Turn a test tree into a list of actions to run tests coupled with
+-- variables to watch them
 createTestActions :: OptionSet -> TestTree -> IO [(IO (), TVar Status)]
 createTestActions opts tree =
   liftM (map (first ($ (Seq.empty, Seq.empty)))) $
