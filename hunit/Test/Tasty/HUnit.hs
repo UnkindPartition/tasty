@@ -44,15 +44,7 @@ instance IsTest TestCase where
     hunitResult <- performTestCase assertion
     return $
       case hunitResult of
-        Nothing ->
-          Result
-            { resultSuccessful = True
-            , resultDescription = ""
-            }
-        Just (_, message)  ->
-          Result
-            { resultSuccessful = False
-            , resultDescription = message
-            }
+        Nothing -> testPassed ""
+        Just (_, message)  -> testFailed message
 
   testOptions = return []

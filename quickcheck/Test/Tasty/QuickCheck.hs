@@ -103,13 +103,11 @@ instance IsTest QC where
     r <- QC.quickCheckWithResult args prop
 
     return $
-      Result
-        { resultSuccessful = successful r
-        , resultDescription =
-            if unexpected r
-              then QC.output r ++ reproduceMsg r
-              else QC.output r
-        }
+      (if successful r then testPassed else testFailed)
+      (if unexpected r
+         then QC.output r ++ reproduceMsg r
+         else QC.output r
+      )
 
 successful :: QC.Result -> Bool
 successful r =

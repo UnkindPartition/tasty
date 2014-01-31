@@ -70,8 +70,8 @@ instance IsTest (SC.Property IO) where
 
     return $
       case scResult of
-        Nothing -> Result { resultSuccessful = True,  resultDescription = desc }
-        Just f ->  Result { resultSuccessful = False, resultDescription = ppFailure f }
+        Nothing -> testPassed desc
+        Just f ->  testFailed $ ppFailure f
 
 -- Copied from base to stay compatible with GHC 7.4.
 myAtomicModifyIORef' :: IORef a -> (a -> (a,b)) -> IO b
