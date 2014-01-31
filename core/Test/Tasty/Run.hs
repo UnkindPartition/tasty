@@ -29,8 +29,6 @@ data Status
   = NotStarted
     -- ^ test has not started running yet
   | Executing Progress
-    -- ^ test is being run
-  | Exception SomeException
     -- ^ test threw an exception and was aborted
   | Done Result
     -- ^ test finished with a given result
@@ -66,7 +64,7 @@ executeTest
   -> Seq.Seq Finalizer -- ^ finalizers (to be executed in this order)
   -> IO ()
 executeTest action statusVar inits fins =
-  handle (atomically . writeTVar statusVar . Exception) $ do
+  handle (atomically . writeTVar statusVar . Done . exceptionResult) $ do
   -- We don't try to protect against async exceptions here.
   -- This is because we use interruptible modifyMVar and wouldn't be able
   -- to give any guarantees anyway.
@@ -116,10 +114,10 @@ executeTest action statusVar inits fins =
 
         tell $ First mbExcn
 
-  atomically . writeTVar statusVar $
+  atomically . writeTVar statusVar $ Done $
     case resultOrExcn <* maybe (return ()) Left mbExcn of
-      Left ex -> Exception ex
-      Right r -> Done r
+      Left ex -> exceptionResult ex
+      Right r -> r
 
   where
     -- The callback

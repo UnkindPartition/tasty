@@ -9,17 +9,24 @@ import Test.Tasty.Options
 import Test.Tasty.Patterns
 import Data.Foldable
 import Data.Monoid
+import Data.Maybe
 import Data.Typeable
 import qualified Data.Map as Map
 import Data.Tagged
+import Data.Timeout
 import Text.Printf
+
+data FailureReason
+  = TestFailed
+  | TestThrewException SomeException
+  | TestTimedOut Timeout
 
 -- | A test result
 data Result = Result
-  { resultSuccessful :: Bool
-    -- ^
-    -- 'resultSuccessful' should be 'True' for a passed test and 'False' for
-    -- a failed one.
+  { resultFailure :: Maybe FailureReason
+    -- ^ When 'Nothing', the test passed successfully.
+    --
+    -- When 'Just', contains the reason of test's failure.
   , resultDescription :: String
     -- ^
     -- 'resultDescription' may contain some details about the test. For
@@ -29,6 +36,16 @@ data Result = Result
     --
     -- For a failed test, 'resultDescription' should typically provide more
     -- information about the failure.
+  }
+
+-- | 'True' for a passed test, 'False' for a failed one.
+resultSuccessful :: Result -> Bool
+resultSuccessful = isNothing . resultFailure
+
+exceptionResult :: SomeException -> Result
+exceptionResult e = Result
+  { resultFailure = Just $ TestThrewException e
+  , resultDescription = "Exception: " ++ show e
   }
 
 -- | Test progress information.

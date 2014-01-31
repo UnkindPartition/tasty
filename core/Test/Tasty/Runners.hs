@@ -31,6 +31,7 @@ module Test.Tasty.Runners
     -- * Running tests
   , Status(..)
   , Result(..)
+  , resultSuccessful
   , Progress(..)
   , StatusMap
   , launchTestTree

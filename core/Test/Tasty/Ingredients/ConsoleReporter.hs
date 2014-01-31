@@ -266,7 +266,6 @@ failureStatus smap = atomically $ do
     return $ case status of
         Done r ->
           if resultSuccessful r then OK else Failed
-        Exception {} -> Failed
         _ -> Unknown
   case fst of
     Unknown -> retry
@@ -361,19 +360,12 @@ instance IsOption HideSuccesses where
 -- Various utilities
 --------------------------------------------------
 -- {{{
-exceptionToResult :: SomeException -> Result
-exceptionToResult e = Result
-  { resultSuccessful = False
-  , resultDescription = "Exception: " ++ show e
-  }
-
 getResultFromTVar :: TVar Status -> IO Result
 getResultFromTVar var =
   atomically $ do
     status <- readTVar var
     case status of
       Done r -> return r
-      Exception e -> return $ exceptionToResult e
       _ -> retry
 
 -- }}}
