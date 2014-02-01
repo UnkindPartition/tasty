@@ -31,6 +31,7 @@ import Test.HUnit.Base hiding -- for re-export
 
 import Data.Typeable
 import Control.Monad.Trans
+import Control.Exception
 
 -- | Create a 'Test' for a HUnit 'Assertion'
 testCase :: TestName -> Assertion -> TestTree
@@ -41,10 +42,19 @@ newtype TestCase = TestCase Assertion
 
 instance IsTest TestCase where
   run _ (TestCase assertion) _ = do
-    hunitResult <- performTestCase assertion
+  -- The standard HUnit's performTestCase catches (almost) all exceptions.
+  --
+  -- This is bad for a few reasons:
+  -- * it interferes with timeout handling
+  -- * it makes exception reporting inconsistent across providers
+  -- * it doesn't provide enough information for ingredients such as
+  -- tasty-rerun
+  --
+  -- So we do it ourselves.
+    hunitResult <- try assertion
     return $
       case hunitResult of
-        Nothing -> testPassed ""
-        Just (_, message)  -> testFailed message
+        Right {} -> testPassed ""
+        Left (HUnitFailure message) -> testFailed message
 
   testOptions = return []
