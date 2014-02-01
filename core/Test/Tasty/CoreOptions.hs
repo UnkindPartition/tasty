@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
 module Test.Tasty.CoreOptions
   ( NumThreads(..)
+  , Timeout(..)
   , coreOptions
   )
   where
@@ -9,6 +10,7 @@ module Test.Tasty.CoreOptions
 import Data.Typeable
 import Data.Proxy
 import Data.Tagged
+import qualified Data.Timeout as T
 import Options.Applicative
 import Options.Applicative.Types (ReadM(..))
 
@@ -43,6 +45,22 @@ instance IsOption NumThreads where
         ReadM .
         maybe (Left (ErrorMsg $ "Could not parse " ++ name)) Right .
         parseValue
+
+data Timeout
+    -- String here is the original representation of the timeout, so that
+    -- we can print it back
+  = Timeout T.Timeout String
+  | NoTimeout
+  deriving (Typeable)
+
+instance IsOption Timeout where
+  defaultValue = NoTimeout
+  parseValue str =
+    Timeout
+      <$> ((T.# T.Second) <$> safeRead str)
+      <*> pure (str ++ "s")
+  optionName = return "timeout"
+  optionHelp = return "Timeout for individual tests (in seconds)"
 
 -- | The list of all core options, i.e. the options not specific to any
 -- provider or ingredient, but to tasty itself. Currently only contains 'TestPattern'.

@@ -9,12 +9,14 @@ module Test.Tasty.Run
 import qualified Data.IntMap as IntMap
 import qualified Data.Sequence as Seq
 import qualified Data.Foldable as F
+import Data.Maybe
 import Control.Monad.State
 import Control.Monad.Writer
 import Control.Monad.Reader
 import Control.Monad.Trans.Either
 import Control.Concurrent
 import Control.Concurrent.STM
+import Control.Concurrent.Timeout
 import Control.Exception
 import Control.Applicative
 import Control.Arrow
@@ -60,10 +62,11 @@ executeTest
     -- ^ the action to execute the test, which takes a progress callback as
     -- a parameter
   -> TVar Status -- ^ variable to write status to
+  -> Timeout -- ^ optional timeout to apply
   -> Seq.Seq Initializer -- ^ initializers (to be executed in this order)
   -> Seq.Seq Finalizer -- ^ finalizers (to be executed in this order)
   -> IO ()
-executeTest action statusVar inits fins =
+executeTest action statusVar timeoutOpt inits fins =
   handle (atomically . writeTVar statusVar . Done . exceptionResult) $ do
   -- We don't try to protect against async exceptions here.
   -- This is because we use interruptible modifyMVar and wouldn't be able
@@ -85,10 +88,22 @@ executeTest action statusVar inits fins =
           FailedToCreate ex -> return (resStatus, Left ex)
 
     -- if all initializers ran successfully, actually run the test
+    let
+      applyTimeout NoTimeout a = a
+      applyTimeout (Timeout t tstr) a = do
+        let
+          timeoutResult =
+            Result
+              { resultFailure = Just $ TestTimedOut t
+              , resultDescription =
+                  "Timed out after " ++ tstr
+              }
+        fromMaybe timeoutResult <$> timeout t a
+
     EitherT . try $
       -- pass our callback (which updates the status variable) to the test
       -- action
-      action yieldProgress
+      applyTimeout timeoutOpt $ action yieldProgress
 
   -- no matter what, try to run each finalizer
   -- remember the first exception that occurred
@@ -149,7 +164,7 @@ createTestActions opts tree =
       statusVar <- liftIO $ atomically $ newTVar NotStarted
       let
         act (inits, fins) =
-          executeTest (run opts test) statusVar inits fins
+          executeTest (run opts test) statusVar (lookupOption opts) inits fins
       tell [(act, statusVar)]
     addInitAndRelease (ResourceSpec doInit doRelease) a =
       AppMonoid . WriterT . fmap ((,) ()) $ do
