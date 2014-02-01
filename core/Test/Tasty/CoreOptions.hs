@@ -63,8 +63,10 @@ instance IsOption Timeout where
   optionHelp = return "Timeout for individual tests (in seconds)"
 
 -- | The list of all core options, i.e. the options not specific to any
--- provider or ingredient, but to tasty itself. Currently only contains 'TestPattern'.
+-- provider or ingredient, but to tasty itself. Currently contains
+-- 'TestPattern' and 'Timeout'.
 coreOptions :: [OptionDescription]
 coreOptions =
   [ Option (Proxy :: Proxy TestPattern)
+  , Option (Proxy :: Proxy Timeout)
   ]
