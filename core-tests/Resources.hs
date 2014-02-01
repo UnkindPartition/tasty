@@ -35,7 +35,7 @@ testResources = testCase "Resources" $ do
   rs <- runSMap smap
   assertBool "Resource is not available" $ getAll $ flip F.foldMap rs $ \r ->
     case r of
-      Done (Result {resultSuccessful = True}) -> All True
+      Done r | resultSuccessful r -> All True
       _ -> All False
   readIORef ref >>= assertBool "Resource was not released" . not
 
