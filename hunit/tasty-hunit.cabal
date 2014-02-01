@@ -24,6 +24,6 @@ library
   exposed-modules:     Test.Tasty.HUnit
   -- other-modules:       
   other-extensions:    TypeFamilies, DeriveDataTypeable
-  build-depends:       base ==4.*, tasty, HUnit, mtl
+  build-depends:       base ==4.*, tasty >= 0.8, HUnit, mtl
   -- hs-source-dirs:      
   default-language:    Haskell2010
