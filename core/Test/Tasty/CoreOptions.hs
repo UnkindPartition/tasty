@@ -4,6 +4,7 @@
 module Test.Tasty.CoreOptions
   ( NumThreads(..)
   , Timeout(..)
+  , mkTimeout
   , coreOptions
   )
   where
@@ -52,7 +53,7 @@ data Timeout
     -- we can print it back. Integer is the number of microseconds
   = Timeout Integer String
   | NoTimeout
-  deriving (Typeable)
+  deriving (Show, Typeable)
 
 instance IsOption Timeout where
   defaultValue = NoTimeout
@@ -78,6 +79,14 @@ parseTimeout str =
         "h" -> Just (n * 60^2)
         _ -> Nothing
     _ -> Nothing
+
+-- | A shortcut for creating 'Timeout' values
+mkTimeout
+  :: Integer -- ^ microseconds
+  -> Timeout
+mkTimeout n =
+  Timeout n $
+    showFixed True (fromInteger n / (10^6) :: Micro) ++ "s"
 
 -- | The list of all core options, i.e. the options not specific to any
 -- provider or ingredient, but to tasty itself. Currently contains
