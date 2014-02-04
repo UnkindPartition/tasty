@@ -18,6 +18,10 @@ module Test.Tasty
   , adjustOption
   , localOption
   , askOption
+  -- ** Standard options
+  , NumThreads(..)
+  , Timeout(..)
+  , mkTimeout
   -- * Resources
   -- | Sometimes several tests need to access the same resource — say,
   -- a file or a socket. We want to create or grab the resource before
@@ -29,6 +33,7 @@ module Test.Tasty
 import Test.Tasty.Core
 import Test.Tasty.Runners
 import Test.Tasty.Options
+import Test.Tasty.CoreOptions
 import Test.Tasty.Ingredients.Basic
 
 -- | List of the default ingredients. This is what 'defaultMain' uses.
