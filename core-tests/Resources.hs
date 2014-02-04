@@ -11,7 +11,8 @@ import Control.Monad.Writer
 import qualified Data.IntMap as IntMap
 import Data.Monoid
 import Control.Applicative
-import qualified Data.Foldable as F
+
+import Utils
 
 -- this is a dummy tree we use for testing
 testTreeWithResources :: IORef Bool -> TestTree
@@ -35,12 +36,3 @@ testResources = testCase "Resources" $ do
   rs <- runSMap smap
   assertBool "Resource is not available" $ all resultSuccessful rs
   readIORef ref >>= assertBool "Resource was not released" . not
-
--- run tests, return successfulness
-runSMap :: StatusMap -> IO [Result]
-runSMap smap = atomically $
-  execWriterT $ getApp $ flip F.foldMap smap $ \tv -> AppMonoid $ do
-    s <- lift $ readTVar tv
-    case s of
-      Done r -> tell [r]
-      _ -> lift retry
