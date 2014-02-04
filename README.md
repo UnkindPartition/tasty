@@ -98,7 +98,7 @@ below).
 
 ### Providers
 
-The following standard providers are available:
+The following providers exist:
 
 * [tasty-hunit](http://hackage.haskell.org/package/tasty-hunit) — for unit tests
   (based on [HUnit](http://hackage.haskell.org/package/HUnit))
@@ -111,6 +111,8 @@ The following standard providers are available:
   property-based testing (based on [QuickCheck](http://hackage.haskell.org/package/QuickCheck))
 * [tasty-hspec](http://hackage.haskell.org/package/tasty-hspec) — for
   [Hspec](http://hspec.github.io/) tests
+* [tasty-program](http://hackage.haskell.org/package/tasty-program) — run
+  external program and test whether it terminates successfully
 
 [tasty-golden]: http://hackage.haskell.org/package/tasty-golden
 
@@ -140,9 +142,11 @@ Some ingredients that can enhance your test suite are:
 
 ### Other packages
 
-[tasty-th](http://hackage.haskell.org/package/tasty-th) can automatically
-discover tests based on the function names and generate the boilerplate code for
-you.
+* [tasty-th](http://hackage.haskell.org/package/tasty-th) automatically
+discovers tests based on the function names and generate the boilerplate code for
+you
+* [tasty-hunit-adapter](http://hackage.haskell.org/package/tasty-hunit-adapter)
+  converts existing HUnit test suites into tasty test suites
 
 ## Running tests in parallel
 
@@ -343,6 +347,7 @@ something not mentioned here, send a pull request!
 * [Custom options in Tasty][custom-options-article]
 * [Resources in Tasty (update)](http://ro-che.info/articles/2013-12-29-tasty-resources-2.html)
 * [Announcing tasty-rerun](http://ocharles.org.uk/blog/posts/2014-01-20-announcing-tasty-rerun.html)
+* [Code testing in Haskell revisited (with Tasty)](http://lambda.jstolarek.com/2014/01/code-testing-in-haskell-revisited-with-tasty/)
 
 [custom-options-article]: http://ro-che.info/articles/2013-12-20-tasty-custom-options.html
 
