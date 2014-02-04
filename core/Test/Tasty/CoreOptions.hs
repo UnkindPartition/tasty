@@ -11,7 +11,6 @@ import Data.Typeable
 import Data.Proxy
 import Data.Tagged
 import qualified Data.Timeout as T
-import qualified Data.Textual as T
 import Options.Applicative
 import Options.Applicative.Types (ReadM(..))
 
@@ -56,7 +55,10 @@ data Timeout
 
 instance IsOption Timeout where
   defaultValue = NoTimeout
-  parseValue str = Timeout <$> T.maybeParsed (T.parseString str) <*> pure str
+  parseValue str =
+    Timeout
+      <$> ((T.# T.Second) <$> safeRead str)
+      <*> pure (str ++ "s")
   optionName = return "timeout"
   optionHelp = return "Timeout for individual tests (in seconds)"
 
