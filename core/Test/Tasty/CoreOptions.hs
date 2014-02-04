@@ -1,5 +1,6 @@
 -- | Core options, i.e. the options used by tasty itself
 {-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
+{-# OPTIONS_GHC -fno-warn-type-defaults #-} -- for (^)
 module Test.Tasty.CoreOptions
   ( NumThreads(..)
   , Timeout(..)
@@ -10,7 +11,7 @@ module Test.Tasty.CoreOptions
 import Data.Typeable
 import Data.Proxy
 import Data.Tagged
-import qualified Data.Timeout as T
+import Data.Fixed
 import Options.Applicative
 import Options.Applicative.Types (ReadM(..))
 
@@ -48,8 +49,8 @@ instance IsOption NumThreads where
 
 data Timeout
     -- String here is the original representation of the timeout, so that
-    -- we can print it back
-  = Timeout T.Timeout String
+    -- we can print it back. Integer is the number of microseconds
+  = Timeout Integer String
   | NoTimeout
   deriving (Typeable)
 
@@ -57,10 +58,26 @@ instance IsOption Timeout where
   defaultValue = NoTimeout
   parseValue str =
     Timeout
-      <$> ((T.# T.Second) <$> safeRead str)
-      <*> pure (str ++ "s")
+      <$> parseTimeout str
+      <*> pure str
   optionName = return "timeout"
-  optionHelp = return "Timeout for individual tests (in seconds)"
+  optionHelp = return "Timeout for individual tests (suffixes: ms,s,m,h; default: s)"
+
+parseTimeout :: String -> Maybe Integer
+parseTimeout str =
+  -- it sucks that there's no more direct way to convert to a number of
+  -- microseconds
+  (round :: Micro -> Integer) . (* 10^6) <$>
+  case reads str of
+    [(n, suffix)] ->
+      case suffix of
+        "ms" -> Just (n / 10^3)
+        "" -> Just n
+        "s" -> Just n
+        "m" -> Just (n * 60)
+        "h" -> Just (n * 60^2)
+        _ -> Nothing
+    _ -> Nothing
 
 -- | The list of all core options, i.e. the options not specific to any
 -- provider or ingredient, but to tasty itself. Currently contains

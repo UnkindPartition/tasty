@@ -13,13 +13,12 @@ import Data.Maybe
 import Data.Typeable
 import qualified Data.Map as Map
 import Data.Tagged
-import Data.Timeout
 import Text.Printf
 
 data FailureReason
   = TestFailed
   | TestThrewException SomeException
-  | TestTimedOut Timeout
+  | TestTimedOut Integer
 
 -- | A test result
 data Result = Result
