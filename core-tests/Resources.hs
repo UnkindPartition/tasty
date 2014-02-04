@@ -33,18 +33,14 @@ testResources = testCase "Resources" $ do
   smap <- launchTestTree (setOption (parseTestPattern "aa") mempty) $ testTreeWithResources ref
   assertEqual "Number of tests to run" 2 (IntMap.size smap)
   rs <- runSMap smap
-  assertBool "Resource is not available" $ getAll $ flip F.foldMap rs $ \r ->
-    case r of
-      Done r | resultSuccessful r -> All True
-      _ -> All False
+  assertBool "Resource is not available" $ all resultSuccessful rs
   readIORef ref >>= assertBool "Resource was not released" . not
 
 -- run tests, return successfulness
-runSMap :: StatusMap -> IO [Status]
+runSMap :: StatusMap -> IO [Result]
 runSMap smap = atomically $
   execWriterT $ getApp $ flip F.foldMap smap $ \tv -> AppMonoid $ do
     s <- lift $ readTVar tv
     case s of
-      NotStarted -> lift retry
-      Executing {} -> lift retry
-      finished -> tell [finished]
+      Done r -> tell [r]
+      _ -> lift retry
