@@ -141,7 +141,7 @@ executeTest action statusVar timeoutOpt inits fins =
     -- providers this is either difficult to implement or doesn't make
     -- sense at all.
     -- See also https://github.com/feuerbach/tasty/issues/33
-    yieldProgress progress = return ()
+    yieldProgress _ = return ()
 
 type InitFinPair = (Seq.Seq Initializer, Seq.Seq Finalizer)
 
