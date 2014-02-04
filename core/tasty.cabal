@@ -9,6 +9,7 @@ license:             MIT
 license-file:        LICENSE
 author:              Roman Cheplyaka
 maintainer:          roma@ro-che.info
+homepage:            http://documentup.com/feuerbach/tasty
 -- copyright:           
 category:            Testing
 build-type:          Simple
