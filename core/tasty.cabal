@@ -54,7 +54,8 @@ library
     either >= 4.0,
     semigroups >= 0.12,
     reducers >= 3.10.1,
-    data-timeout >= 0.2
+    data-timeout >= 0.3,
+    data-textual >= 0.2
 
   if flag(colors)
     build-depends: ansi-terminal >= 0.6.1
