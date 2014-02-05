@@ -63,6 +63,20 @@ instance IsOption Timeout where
       <*> pure str
   optionName = return "timeout"
   optionHelp = return "Timeout for individual tests (suffixes: ms,s,m,h; default: s)"
+  optionCLParser =
+    nullOption
+      (  reader parse
+      <> short 't'
+      <> long name
+      <> value defaultValue
+      <> help (untag (optionHelp :: Tagged Timeout String))
+      )
+    where
+      name = untag (optionName :: Tagged Timeout String)
+      parse =
+        ReadM .
+        maybe (Left (ErrorMsg $ "Could not parse " ++ name)) Right .
+        parseValue
 
 parseTimeout :: String -> Maybe Integer
 parseTimeout str =
