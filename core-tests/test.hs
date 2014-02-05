@@ -7,6 +7,7 @@ import Data.Monoid
 import Data.IORef
 
 import Resources
+import Timeouts
 
 main = do
   defaultMain mainGroup
@@ -14,6 +15,7 @@ main = do
 mainGroup = testGroup "Tests"
   [ patternTests
   , testResources
+  , testTimeouts
   ]
 
 patternTests = testGroup "Pattern tests"
