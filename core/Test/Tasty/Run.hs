@@ -17,6 +17,7 @@ import Control.Monad.Trans.Either
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Concurrent.Timeout
+import Control.Concurrent.Async
 import Control.Exception
 import Control.Applicative
 import Control.Arrow
@@ -92,7 +93,7 @@ executeTest action statusVar timeoutOpt inits fins =
       applyTimeout NoTimeout a = a
       applyTimeout (Timeout t tstr) a = do
         let
-          timeoutResult =
+          timeoutResult = Right $
             Result
               { resultFailure = Just $ TestTimedOut t
               , resultDescription =
@@ -100,10 +101,10 @@ executeTest action statusVar timeoutOpt inits fins =
               }
         fromMaybe timeoutResult <$> timeout t a
 
-    EitherT . try $
-      -- pass our callback (which updates the status variable) to the test
-      -- action
-      applyTimeout timeoutOpt $ action yieldProgress
+    EitherT $
+      withAsync (action yieldProgress) $ \asy ->
+        applyTimeout timeoutOpt $
+          waitCatch asy
 
   -- no matter what, try to run each finalizer
   -- remember the first exception that occurred

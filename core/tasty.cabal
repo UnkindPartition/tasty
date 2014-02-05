@@ -55,7 +55,8 @@ library
     either >= 4.0,
     semigroups >= 0.12,
     reducers >= 3.10.1,
-    unbounded-delays >= 0.1
+    unbounded-delays >= 0.1,
+    async >= 2.0
 
   if flag(colors)
     build-depends: ansi-terminal >= 0.6.1
