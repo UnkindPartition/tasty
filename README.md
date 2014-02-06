@@ -148,14 +148,6 @@ you
 * [tasty-hunit-adapter](http://hackage.haskell.org/package/tasty-hunit-adapter)
   converts existing HUnit test suites into tasty test suites
 
-## Running tests in parallel
-
-In order to run tests in parallel, you have to do the following:
-
-* Compile (or, more precisely, *link*) your test program with the `-threaded`
-  flag;
-* Launch the program with `--num-threads 4 +RTS -N4 -RTS` (to use 4 threads).
-
 ## Options
 
 Options allow one to customize the run-time behavior of the test suite, such
@@ -244,6 +236,29 @@ For example, `group/*1` matches `group/test1` but not
 `group/subgroup/test1`, whereas both examples would be matched by
 `group/**1`. A leading slash matches the beginning of the test path; for
 example, `/test*` matches `test1` but not `group/test1`.
+
+### Running tests in parallel
+
+In order to run tests in parallel, you have to do the following:
+
+* Compile (or, more precisely, *link*) your test program with the `-threaded`
+  flag;
+* Launch the program with `-j 4 +RTS -N4 -RTS` (to use 4 threads).
+
+### Timeout
+
+To apply timeout to individual tests, use the `--timeout` (or `-t`) command-line
+option, or set the option in your test suite using the `mkTimeout` function.
+
+Timeouts can be fractional, and can be optionally followed by a suffix `ms`
+(milliseconds), `s` (seconds), `m` (minutes), or `h` (hours). When there's no
+suffix, seconds are assumed.
+
+Example:
+
+    ./test --timeout=0.5m
+
+sets a 30 seconds timeout for each individual test.
 
 ### Options controlling console output
 
