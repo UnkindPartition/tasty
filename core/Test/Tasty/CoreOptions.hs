@@ -48,10 +48,12 @@ instance IsOption NumThreads where
         maybe (Left (ErrorMsg $ "Could not parse " ++ name)) Right .
         parseValue
 
+-- | Timeout to be applied to individual tests
 data Timeout
-    -- String here is the original representation of the timeout, so that
-    -- we can print it back. Integer is the number of microseconds
   = Timeout Integer String
+    -- ^ 'String' is the original representation of the timeout (such as
+    -- @\"0.5m\"@), so that we can print it back. 'Integer' is the number of
+    -- microseconds.
   | NoTimeout
   deriving (Show, Typeable)
 
