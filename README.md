@@ -385,3 +385,11 @@ So I decided to recreate everything that I liked in test-framework from scratch
 in this package.
 
 [test-framework]: http://batterseapower.github.io/test-framework/
+
+Maintainers
+-----------
+
+[Roman Cheplyaka](https://github.com/feuerbach) is the primary maintainer.
+
+[Oliver Charles](https://github.com/ocharles) is the backup maintainer. Please
+get in touch with him if the primary maintainer cannot be reached.
