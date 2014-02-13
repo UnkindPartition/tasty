@@ -197,12 +197,6 @@ foldTestTree (TreeFold fTest fGroup fResource) opts tree =
         WithResource res tree -> fResource res $ \res -> go pat path opts (tree res)
         AskOptions f -> go pat path opts (f opts)
 
--- | Useful wrapper for use with foldTestTree
-newtype AppMonoid f = AppMonoid { getApp :: f () }
-instance Applicative f => Monoid (AppMonoid f) where
-  mempty = AppMonoid $ pure ()
-  AppMonoid f1 `mappend` AppMonoid f2 = AppMonoid $ f1 *> f2
-
 -- | Get the list of options that are relevant for a given test tree
 treeOptions :: TestTree -> [OptionDescription]
 treeOptions =

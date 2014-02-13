@@ -6,8 +6,8 @@ module Test.Tasty.Runners
   , foldTestTree
   , TreeFold(..)
   , trivialFold
-  , AppMonoid(..)
   , ResourceSpec(..)
+  , module Test.Tasty.Runners.Reducers
     -- * Ingredients
   , Ingredient(..)
   , tryIngredients
@@ -52,3 +52,4 @@ import Test.Tasty.CoreOptions
 import Test.Tasty.Patterns
 import Test.Tasty.CmdLine
 import Test.Tasty.Ingredients.Basic
+import Test.Tasty.Runners.Reducers

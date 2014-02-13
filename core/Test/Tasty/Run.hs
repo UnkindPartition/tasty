@@ -25,6 +25,7 @@ import Test.Tasty.Core
 import Test.Tasty.Parallel
 import Test.Tasty.Options
 import Test.Tasty.CoreOptions
+import Test.Tasty.Runners.Reducers
 
 -- | Current status of a test
 data Status
@@ -107,9 +108,9 @@ executeTest action statusVar timeoutOpt inits fins =
 
   -- no matter what, try to run each finalizer
   -- remember the first exception that occurred
-  mbExcn <- liftM getFirst . execWriterT . getApp $
+  mbExcn <- liftM getFirst . execWriterT . getTraversal $
     flip F.foldMap fins $ \(Finalizer doRelease initVar finishVar) ->
-      AppMonoid $ do
+      Traversal $ do
         mbExcn <-
           liftIO $ modifyMVar finishVar $ \nUsers -> do
             let nUsers' = nUsers - 1
@@ -150,7 +151,7 @@ type InitFinPair = (Seq.Seq Initializer, Seq.Seq Finalizer)
 createTestActions :: OptionSet -> TestTree -> IO [(IO (), TVar Status)]
 createTestActions opts tree =
   liftM (map (first ($ (Seq.empty, Seq.empty)))) $
-  execWriterT $ getApp $
+  execWriterT $ getTraversal $
   (foldTestTree
     trivialFold
       { foldSingle = runSingleTest
@@ -158,18 +159,18 @@ createTestActions opts tree =
       }
     opts
     tree
-    :: AppMonoid (WriterT [(InitFinPair -> IO (), TVar Status)] IO))
+    :: Traversal (WriterT [(InitFinPair -> IO (), TVar Status)] IO))
   where
-    runSingleTest opts _ test = AppMonoid $ do
+    runSingleTest opts _ test = Traversal $ do
       statusVar <- liftIO $ atomically $ newTVar NotStarted
       let
         act (inits, fins) =
           executeTest (run opts test) statusVar (lookupOption opts) inits fins
       tell [(act, statusVar)]
     addInitAndRelease (ResourceSpec doInit doRelease) a =
-      AppMonoid . WriterT . fmap ((,) ()) $ do
+      Traversal . WriterT . fmap ((,) ()) $ do
         initVar <- newMVar NotCreated
-        tests <- execWriterT $ getApp $ a (getResource initVar)
+        tests <- execWriterT $ getTraversal $ a (getResource initVar)
         let ntests = length tests
         finishVar <- newMVar ntests
         let

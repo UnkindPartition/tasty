@@ -14,20 +14,19 @@ import Control.Concurrent.STM
 import Control.Exception
 import Control.DeepSeq
 import Control.Applicative
-import Test.Tasty.Core hiding (getApp) -- FIXME
+import Test.Tasty.Core
 import Test.Tasty.Run
 import Test.Tasty.Ingredients
 import Test.Tasty.Options
+import Test.Tasty.Runners.Reducers
 import Text.Printf
 import qualified Data.IntMap as IntMap
 import Data.Maybe
 import Data.Monoid
-import qualified Data.Semigroup as Semi
-import Data.Semigroup.Applicative
-import Data.Semigroup.Reducer
 import Data.Tagged
 import Data.Proxy
 import Data.Typeable
+import Data.Foldable (foldMap)
 import System.IO
 import Options.Applicative
 
@@ -214,17 +213,12 @@ data Statistics = Statistics
   , statFailures :: !Int
   }
 
-instance Semi.Semigroup Statistics where
-  (<>) = mappend
-
 instance Monoid Statistics where
   Statistics t1 f1 `mappend` Statistics t2 f2 = Statistics (t1 + t2) (f1 + f2)
   mempty = Statistics 0 0
 
-instance Reducer Statistics Statistics where unit = id
-
 computeStatistics :: StatusMap -> IO Statistics
-computeStatistics = getApp . foldMapReduce (\var ->
+computeStatistics = getApp . foldMap (\var -> Ap $
   (\r -> Statistics 1 (if resultSuccessful r then 0 else 1))
     <$> getResultFromTVar var)
 
@@ -244,9 +238,6 @@ data FailureStatus
   | Failed
   | OK
 
-instance Semi.Semigroup FailureStatus where
-  (<>) = mappend
-
 instance Monoid FailureStatus where
   mappend Failed _ = Failed
   mappend _ Failed = Failed
@@ -257,11 +248,9 @@ instance Monoid FailureStatus where
 
   mempty = OK
 
-instance Reducer FailureStatus FailureStatus where unit = id
-
 failureStatus :: StatusMap -> IO FailureStatus
 failureStatus smap = atomically $ do
-  fst <- getApp $ flip foldMapReduce smap $ \svar -> do
+  fst <- getApp $ flip foldMap smap $ \svar -> Ap $ do
     status <- readTVar svar
     return $ case status of
         Done r ->
