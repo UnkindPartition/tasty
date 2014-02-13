@@ -10,7 +10,7 @@ import Test.Tasty.Runners
 -- run tests, return successfulness
 runSMap :: StatusMap -> IO [Result]
 runSMap smap = atomically $
-  execWriterT $ getApp $ flip F.foldMap smap $ \tv -> AppMonoid $ do
+  execWriterT $ getTraversal $ flip F.foldMap smap $ \tv -> Traversal $ do
     s <- lift $ readTVar tv
     case s of
       Done r -> tell [r]
