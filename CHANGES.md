@@ -22,6 +22,8 @@ Version 0.8
 * Add short command-line options: `-j` for `--num-threads`, `-p` for `--pattern`
 * Add timeout support
 * hunit: exceptions are now handled by tasty rather than by HUnit
+* `AppMonoid` is renamed to `Traversal` for consistency with the 'reducers'
+  package. Another similar wrapper, `Ap`, is introduced.
 
 Version 0.7
 -----------
