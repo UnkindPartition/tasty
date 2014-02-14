@@ -4,13 +4,11 @@
              DeriveGeneric #-}
 module Test.Tasty.Core where
 
-import Control.Applicative
 import Control.Exception
 import Test.Tasty.Options
 import Test.Tasty.Patterns
 import Data.Foldable
 import Data.Monoid
-import Data.Maybe
 import Data.Typeable
 import qualified Data.Map as Map
 import Data.Tagged
