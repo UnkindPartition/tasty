@@ -95,7 +95,7 @@ executeTest action statusVar timeoutOpt inits fins =
         let
           timeoutResult = Right $
             Result
-              { resultFailure = Just $ TestTimedOut t
+              { resultOutcome = Failure $ TestTimedOut t
               , resultDescription =
                   "Timed out after " ++ tstr
               }

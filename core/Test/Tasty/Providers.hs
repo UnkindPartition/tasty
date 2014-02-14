@@ -22,7 +22,7 @@ testPassed
   :: String -- ^ description (may be empty)
   -> Result
 testPassed desc = Result
-  { resultFailure = Nothing
+  { resultOutcome = Success
   , resultDescription = desc
   }
 
@@ -31,6 +31,6 @@ testFailed
   :: String -- ^ description
   -> Result
 testFailed desc = Result
-  { resultFailure = Just TestFailed
+  { resultOutcome = Failure TestFailed
   , resultDescription = desc
   }

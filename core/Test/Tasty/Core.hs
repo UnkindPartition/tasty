@@ -1,6 +1,7 @@
 -- | Core types and definitions
 {-# LANGUAGE GeneralizedNewtypeDeriving, FlexibleContexts,
-             ExistentialQuantification, RankNTypes, DeriveDataTypeable #-}
+             ExistentialQuantification, RankNTypes, DeriveDataTypeable,
+             DeriveGeneric #-}
 module Test.Tasty.Core where
 
 import Control.Applicative
@@ -14,15 +15,23 @@ import Data.Typeable
 import qualified Data.Map as Map
 import Data.Tagged
 import Text.Printf
+import GHC.Generics
+import qualified Data.Generics.Maybe as G
 
 data FailureReason
   = TestFailed
   | TestThrewException SomeException
   | TestTimedOut Integer
+  deriving Show
+
+data Outcome
+  = Success
+  | Failure FailureReason
+  deriving (Show, Generic)
 
 -- | A test result
 data Result = Result
-  { resultFailure :: Maybe FailureReason
+  { resultOutcome :: Outcome
     -- ^ When 'Nothing', the test passed successfully.
     --
     -- When 'Just', contains the reason of test's failure.
@@ -39,11 +48,11 @@ data Result = Result
 
 -- | 'True' for a passed test, 'False' for a failed one.
 resultSuccessful :: Result -> Bool
-resultSuccessful = isNothing . resultFailure
+resultSuccessful = G.isNothing . resultOutcome
 
 exceptionResult :: SomeException -> Result
 exceptionResult e = Result
-  { resultFailure = Just $ TestThrewException e
+  { resultOutcome = Failure $ TestThrewException e
   , resultDescription = "Exception: " ++ show e
   }
 
