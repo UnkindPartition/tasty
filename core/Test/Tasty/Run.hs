@@ -228,8 +228,8 @@ launchTestTree opts tree k = do
   let NumThreads numTheads = lookupOption opts
   abortTests <- runInParallel numTheads (fst <$> testActions)
   let smap = IntMap.fromList $ zip [0..] (snd <$> testActions)
-  k smap abortTests <*
-    waitForResources rvars
+  k smap abortTests `finally`
+    (do abortTests; putStrLn "tests aborted"; waitForResources rvars)
   where
     alive :: Resource r -> Bool
     alive r = case r of
