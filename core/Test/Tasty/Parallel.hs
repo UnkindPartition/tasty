@@ -1,4 +1,5 @@
 -- | A helper module which takes care of parallelism
+{-# LANGUAGE DeriveDataTypeable #-}
 module Test.Tasty.Parallel (runInParallel) where
 
 import Control.Monad
@@ -6,9 +7,31 @@ import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Exception
 import Foreign.StablePtr
+import Data.Typeable
+
+data Interrupt = Interrupt
+  deriving Typeable
+instance Show Interrupt where
+  show Interrupt = "interrupted"
+instance Exception Interrupt
+
+data ParThreadKilled = ParThreadKilled SomeException
+  deriving Typeable
+instance Show ParThreadKilled where
+  show (ParThreadKilled exn) =
+    "tasty: one of the test running threads was killed by: " ++
+    show exn
+instance Exception ParThreadKilled
+
+shutdown :: ThreadId -> IO ()
+shutdown = flip throwTo Interrupt
 
 -- | Take a list of actions and execute them in parallel, no more than @n@
--- at the same time
+-- at the same time.
+--
+-- The action itself is asynchronous, ie. it returns immediately and does
+-- the work in new threads. It returns an action which aborts tests and
+-- cleans up.
 runInParallel
   :: Int -- ^ maximum number of parallel threads
   -> [IO ()] -- ^ list of actions to execute
@@ -41,21 +64,33 @@ runInParallel nthreads actions = do
 
   let
     -- Kill all threads.
-    killAll :: IO ()
-    killAll = do
+    shutdownAll :: IO ()
+    shutdownAll = do
       pids <- atomically $ do
         writeTVar aliveVar False
         readTVar pidsVar
 
       -- be sure not to kill myself!
       me <- myThreadId
-      mapM_ killThread $ filter (/= me) pids
+      mapM_ shutdown $ filter (/= me) pids
 
     cleanup :: Either SomeException () -> IO ()
-    cleanup = either (\e -> killAll >> throwTo callingThread e) (const $ return ())
+    cleanup Right {} = return ()
+    cleanup (Left exn)
+      | Just Interrupt <- fromException exn
+        -- I'm being shut down either by a fellow thread (which caught an
+        -- exception), or by the main thread which decided to stop running
+        -- tests. In any case, just end silently.
+        = return ()
+      | otherwise = do
+        -- Wow, I caught an exception (most probably an async one,
+        -- although it doesn't really matter). Shut down all other
+        -- threads, and re-throw my exception to the calling thread.
+        shutdownAll
+        throwTo callingThread $ ParThreadKilled exn
 
-    forkCarefully :: IO () -> IO ()
-    forkCarefully action = void . flip myForkFinally cleanup $ do
+    forkCarefully :: IO () -> IO ThreadId
+    forkCarefully action = flip myForkFinally cleanup $ do
       -- We cannot check liveness and update the pidsVar in one
       -- transaction before forking, because we don't know the new pid yet.
       --
@@ -94,7 +129,7 @@ runInParallel nthreads actions = do
 
   -- fork here as well, so that we can move to the UI without waiting
   -- untill all tests have finished
-  forkCarefully $ foldr go (return ()) actions
+  void $ forkCarefully $ foldr go (return ()) actions
 
 -- Copied from base to stay compatible with GHC 7.4.
 myForkFinally :: IO a -> (Either SomeException a -> IO ()) -> IO ThreadId
