@@ -13,7 +13,6 @@ import Data.Maybe
 import Control.Monad.State
 import Control.Monad.Writer
 import Control.Monad.Reader
-import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Concurrent.Timeout
 import Control.Concurrent.Async
@@ -44,18 +43,20 @@ type StatusMap = IntMap.IntMap (TVar Status)
 
 data Resource r
   = NotCreated
+  | BeingCreated
   | FailedToCreate SomeException
   | Created r
+  | Destroyed
 
 data Initializer
   = forall res . Initializer
       (IO res)
-      (MVar (Resource res))
+      (TVar (Resource res))
 data Finalizer
   = forall res . Finalizer
       (res -> IO ())
-      (MVar (Resource res))
-      (MVar Int)
+      (TVar (Resource res))
+      (TVar Int)
 
 -- | Execute a test taking care of resources
 executeTest
@@ -70,23 +71,34 @@ executeTest
 executeTest action statusVar timeoutOpt inits fins =
   handle (atomically . writeTVar statusVar . Done . exceptionResult) $ do
   -- We don't try to protect against async exceptions here.
-  -- This is because we use interruptible modifyMVar and wouldn't be able
-  -- to give any guarantees anyway.
+  -- This is because we use interruptible operations (STM w/ retry) and
+  -- wouldn't be able to give any guarantees anyway.
   -- So all we do is guard actual acquire/test/release actions using 'try'.
   -- The only thing we guarantee upon catching an async exception is that
   -- we'll write it to the status var, so that the UI won't be waiting
   -- infinitely.
   resultOrExcn <- runEitherT $ do
-    F.forM_ inits $ \(Initializer doInit initVar) -> EitherT $
-      modifyMVar initVar $ \resStatus  ->
+    F.forM_ inits $ \(Initializer doInit initVar) -> EitherT $ do
+      join $ atomically $ do
+        resStatus <- readTVar initVar
         case resStatus of
           NotCreated -> do
-            mbRes <- try doInit
-            case mbRes of
-              Right res -> return (Created res, Right ())
-              Left ex -> return (FailedToCreate ex, Left ex)
-          Created {} -> return (resStatus, Right ())
-          FailedToCreate ex -> return (resStatus, Left ex)
+            -- signal to others that we're taking care of the resource
+            -- initialization
+            writeTVar initVar BeingCreated
+            return $
+              (do
+                res <- doInit
+                atomically $ writeTVar initVar $ Created res
+                return $ Right ()
+               ) `catch` \exn -> do
+                -- handle possible resource initialization exceptions
+                atomically $ writeTVar initVar $ FailedToCreate exn
+                return $ Left exn
+          BeingCreated -> retry
+          Created {} -> return $ return $ Right ()
+          FailedToCreate exn -> return $ return $ Left exn
+          _ -> return $ return $ Left $ toException UnexpectedState
 
     -- if all initializers ran successfully, actually run the test
     let
@@ -111,22 +123,29 @@ executeTest action statusVar timeoutOpt inits fins =
   mbExcn <- liftM getFirst . execWriterT . getTraversal $
     flip F.foldMap fins $ \(Finalizer doRelease initVar finishVar) ->
       Traversal $ do
-        mbExcn <-
-          liftIO $ modifyMVar finishVar $ \nUsers -> do
-            let nUsers' = nUsers - 1
-            mbExcn <-
-              if nUsers' == 0
-              then do
-                resStatus <- readMVar initVar
-                case resStatus of
-                  Created res ->
-                    either
-                      (\ex -> Just ex)
-                      (\_ -> Nothing)
-                    <$> try (doRelease res)
-                  _ -> return Nothing
-              else return Nothing
-            return (nUsers', mbExcn) -- end of modifyMVar
+        iAmLast <- liftIO $ atomically $ do
+          nUsers <- readTVar finishVar
+          let nUsers' = nUsers - 1
+          writeTVar finishVar nUsers'
+          return $ nUsers' == 0
+
+        mbExcn <- liftIO $
+          if iAmLast
+          then join $ atomically $ do
+            resStatus <- readTVar initVar
+            case resStatus of
+              Created res -> do
+                -- Don't worry about double destroy — only one thread
+                -- receives iAmLast
+                return $
+                  (either
+                    (\ex -> Just ex)
+                    (\_ -> Nothing)
+                    <$> try (doRelease res))
+                  `finally`
+                  (atomically $ writeTVar initVar Destroyed)
+              _ -> return $ return $ Just $ toException UnexpectedState
+          else return Nothing
 
         tell $ First mbExcn
 
@@ -169,23 +188,23 @@ createTestActions opts tree =
       tell [(act, statusVar)]
     addInitAndRelease (ResourceSpec doInit doRelease) a =
       Traversal . WriterT . fmap ((,) ()) $ do
-        initVar <- newMVar NotCreated
+        initVar <- atomically $ newTVar NotCreated
         tests <- execWriterT $ getTraversal $ a (getResource initVar)
         let ntests = length tests
-        finishVar <- newMVar ntests
+        finishVar <- atomically $ newTVar ntests
         let
           ini = Initializer doInit initVar
           fin = Finalizer doRelease initVar finishVar
         return $ map (first $ local $ (Seq.|> ini) *** (fin Seq.<|)) tests
 
 -- | Used to create the IO action which is passed in a WithResource node
-getResource :: MVar (Resource r) -> IO r
+getResource :: TVar (Resource r) -> IO r
 getResource var =
-  readMVar var >>= \rState ->
+  atomically $ do
+    rState <- readTVar var
     case rState of
       Created r -> return r
-      NotCreated -> throwIO $ UnexpectedState "not created"
-      FailedToCreate {} -> throwIO $ UnexpectedState "failed to create"
+      _ -> throwSTM UnexpectedState
 
 -- | Start running all the tests in a test tree in parallel. The number of
 -- threads is determined by the 'NumThreads' option.

@@ -12,7 +12,6 @@ import Data.Monoid
 import Data.Typeable
 import qualified Data.Map as Map
 import Data.Tagged
-import Text.Printf
 import GHC.Generics
 import qualified Data.Generics.Maybe as G
 
@@ -91,15 +90,14 @@ data ResourceSpec a = ResourceSpec (IO a) (a -> IO ())
 
 data ResourceError
   = NotRunningTests
-  | UnexpectedState String
+  | UnexpectedState
   deriving Typeable
 
 instance Show ResourceError where
   show NotRunningTests =
     "Unhandled resource. Probably a bug in the runner you're using."
-  show (UnexpectedState state) =
-    printf "Unexpected state of the resource (%s). Report as a tasty bug."
-      state
+  show UnexpectedState =
+    "Unexpected state of the resource. Report as a tasty bug."
 
 instance Exception ResourceError
 
