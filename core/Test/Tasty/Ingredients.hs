@@ -78,7 +78,7 @@ data Ingredient
 tryIngredient :: Ingredient -> OptionSet -> TestTree -> Maybe (IO Bool)
 tryIngredient (TestReporter _ report) opts testTree = do -- Maybe monad
   reportFn <- report opts testTree
-  return $ reportFn =<< launchTestTree opts testTree
+  return $ launchTestTree opts testTree $ \smap _abort -> reportFn smap
 tryIngredient (TestManager _ manage) opts testTree =
   manage opts testTree
 

@@ -48,6 +48,8 @@ data Resource r
   | Created r
   | Destroyed
 
+data ResourceVar = forall r . ResourceVar (TVar (Resource r))
+
 data Initializer
   = forall res . Initializer
       (IO res)
@@ -167,35 +169,40 @@ type InitFinPair = (Seq.Seq Initializer, Seq.Seq Finalizer)
 
 -- | Turn a test tree into a list of actions to run tests coupled with
 -- variables to watch them
-createTestActions :: OptionSet -> TestTree -> IO [(IO (), TVar Status)]
-createTestActions opts tree =
-  liftM (map (first ($ (Seq.empty, Seq.empty)))) $
-  execWriterT $ getTraversal $
-  (foldTestTree
-    trivialFold
-      { foldSingle = runSingleTest
-      , foldResource = addInitAndRelease
-      }
-    opts
-    tree
-    :: Traversal (WriterT [(InitFinPair -> IO (), TVar Status)] IO))
+createTestActions :: OptionSet -> TestTree -> IO ([(IO (), TVar Status)], [ResourceVar])
+createTestActions opts tree = do
+  let
+    -- traversal :: Traversal (WriterT ([(InitFinPair -> IO (), TVar Status)] IO)
+    traversal =
+      foldTestTree
+        trivialFold
+          { foldSingle = runSingleTest
+          , foldResource = addInitAndRelease
+          }
+        opts tree
+  (tests, rvars) <- unwrap traversal
+  let tests' = map (first ($ (Seq.empty, Seq.empty))) tests
+  return (tests', rvars)
+
   where
     runSingleTest opts _ test = Traversal $ do
       statusVar <- liftIO $ atomically $ newTVar NotStarted
       let
         act (inits, fins) =
           executeTest (run opts test) statusVar (lookupOption opts) inits fins
-      tell [(act, statusVar)]
-    addInitAndRelease (ResourceSpec doInit doRelease) a =
-      Traversal . WriterT . fmap ((,) ()) $ do
-        initVar <- atomically $ newTVar NotCreated
-        tests <- execWriterT $ getTraversal $ a (getResource initVar)
-        let ntests = length tests
-        finishVar <- atomically $ newTVar ntests
-        let
-          ini = Initializer doInit initVar
-          fin = Finalizer doRelease initVar finishVar
-        return $ map (first $ local $ (Seq.|> ini) *** (fin Seq.<|)) tests
+      tell ([(act, statusVar)], mempty)
+    addInitAndRelease (ResourceSpec doInit doRelease) a = wrap $ do
+      initVar <- atomically $ newTVar NotCreated
+      (tests, rvars) <- unwrap $ a (getResource initVar)
+      let ntests = length tests
+      finishVar <- atomically $ newTVar ntests
+      let
+        ini = Initializer doInit initVar
+        fin = Finalizer doRelease initVar finishVar
+        tests' = map (first $ local $ (Seq.|> ini) *** (fin Seq.<|)) tests
+      return (tests', ResourceVar initVar : rvars)
+    wrap = Traversal . WriterT . fmap ((,) ())
+    unwrap = execWriterT . getTraversal
 
 -- | Used to create the IO action which is passed in a WithResource node
 getResource :: TVar (Resource r) -> IO r
@@ -211,12 +218,32 @@ getResource var =
 --
 -- Return a map from the test number (starting from 0) to its status
 -- variable.
-launchTestTree :: OptionSet -> TestTree -> IO StatusMap
-launchTestTree opts tree = do
-  testActions <- createTestActions opts tree
+launchTestTree
+  :: OptionSet
+  -> TestTree
+  -> (StatusMap -> IO () -> IO a)
+  -> IO a
+launchTestTree opts tree k = do
+  (testActions, rvars) <- createTestActions opts tree
   let NumThreads numTheads = lookupOption opts
-  runInParallel numTheads (fst <$> testActions)
-  return $ IntMap.fromList $ zip [0..] (snd <$> testActions)
+  abortTests <- runInParallel numTheads (fst <$> testActions)
+  let smap = IntMap.fromList $ zip [0..] (snd <$> testActions)
+  k smap abortTests <*
+    waitForResources rvars
+  where
+    alive :: Resource r -> Bool
+    alive r = case r of
+      NotCreated -> False
+      BeingCreated -> True
+      FailedToCreate {} -> False
+      Created {} -> True
+      Destroyed -> False
+
+    waitForResources rvars = atomically $
+      forM_ rvars $ \(ResourceVar rvar) -> do
+        res <- readTVar rvar
+        check $ not $ alive res
+
 
 -- EitherT from the 'either' package
 {- License for the 'either' package
