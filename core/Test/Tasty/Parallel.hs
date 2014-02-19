@@ -35,7 +35,7 @@ shutdown = flip throwTo Interrupt
 runInParallel
   :: Int -- ^ maximum number of parallel threads
   -> [IO ()] -- ^ list of actions to execute
-  -> IO ()
+  -> IO (IO ())
 -- This implementation tries its best to ensure that exceptions are
 -- properly propagated to the caller and threads are not left running.
 --
@@ -129,7 +129,8 @@ runInParallel nthreads actions = do
 
   -- fork here as well, so that we can move to the UI without waiting
   -- untill all tests have finished
-  void $ forkCarefully $ foldr go (return ()) actions
+  forkCarefully $ foldr go (return ()) actions
+  return shutdownAll
 
 -- Copied from base to stay compatible with GHC 7.4.
 myForkFinally :: IO a -> (Either SomeException a -> IO ()) -> IO ThreadId
