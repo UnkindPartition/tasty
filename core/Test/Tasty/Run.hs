@@ -172,7 +172,8 @@ type InitFinPair = (Seq.Seq Initializer, Seq.Seq Finalizer)
 createTestActions :: OptionSet -> TestTree -> IO ([(IO (), TVar Status)], [ResourceVar])
 createTestActions opts tree = do
   let
-    -- traversal :: Traversal (WriterT ([(InitFinPair -> IO (), TVar Status)] IO)
+    traversal ::
+      Traversal (WriterT ([(InitFinPair -> IO (), TVar Status)], [ResourceVar]) IO)
     traversal =
       foldTestTree
         trivialFold
