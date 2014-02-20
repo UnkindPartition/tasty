@@ -171,6 +171,7 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
                       (either Just (const Nothing)
                         <$> try (restore $ doRelease res))
                         <* atomically (writeTVar initVar Destroyed)
+                  FailedToCreate {} -> return $ return Nothing
                   _ -> return $ return $ Just $
                     unexpectedState "destroyResources" resStatus
               else return Nothing
