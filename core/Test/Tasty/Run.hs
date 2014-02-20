@@ -99,7 +99,7 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
   mbExn <- destroyResources restore
 
   atomically . writeTVar statusVar $ Done $
-    case resultOrExn <* maybe (return ()) Left mbExn of
+    case resultOrExn <* maybe (Right ()) Left mbExn of
       Left ex -> exceptionResult ex
       Right r -> r
 
