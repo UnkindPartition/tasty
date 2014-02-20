@@ -24,6 +24,8 @@ Version 0.8
 * hunit: exceptions are now handled by tasty rather than by HUnit
 * `AppMonoid` is renamed to `Traversal` for consistency with the 'reducers'
   package. Another similar wrapper, `Ap`, is introduced.
+* Fix a resources bug (resources were not released if the test suite was
+  interrupted)
 
 Version 0.7
 -----------
