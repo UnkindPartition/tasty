@@ -269,10 +269,6 @@ failureStatus smap = atomically $ do
 
 -- | A simple console UI
 consoleTestReporter :: Ingredient
--- We fold the test tree using (AppMonoid m, Any) monoid.
---
--- The 'Any' part is needed to know whether a group is empty, in which case
--- we shouldn't display it.
 consoleTestReporter =
   TestReporter
     [ Option (Proxy :: Proxy Quiet)
