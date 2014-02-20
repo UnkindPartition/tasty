@@ -26,6 +26,8 @@ Version 0.8
   package. Another similar wrapper, `Ap`, is introduced.
 * Fix a resources bug (resources were not released if the test suite was
   interrupted)
+* The type of `launchTestTree` is changed. It now takes a continuation as an
+  argument. This is necessary to fix the bug mentioned above.
 
 Version 0.7
 -----------
