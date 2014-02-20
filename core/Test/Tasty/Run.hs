@@ -48,6 +48,14 @@ data Resource r
   | Created r
   | Destroyed
 
+instance Show (Resource r) where
+  show r = case r of
+    NotCreated -> "NotCreated"
+    BeingCreated -> "BeingCreated"
+    FailedToCreate exn -> "FailedToCreate " ++ show exn
+    Created {} -> "Created"
+    Destroyed -> "Destroyed"
+
 data ResourceVar = forall r . ResourceVar (TVar (Resource r))
 
 data Initializer
@@ -118,7 +126,8 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
             BeingCreated -> retry
             Created {} -> return $ return $ Right ()
             FailedToCreate exn -> return $ return $ Left exn
-            _ -> return $ return $ Left $ toException UnexpectedState
+            _ -> return $ return $ Left $
+              unexpectedState "initResources" resStatus
 
     applyTimeout :: Timeout -> IO Result -> IO Result
     applyTimeout NoTimeout a = a
@@ -162,7 +171,8 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
                       (either Just (const Nothing)
                         <$> try (restore $ doRelease res))
                         <* atomically (writeTVar initVar Destroyed)
-                  _ -> return $ return $ Just $ toException UnexpectedState
+                  _ -> return $ return $ Just $
+                    unexpectedState "destroyResources" resStatus
               else return Nothing
 
             tell $ First mbExcn
@@ -222,7 +232,7 @@ getResource var =
     rState <- readTVar var
     case rState of
       Created r -> return r
-      _ -> throwSTM UnexpectedState
+      _ -> throwSTM $ unexpectedState "getResource" rState
 
 -- | Start running all the tests in a test tree in parallel. The number of
 -- threads is determined by the 'NumThreads' option.
@@ -256,3 +266,6 @@ launchTestTree opts tree k = do
       forM_ rvars $ \(ResourceVar rvar) -> do
         res <- readTVar rvar
         check $ not $ alive res
+
+unexpectedState :: String -> Resource r -> SomeException
+unexpectedState where_ r = toException $ UnexpectedState where_ (show r)

@@ -14,6 +14,7 @@ import qualified Data.Map as Map
 import Data.Tagged
 import GHC.Generics
 import qualified Data.Generics.Maybe as G
+import Text.Printf
 
 data FailureReason
   = TestFailed
@@ -90,14 +91,15 @@ data ResourceSpec a = ResourceSpec (IO a) (a -> IO ())
 
 data ResourceError
   = NotRunningTests
-  | UnexpectedState
+  | UnexpectedState String String
   deriving Typeable
 
 instance Show ResourceError where
   show NotRunningTests =
     "Unhandled resource. Probably a bug in the runner you're using."
-  show UnexpectedState =
-    "Unexpected state of the resource. Report as a tasty bug."
+  show (UnexpectedState where_ what) =
+    printf "Unexpected state of the resource (%s) in %s. Report as a tasty bug."
+      what where_
 
 instance Exception ResourceError
 
