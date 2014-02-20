@@ -118,15 +118,13 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
                 (do
                   res <- doInit
                   atomically $ writeTVar initVar $ Created res
-                  return $ Right ()
                  ) `E.catch` \exn -> do
-                  -- handle possible resource initialization exceptions
                   atomically $ writeTVar initVar $ FailedToCreate exn
-                  return $ Left exn
+                  throwIO exn
             BeingCreated -> retry
-            Created {} -> return $ return $ Right ()
-            FailedToCreate exn -> return $ return $ Left exn
-            _ -> return $ return $ Left $
+            Created {} -> return $ return ()
+            FailedToCreate exn -> return $ throwIO exn
+            _ -> return $ throwIO $
               unexpectedState "initResources" resStatus
 
     applyTimeout :: Timeout -> IO Result -> IO Result
