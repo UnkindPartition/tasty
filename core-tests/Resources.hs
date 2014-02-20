@@ -1,3 +1,4 @@
+{-# LANGUAGE ViewPatterns #-}
 module Resources where
 
 import Data.IORef
@@ -11,12 +12,19 @@ import Control.Monad.Writer
 import qualified Data.IntMap as IntMap
 import Data.Monoid
 import Control.Applicative
+import Control.Exception
 
 import Utils
 
+testResources = testGroup "Resources"
+  [testResources1, testResources2]
+
+------------------------------
+-- Normal operation
+
 -- this is a dummy tree we use for testing
-testTreeWithResources :: IORef Bool -> TestTree
-testTreeWithResources ref =
+testTree1 :: IORef Bool -> TestTree
+testTree1 ref =
   withResource (ref <$ writeIORef ref True) (\ref -> writeIORef ref False) $ \ioRef ->
   testGroup "dummy"
     [ testCase "aaa" $ check ioRef
@@ -28,14 +36,30 @@ testTreeWithResources ref =
     check ioRef = ioRef >>= readIORef >>= assertBool "ref is false!"
 
 -- this is the actual test
-testResources :: TestTree
-testResources = testCase "Resources" $ do
+testResources1 :: TestTree
+testResources1 = testCase "Normal; a test excluded by a pattern" $ do
   ref <- newIORef False
   launchTestTree
     (setOption (parseTestPattern "aa") mempty)
-    (testTreeWithResources ref) $
+    (testTree1 ref) $
     \smap abort -> do
       assertEqual "Number of tests to run" 2 (IntMap.size smap)
       rs <- runSMap smap
       assertBool "Resource is not available" $ all resultSuccessful rs
       readIORef ref >>= assertBool "Resource was not released" . not
+
+------------------------------
+-- Exceptions
+
+testTree2 :: TestTree
+testTree2 =
+  withResource (error "exInit") (error "exFin") $ \ioRef -> testCase "body" $ return () -- error "exBody"
+
+testResources2 :: TestTree
+testResources2 = testCase "Exception during resource initialization" $
+  launchTestTree mempty testTree2 $ \smap abort -> do
+  [r] <- runSMap smap
+  case resultOutcome r of
+    Failure (TestThrewException (fromException -> Just (ErrorCall "exInit"))) ->
+      return ()
+    c -> assertFailure $ "Unexpected outcome: " ++ show c
