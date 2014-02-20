@@ -54,7 +54,7 @@ testResources1 = testCase "Normal; a test excluded by a pattern" $ do
   launchTestTree
     (setOption (parseTestPattern "aa") mempty)
     (testTree1 ref) $
-    \smap abort -> do
+    \smap -> do
       assertEqual "Number of tests to run" 2 (IntMap.size smap)
       rs <- runSMap smap
       assertBool "Resource is not available" $ all resultSuccessful rs
@@ -70,7 +70,7 @@ testTree2 =
 
 testResources2 :: TestTree
 testResources2 = testCase "Exception during resource initialization" $
-  launchTestTree mempty testTree2 $ \smap abort -> do
+  launchTestTree mempty testTree2 $ \smap -> do
   [r] <- runSMap smap
   case resultOutcome r of
     Failure (TestThrewException (fromException -> Just (ErrorCall "exInit"))) ->
@@ -85,7 +85,7 @@ testTree3 ref =
 testResources3 :: TestTree
 testResources3 = testCase "Exception in test body; resource is released" $ do
   ref <- newIORef False
-  launchTestTree mempty (testTree3 ref) $ \smap abort -> do
+  launchTestTree mempty (testTree3 ref) $ \smap -> do
     [r] <- runSMap smap
     case resultOutcome r of
       Failure (TestThrewException (fromException -> Just (ErrorCall "exBody"))) ->
@@ -102,7 +102,7 @@ testTree4 ref =
 testResources4 :: TestTree
 testResources4 = testCase "Exception in finalizer" $ do
   ref <- newIORef False
-  launchTestTree mempty (testTree4 ref) $ \smap abort -> do
+  launchTestTree mempty (testTree4 ref) $ \smap -> do
     [r] <- runSMap smap
     case resultOutcome r of
       Failure (TestThrewException (fromException -> Just (ErrorCall "exFin"))) ->

@@ -242,14 +242,14 @@ getResource var =
 launchTestTree
   :: OptionSet
   -> TestTree
-  -> (StatusMap -> IO () -> IO a)
+  -> (StatusMap -> IO a)
   -> IO a
 launchTestTree opts tree k = do
   (testActions, rvars) <- createTestActions opts tree
   let NumThreads numTheads = lookupOption opts
   abortTests <- runInParallel numTheads (fst <$> testActions)
   (do let smap = IntMap.fromList $ zip [0..] (snd <$> testActions)
-      k smap abortTests)
+      k smap)
    `finally` do
       abortTests
       waitForResources rvars

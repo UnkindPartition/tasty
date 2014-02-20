@@ -22,7 +22,7 @@ testTree =
 
 testTimeouts :: TestTree
 testTimeouts = testCase "Timeouts" $ do
-  launchTestTree mempty testTree $ \smap abort -> do
+  launchTestTree mempty testTree $ \smap -> do
     [fast, slow] <- runSMap smap
     case fast of
       Result { resultOutcome = Success } -> return ()
