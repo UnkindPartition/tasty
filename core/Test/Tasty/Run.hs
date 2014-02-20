@@ -1,5 +1,5 @@
 -- | Running tests
-{-# LANGUAGE ScopedTypeVariables, ExistentialQuantification #-}
+{-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes #-}
 module Test.Tasty.Run
   ( Status(..)
   , StatusMap
@@ -70,93 +70,103 @@ executeTest
   -> Seq.Seq Initializer -- ^ initializers (to be executed in this order)
   -> Seq.Seq Finalizer -- ^ finalizers (to be executed in this order)
   -> IO ()
-executeTest action statusVar timeoutOpt inits fins =
-  handle (atomically . writeTVar statusVar . Done . exceptionResult) $ do
-  -- We don't try to protect against async exceptions here.
-  -- This is because we use interruptible operations (STM w/ retry) and
-  -- wouldn't be able to give any guarantees anyway.
-  -- So all we do is guard actual acquire/test/release actions using 'try'.
-  -- The only thing we guarantee upon catching an async exception is that
-  -- we'll write it to the status var, so that the UI won't be waiting
-  -- infinitely.
-  resultOrExcn <- runEitherT $ do
-    F.forM_ inits $ \(Initializer doInit initVar) -> EitherT $ do
-      join $ atomically $ do
-        resStatus <- readTVar initVar
-        case resStatus of
-          NotCreated -> do
-            -- signal to others that we're taking care of the resource
-            -- initialization
-            writeTVar initVar BeingCreated
-            return $
-              (do
-                res <- doInit
-                atomically $ writeTVar initVar $ Created res
-                return $ Right ()
-               ) `catch` \exn -> do
-                -- handle possible resource initialization exceptions
-                atomically $ writeTVar initVar $ FailedToCreate exn
-                return $ Left exn
-          BeingCreated -> retry
-          Created {} -> return $ return $ Right ()
-          FailedToCreate exn -> return $ return $ Left exn
-          _ -> return $ return $ Left $ toException UnexpectedState
+executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
+  resultOrExn <- try $ restore $ do
+    -- N.B. this can (re-)throw an exception. It's okay. By design, the
+    -- actual test will not be run, then. We still run all the
+    -- finalizers.
+    --
+    -- There's no point to transform these exceptions to something like
+    -- EitherT, because an async exception (cancellation) can strike
+    -- anyway.
+    initResources
 
-    -- if all initializers ran successfully, actually run the test
-    let
-      applyTimeout NoTimeout a = a
-      applyTimeout (Timeout t tstr) a = do
-        let
-          timeoutResult = Right $
-            Result
-              { resultOutcome = Failure $ TestTimedOut t
-              , resultDescription =
-                  "Timed out after " ++ tstr
-              }
-        fromMaybe timeoutResult <$> timeout t a
-
-    EitherT $
-      withAsync (action yieldProgress) $ \asy ->
-        applyTimeout timeoutOpt $
-          waitCatch asy
+    -- If all initializers ran successfully, actually run the test.
+    -- We run it in a separate thread, so that the test's exception
+    -- handler doesn't interfere with our timeout.
+    withAsync (action yieldProgress) $ \asy ->
+      applyTimeout timeoutOpt $ wait asy
 
   -- no matter what, try to run each finalizer
-  -- remember the first exception that occurred
-  mbExcn <- liftM getFirst . execWriterT . getTraversal $
-    flip F.foldMap fins $ \(Finalizer doRelease initVar finishVar) ->
-      Traversal $ do
-        iAmLast <- liftIO $ atomically $ do
-          nUsers <- readTVar finishVar
-          let nUsers' = nUsers - 1
-          writeTVar finishVar nUsers'
-          return $ nUsers' == 0
-
-        mbExcn <- liftIO $
-          if iAmLast
-          then join $ atomically $ do
-            resStatus <- readTVar initVar
-            case resStatus of
-              Created res -> do
-                -- Don't worry about double destroy — only one thread
-                -- receives iAmLast
-                return $
-                  (either
-                    (\ex -> Just ex)
-                    (\_ -> Nothing)
-                    <$> try (doRelease res))
-                  `finally`
-                  (atomically $ writeTVar initVar Destroyed)
-              _ -> return $ return $ Just $ toException UnexpectedState
-          else return Nothing
-
-        tell $ First mbExcn
+  mbExn <- destroyResources restore
 
   atomically . writeTVar statusVar $ Done $
-    case resultOrExcn <* maybe (return ()) Left mbExcn of
+    case resultOrExn <* maybe (return ()) Left mbExn of
       Left ex -> exceptionResult ex
       Right r -> r
 
   where
+    initResources :: IO ()
+    initResources =
+      F.forM_ inits $ \(Initializer doInit initVar) -> do
+        join $ atomically $ do
+          resStatus <- readTVar initVar
+          case resStatus of
+            NotCreated -> do
+              -- signal to others that we're taking care of the resource
+              -- initialization
+              writeTVar initVar BeingCreated
+              return $
+                (do
+                  res <- doInit
+                  atomically $ writeTVar initVar $ Created res
+                  return $ Right ()
+                 ) `catch` \exn -> do
+                  -- handle possible resource initialization exceptions
+                  atomically $ writeTVar initVar $ FailedToCreate exn
+                  return $ Left exn
+            BeingCreated -> retry
+            Created {} -> return $ return $ Right ()
+            FailedToCreate exn -> return $ return $ Left exn
+            _ -> return $ return $ Left $ toException UnexpectedState
+
+    applyTimeout :: Timeout -> IO Result -> IO Result
+    applyTimeout NoTimeout a = a
+    applyTimeout (Timeout t tstr) a = do
+      let
+        timeoutResult =
+          Result
+            { resultOutcome = Failure $ TestTimedOut t
+            , resultDescription =
+                "Timed out after " ++ tstr
+            }
+      fromMaybe timeoutResult <$> timeout t a
+
+    -- destroyResources should not be interrupted by an exception
+    -- Here's how we ensure this:
+    --
+    -- * the finalizer is wrapped in 'try'
+    -- * async exceptions are masked by the caller
+    -- * we don't use any interruptible operations here (outside of 'try')
+    destroyResources :: (forall a . IO a -> IO a) -> IO (Maybe SomeException)
+    destroyResources restore = do
+      -- remember the first exception that occurred
+      liftM getFirst . execWriterT . getTraversal $
+        flip F.foldMap fins $ \(Finalizer doRelease initVar finishVar) ->
+          Traversal $ do
+            iAmLast <- liftIO $ atomically $ do
+              nUsers <- readTVar finishVar
+              let nUsers' = nUsers - 1
+              writeTVar finishVar nUsers'
+              return $ nUsers' == 0
+
+            mbExcn <- liftIO $
+              if iAmLast
+              then join $ atomically $ do
+                resStatus <- readTVar initVar
+                case resStatus of
+                  Created res -> do
+                    -- Don't worry about double destroy — only one thread
+                    -- receives iAmLast
+                    return $
+                      (either Just (const Nothing)
+                        <$> try (restore $ doRelease res))
+                        <* atomically (writeTVar initVar Destroyed)
+                  _ -> return $ return $ Just $ toException UnexpectedState
+              else return Nothing
+
+            tell $ First mbExcn
+
     -- The callback
     -- Since this is not used yet anyway, disable for now.
     -- I'm not sure whether we should get rid of this altogether. For most
