@@ -53,7 +53,8 @@ testResources1 = testCase "Normal; a test excluded by a pattern" $ do
 
 testTree2 :: TestTree
 testTree2 =
-  withResource (error "exInit") (error "exFin") $ \ioRef -> testCase "body" $ return () -- error "exBody"
+  withResource (error "exInit") (error "exFin") $ \ioRef -> testCase "body" $
+    error "exBody"
 
 testResources2 :: TestTree
 testResources2 = testCase "Exception during resource initialization" $
