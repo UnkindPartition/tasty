@@ -92,6 +92,7 @@ data ResourceSpec a = ResourceSpec (IO a) (a -> IO ())
 data ResourceError
   = NotRunningTests
   | UnexpectedState String String
+  | UseOutsideOfTest
   deriving Typeable
 
 instance Show ResourceError where
@@ -100,6 +101,8 @@ instance Show ResourceError where
   show (UnexpectedState where_ what) =
     printf "Unexpected state of the resource (%s) in %s. Report as a tasty bug."
       what where_
+  show UseOutsideOfTest =
+    "It looks like you're attempting to use a resource outside of its test. Don't do that!"
 
 instance Exception ResourceError
 

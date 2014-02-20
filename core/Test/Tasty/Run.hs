@@ -233,6 +233,7 @@ getResource var =
     rState <- readTVar var
     case rState of
       Created r -> return r
+      Destroyed -> throwSTM UseOutsideOfTest
       _ -> throwSTM $ unexpectedState "getResource" rState
 
 -- | Start running all the tests in a test tree in parallel. The number of
