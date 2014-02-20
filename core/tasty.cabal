@@ -57,6 +57,10 @@ library
     async >= 2.0,
     generic-maybe >= 0.3
 
+  if impl(ghc < 7.6)
+    -- for GHC.Generics
+    build-depends: ghc-prim
+
   if flag(colors)
     build-depends: ansi-terminal >= 0.6.1
     cpp-options: -DCOLORS

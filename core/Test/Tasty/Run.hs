@@ -16,7 +16,7 @@ import Control.Monad.Reader
 import Control.Concurrent.STM
 import Control.Concurrent.Timeout
 import Control.Concurrent.Async
-import Control.Exception
+import Control.Exception as E
 import Control.Applicative
 import Control.Arrow
 
@@ -111,7 +111,7 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
                   res <- doInit
                   atomically $ writeTVar initVar $ Created res
                   return $ Right ()
-                 ) `catch` \exn -> do
+                 ) `E.catch` \exn -> do
                   -- handle possible resource initialization exceptions
                   atomically $ writeTVar initVar $ FailedToCreate exn
                   return $ Left exn
