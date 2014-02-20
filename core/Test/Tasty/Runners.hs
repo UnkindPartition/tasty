@@ -31,6 +31,7 @@ module Test.Tasty.Runners
     -- * Running tests
   , Status(..)
   , Result(..)
+  , Outcome(..)
   , FailureReason(..)
   , resultSuccessful
   , Progress(..)
