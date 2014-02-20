@@ -22,12 +22,12 @@ testTree =
 
 testTimeouts :: TestTree
 testTimeouts = testCase "Timeouts" $ do
-  smap <- launchTestTree mempty testTree
-  [fast, slow] <- runSMap smap
-  case fast of
-    Result { resultFailure = Nothing } -> return ()
-    _ -> assertFailure $ "Fast test failed: " ++ resultDescription fast
-  case slow of
-    Result { resultFailure = Nothing } -> assertFailure "Slow test passed"
-    Result { resultFailure = Just (TestTimedOut 200000) } -> return ()
-    _ -> assertFailure $ "Slow test failed for wrong reason: " ++ resultDescription fast
+  launchTestTree mempty testTree $ \smap abort -> do
+    [fast, slow] <- runSMap smap
+    case fast of
+      Result { resultOutcome = Success } -> return ()
+      _ -> assertFailure $ "Fast test failed: " ++ resultDescription fast
+    case slow of
+      Result { resultOutcome = Success } -> assertFailure "Slow test passed"
+      Result { resultOutcome = Failure (TestTimedOut 200000) } -> return ()
+      _ -> assertFailure $ "Slow test failed for wrong reason: " ++ resultDescription fast

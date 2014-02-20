@@ -31,8 +31,11 @@ testTreeWithResources ref =
 testResources :: TestTree
 testResources = testCase "Resources" $ do
   ref <- newIORef False
-  smap <- launchTestTree (setOption (parseTestPattern "aa") mempty) $ testTreeWithResources ref
-  assertEqual "Number of tests to run" 2 (IntMap.size smap)
-  rs <- runSMap smap
-  assertBool "Resource is not available" $ all resultSuccessful rs
-  readIORef ref >>= assertBool "Resource was not released" . not
+  launchTestTree
+    (setOption (parseTestPattern "aa") mempty)
+    (testTreeWithResources ref) $
+    \smap abort -> do
+      assertEqual "Number of tests to run" 2 (IntMap.size smap)
+      rs <- runSMap smap
+      assertBool "Resource is not available" $ all resultSuccessful rs
+      readIORef ref >>= assertBool "Resource was not released" . not
