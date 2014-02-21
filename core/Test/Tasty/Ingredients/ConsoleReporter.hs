@@ -324,7 +324,7 @@ instance IsOption Quiet where
       <> help (untag (optionHelp :: Tagged Quiet String))
       )
 
--- | Report only the tests that has failed
+-- | Report only failed tests
 newtype HideSuccesses = HideSuccesses Bool
   deriving (Eq, Ord, Typeable)
 instance IsOption HideSuccesses where
