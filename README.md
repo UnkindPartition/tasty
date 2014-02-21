@@ -17,6 +17,8 @@ Features:
   beyond those provided
 
 [![Build Status](https://travis-ci.org/feuerbach/tasty.png?branch=master)](https://travis-ci.org/feuerbach/tasty)
+<!-- Flattr button -->
+<script id='fb0qspx'>(function(i){var f,s=document.getElementById(i);f=document.createElement('iframe');f.src='//api.flattr.com/button/view/?uid=shebang&button=compact&url='+encodeURIComponent(document.URL);f.title='Flattr';f.height=20;f.width=110;f.style.borderWidth=0;s.parentNode.insertBefore(f,s);})('fb0qspx');</script>
 
 To find out what's new, read the [change log](https://github.com/feuerbach/tasty/blob/master/CHANGES.md).
 
