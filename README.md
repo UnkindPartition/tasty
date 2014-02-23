@@ -22,6 +22,10 @@ Features:
 
 To find out what's new, read the [change log](https://github.com/feuerbach/tasty/blob/master/CHANGES.md).
 
+Ask any tasty-related questions on the [mailing list][].
+
+[mailing list]: https://groups.google.com/forum/#!forum/haskell-tasty
+
 ## Example
 
 Here's how your `test.hs` might look like:
