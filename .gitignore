@@ -1,0 +1,7 @@
+.cabal-sandbox
+cabal.sandbox.config
+core-tests/dist
+core/dist
+hunit/dist
+quickcheck/dist
+smallcheck/dist
