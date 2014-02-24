@@ -31,7 +31,7 @@ data Status
   = NotStarted
     -- ^ test has not started running yet
   | Executing Progress
-    -- ^ test threw an exception and was aborted
+    -- ^ test is being run
   | Done Result
     -- ^ test finished with a given result
 
