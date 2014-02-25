@@ -15,11 +15,14 @@ module Test.Tasty
   -- | Normally options are specified on the command line. But you can
   -- also have different options for different subtrees in the same tree,
   -- using the functions below.
+  --
+  -- Note that /ingredient options/ (number of threads, hide successes
+  -- etc.) set in this way will not have any effect. This is for modifying
+  -- per-test options, such as timeout, number of generated tests etc.
   , adjustOption
   , localOption
   , askOption
   -- ** Standard options
-  , NumThreads(..)
   , Timeout(..)
   , mkTimeout
   -- * Resources
