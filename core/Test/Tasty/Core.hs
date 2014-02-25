@@ -16,23 +16,29 @@ import GHC.Generics
 import qualified Data.Generics.Maybe as G
 import Text.Printf
 
+-- | If a test failed, 'FailureReason' describes why
 data FailureReason
   = TestFailed
+    -- ^ test provider indicated failure
   | TestThrewException SomeException
+    -- ^ test resulted in an exception. Note that some test providers may
+    -- catch exceptions in order to provide more meaningful errors. In that
+    -- case, the 'FailureReason' will be 'TestFailed', not
+    -- 'TestThrewException'.
   | TestTimedOut Integer
+    -- ^ test didn't complete in allotted time
   deriving Show
 
+-- | Outcome of a test run
 data Outcome
-  = Success
-  | Failure FailureReason
+  = Success -- ^ test succeeded
+  | Failure FailureReason -- ^ test failed because of the 'FailureReason'
   deriving (Show, Generic)
 
 -- | A test result
 data Result = Result
   { resultOutcome :: Outcome
-    -- ^ When 'Nothing', the test passed successfully.
-    --
-    -- When 'Just', contains the reason of test's failure.
+    -- ^ Did the test fail? If so, why?
   , resultDescription :: String
     -- ^
     -- 'resultDescription' may contain some details about the test. For
@@ -48,6 +54,7 @@ data Result = Result
 resultSuccessful :: Result -> Bool
 resultSuccessful = G.isNothing . resultOutcome
 
+-- | Shortcut for creating a 'Result' that indicates exception
 exceptionResult :: SomeException -> Result
 exceptionResult e = Result
   { resultOutcome = Failure $ TestThrewException e
@@ -89,6 +96,7 @@ type TestName = String
 -- and how to release it (the second field).
 data ResourceSpec a = ResourceSpec (IO a) (a -> IO ())
 
+-- | A resources-related exception
 data ResourceError
   = NotRunningTests
   | UnexpectedState String String

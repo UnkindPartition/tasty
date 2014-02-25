@@ -1,3 +1,4 @@
+-- | Ingredient for listing test names
 {-# LANGUAGE GeneralizedNewtypeDeriving, DeriveDataTypeable #-}
 module Test.Tasty.Ingredients.ListTests
   ( ListTests(..)

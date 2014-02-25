@@ -1,3 +1,4 @@
+-- | Ingredient for registering user-defined options
 module Test.Tasty.Ingredients.IncludingOptions where
 
 import Test.Tasty.Ingredients
