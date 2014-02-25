@@ -15,6 +15,7 @@ import System.Exit
 import Test.Tasty.Core
 import Test.Tasty.Ingredients
 import Test.Tasty.Options
+import Test.Tasty.Options.Env
 
 -- | Generate a command line parser from a list of option descriptions
 optionParser :: [OptionDescription] -> Parser OptionSet
@@ -31,11 +32,15 @@ suiteOptionParser ins tree = optionParser $ suiteOptions ins tree
 -- ingredient list
 defaultMainWithIngredients :: [Ingredient] -> TestTree -> IO ()
 defaultMainWithIngredients ins testTree = do
-  opts <- execParser $
+  cmdlineOpts <- execParser $
     info (helper <*> suiteOptionParser ins testTree)
     ( fullDesc <>
       header "Mmm... tasty test suite"
     )
+
+  envOpts <- suiteEnvOptions ins testTree
+
+  let opts = envOpts <> cmdlineOpts
 
   case tryIngredients ins opts testTree of
     Nothing ->

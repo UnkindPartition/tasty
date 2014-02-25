@@ -37,6 +37,7 @@ library
     Test.Tasty.Parallel,
     Test.Tasty.Core,
     Test.Tasty.Options.Core,
+    Test.Tasty.Options.Env,
     Test.Tasty.Patterns,
     Test.Tasty.Run,
     Test.Tasty.Runners.Reducers,
