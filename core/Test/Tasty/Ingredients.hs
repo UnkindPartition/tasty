@@ -7,6 +7,7 @@ module Test.Tasty.Ingredients
   , tryIngredients
   , ingredientOptions
   , ingredientsOptions
+  , suiteOptions
   ) where
 
 import Control.Monad
@@ -103,3 +104,11 @@ ingredientOptions (TestManager opts _) = opts
 -- | Like 'ingredientOption', but folds over multiple ingredients.
 ingredientsOptions :: [Ingredient] -> [OptionDescription]
 ingredientsOptions = F.foldMap ingredientOptions
+
+-- | All the options relevant for this test suite. This includes the
+-- options for the test tree and ingredients, and the core options.
+suiteOptions :: [Ingredient] -> TestTree -> [OptionDescription]
+suiteOptions ins tree =
+  coreOptions ++
+  ingredientsOptions ins ++
+  treeOptions tree
