@@ -36,7 +36,7 @@ module Test.Tasty
 import Test.Tasty.Core
 import Test.Tasty.Runners
 import Test.Tasty.Options
-import Test.Tasty.CoreOptions
+import Test.Tasty.Options.Core
 import Test.Tasty.Ingredients.Basic
 
 -- | List of the default ingredients. This is what 'defaultMain' uses.

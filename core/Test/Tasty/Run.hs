@@ -23,7 +23,7 @@ import Control.Arrow
 import Test.Tasty.Core
 import Test.Tasty.Parallel
 import Test.Tasty.Options
-import Test.Tasty.CoreOptions
+import Test.Tasty.Options.Core
 import Test.Tasty.Runners.Reducers
 
 -- | Current status of a test

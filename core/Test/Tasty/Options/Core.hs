@@ -1,7 +1,7 @@
 -- | Core options, i.e. the options used by tasty itself
 {-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-} -- for (^)
-module Test.Tasty.CoreOptions
+module Test.Tasty.Options.Core
   ( NumThreads(..)
   , Timeout(..)
   , mkTimeout

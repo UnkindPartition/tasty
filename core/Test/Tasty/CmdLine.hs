@@ -14,7 +14,7 @@ import System.Exit
 
 
 import Test.Tasty.Core
-import Test.Tasty.CoreOptions
+import Test.Tasty.Options.Core
 import Test.Tasty.Ingredients
 import Test.Tasty.Options
 

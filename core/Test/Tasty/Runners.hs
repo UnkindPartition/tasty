@@ -49,7 +49,7 @@ module Test.Tasty.Runners
 import Test.Tasty.Core
 import Test.Tasty.Run
 import Test.Tasty.Ingredients
-import Test.Tasty.CoreOptions
+import Test.Tasty.Options.Core
 import Test.Tasty.Patterns
 import Test.Tasty.CmdLine
 import Test.Tasty.Ingredients.Basic

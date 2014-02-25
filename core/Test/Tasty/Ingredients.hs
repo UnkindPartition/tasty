@@ -16,7 +16,7 @@ import qualified Data.Foldable as F
 import Test.Tasty.Core
 import Test.Tasty.Run
 import Test.Tasty.Options
-import Test.Tasty.CoreOptions
+import Test.Tasty.Options.Core
 
 -- | 'Ingredient's make your test suite tasty.
 --
