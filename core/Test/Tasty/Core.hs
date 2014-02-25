@@ -13,7 +13,6 @@ import Data.Typeable
 import qualified Data.Map as Map
 import Data.Tagged
 import GHC.Generics
-import qualified Data.Generics.Maybe as G
 import Text.Printf
 
 -- | If a test failed, 'FailureReason' describes why
@@ -30,6 +29,9 @@ data FailureReason
   deriving Show
 
 -- | Outcome of a test run
+--
+-- Note: this is isomorphic to @'Maybe' 'FailureReason'@. You can use the
+-- @generic-maybe@ package to exploit that.
 data Outcome
   = Success -- ^ test succeeded
   | Failure FailureReason -- ^ test failed because of the 'FailureReason'
@@ -52,7 +54,10 @@ data Result = Result
 
 -- | 'True' for a passed test, 'False' for a failed one.
 resultSuccessful :: Result -> Bool
-resultSuccessful = G.isNothing . resultOutcome
+resultSuccessful r =
+  case resultOutcome r of
+    Success -> True
+    Failure {} -> False
 
 -- | Shortcut for creating a 'Result' that indicates exception
 exceptionResult :: SomeException -> Result
