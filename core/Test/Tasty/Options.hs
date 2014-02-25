@@ -13,6 +13,7 @@ module Test.Tasty.Options
   , setOption
   , changeOption
   , lookupOption
+  , singleOption
   , OptionDescription(..)
     -- * Utilities
   , safeRead
@@ -94,6 +95,9 @@ lookupOption (OptionSet s) =
 -- | Change the option value
 changeOption :: forall v . IsOption v => (v -> v) -> OptionSet -> OptionSet
 changeOption f s = setOption (f $ lookupOption s) s
+
+singleOption :: IsOption v => v -> OptionSet
+singleOption v = setOption v mempty
 
 -- | The purpose of this data type is to capture the dictionary
 -- corresponding to a particular option.
