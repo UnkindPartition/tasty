@@ -10,19 +10,21 @@ module Test.Tasty.CmdLine
 import Options.Applicative
 import Data.Monoid
 import Data.Proxy
+import Data.Foldable
 import System.Exit
 
 import Test.Tasty.Core
 import Test.Tasty.Ingredients
 import Test.Tasty.Options
 import Test.Tasty.Options.Env
+import Test.Tasty.Runners.Reducers
 
 -- | Generate a command line parser from a list of option descriptions
 optionParser :: [OptionDescription] -> Parser OptionSet
-optionParser = foldr addOption (pure mempty) where
-  addOption :: OptionDescription -> Parser OptionSet -> Parser OptionSet
-  addOption (Option (Proxy :: Proxy v)) p =
-    setOption <$> (optionCLParser :: Parser v) <*> p
+optionParser = getApp . foldMap toSet where
+  toSet :: OptionDescription -> Ap Parser OptionSet
+  toSet (Option (Proxy :: Proxy v)) = Ap $
+    (singleOption <$> (optionCLParser :: Parser v)) <|> pure mempty
 
 -- | The command line parser for the test suite
 suiteOptionParser :: [Ingredient] -> TestTree -> Parser OptionSet

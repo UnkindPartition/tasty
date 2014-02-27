@@ -93,7 +93,6 @@ instance IsOption TestPattern where
       (  reader (ReadM . Right . parseTestPattern)
       <> short 'p'
       <> long (untag (optionName :: Tagged TestPattern String))
-      <> value defaultValue
       <> help (untag (optionHelp :: Tagged TestPattern String))
       )
 

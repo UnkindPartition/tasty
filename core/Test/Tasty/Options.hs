@@ -49,12 +49,22 @@ class Typeable v => IsOption v where
   --
   -- Even if you override this, you still should implement all the methods
   -- above, to allow alternative interfaces.
+  --
+  -- It is important that we do not supply a default value here.
+  -- This is because if no value was provided on the command line we may
+  -- lookup the option e.g. in the environment. But if the parser always
+  -- succeeds, we have no way to tell whether the user really provided the
+  -- option on the command line.
+  --
+  -- OTOH, if we don't specify a default, the option becomes mandatory.
+  -- So, when we build the complete parser for OptionSet, we turn a
+  -- failing parser into an always-succeeding one that may return an empty
+  -- OptionSet.
   optionCLParser :: Parser v
   optionCLParser =
     nullOption
       (  reader parse
       <> long name
-      <> value defaultValue
       <> help helpString
       )
     where

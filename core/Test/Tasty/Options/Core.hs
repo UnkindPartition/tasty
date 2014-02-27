@@ -38,7 +38,6 @@ instance IsOption NumThreads where
       (  reader parse
       <> short 'j'
       <> long name
-      <> value defaultValue
       <> help (untag (optionHelp :: Tagged NumThreads String))
       )
     where
@@ -70,7 +69,6 @@ instance IsOption Timeout where
       (  reader parse
       <> short 't'
       <> long name
-      <> value defaultValue
       <> help (untag (optionHelp :: Tagged Timeout String))
       )
     where
