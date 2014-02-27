@@ -169,11 +169,10 @@ There are two main ways to set options:
 
 #### Runtime
 
-When using the standard console runner, the options can be passed through the
-command line. To see the available options, run your test suite with the
-`--help`
-flag. The output will look something like this (depending on which
-ingredients and providers the test suite uses):
+When using the standard console runner, the options can be passed on the
+command line or via environment variables. To see the available options, run
+your test suite with the `--help` flag. The output will look something like this
+(depending on which ingredients and providers the test suite uses):
 
 ```
 % ./test --help
@@ -202,6 +201,12 @@ Available options:
                            before giving up
 ```
 
+Every option can be passed via environment. To obtain the environment variable
+name from the option name, replace hyphens `-` with underscores `_`, capitalize
+all letters, and prepend `TASTY_`. For example, the environment equivalent of
+`--smallcheck-depth` is `TASTY_SMALLCHECK_DEPTH`. To turn on a switch (such as
+`TASTY_HIDE_SUCCESSES`), set the variable to `True`.
+
 If you're using a non-console runner, please refer to its documentation to find
 out how to configure options during the run time.
 
@@ -216,6 +221,9 @@ It is possible to combine run-time and compile-time options, too, by using
 `adjustOption`. For example, make the overall testing depth configurable
 during the run time, but increase or decrease it slightly for individual
 tests.
+
+This method currently doesn't work for ingredient options, such as `--quiet` or
+`--num-threads`.
 
 ### Patterns
 
