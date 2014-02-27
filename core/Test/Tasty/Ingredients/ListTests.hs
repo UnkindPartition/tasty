@@ -24,13 +24,7 @@ instance IsOption ListTests where
   parseValue = fmap ListTests . safeRead
   optionName = return "list-tests"
   optionHelp = return "Do not run the tests; just print their names"
-  optionCLParser =
-    fmap ListTests $
-    switch
-      (  short 'l'
-      <> long (untag (optionName :: Tagged ListTests String))
-      <> help (untag (optionHelp :: Tagged ListTests String))
-      )
+  optionCLParser = flagCLParser (Just 'l') (ListTests True)
 
 -- | Obtain the list of all tests in the suite
 testsNames :: OptionSet -> TestTree -> [TestName]

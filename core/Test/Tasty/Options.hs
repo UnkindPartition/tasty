@@ -16,6 +16,7 @@ module Test.Tasty.Options
   , singleOption
   , OptionDescription(..)
     -- * Utilities
+  , flagCLParser
   , safeRead
   ) where
 
@@ -25,6 +26,7 @@ import Data.Map (Map)
 import Data.Tagged
 import Data.Proxy
 import Data.Monoid
+import Data.Foldable
 
 import Options.Applicative
 import Options.Applicative.Types
@@ -113,6 +115,18 @@ singleOption v = setOption v mempty
 -- corresponding to a particular option.
 data OptionDescription where
   Option :: IsOption v => Proxy v -> OptionDescription
+
+-- | Command-line parser to use with flags
+flagCLParser
+  :: forall v . IsOption v
+  => Maybe Char -- ^ optional short flag
+  -> v          -- ^ non-default value (when the flag is supplied)
+  -> Parser v
+flagCLParser mbShort v = flag' v
+  (  foldMap short mbShort
+  <> long (untag (optionName :: Tagged v String))
+  <> help (untag (optionHelp :: Tagged v String))
+  )
 
 -- | Safe read function. Defined here for convenience to use for
 -- 'parseValue'.

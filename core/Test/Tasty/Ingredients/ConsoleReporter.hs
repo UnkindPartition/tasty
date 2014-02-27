@@ -316,13 +316,7 @@ instance IsOption Quiet where
   parseValue = fmap Quiet . safeRead
   optionName = return "quiet"
   optionHelp = return "Do not produce any output; indicate success only by the exit code"
-  optionCLParser =
-    fmap Quiet $
-    switch
-      (  short 'q'
-      <> long (untag (optionName :: Tagged Quiet String))
-      <> help (untag (optionHelp :: Tagged Quiet String))
-      )
+  optionCLParser = flagCLParser (Just 'q') (Quiet True)
 
 -- | Report only failed tests
 newtype HideSuccesses = HideSuccesses Bool
@@ -332,12 +326,7 @@ instance IsOption HideSuccesses where
   parseValue = fmap HideSuccesses . safeRead
   optionName = return "hide-successes"
   optionHelp = return "Do not print tests that passed successfully"
-  optionCLParser =
-    fmap HideSuccesses $
-    switch
-      (  long (untag (optionName :: Tagged HideSuccesses String))
-      <> help (untag (optionHelp :: Tagged HideSuccesses String))
-      )
+  optionCLParser = flagCLParser Nothing (HideSuccesses True)
 
 -- }}}
 
