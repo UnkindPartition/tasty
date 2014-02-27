@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                tasty-hunit
-version:             0.4.1
+version:             0.8
 synopsis:            HUnit support for the Tasty test framework.
 description:         HUnit support for the Tasty test framework.
 license:             MIT

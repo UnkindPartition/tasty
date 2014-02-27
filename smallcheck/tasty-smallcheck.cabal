@@ -1,5 +1,5 @@
 Name:                tasty-smallcheck
-Version:             0.2
+Version:             0.8
 Cabal-Version:       >= 1.6
 Category:            Testing
 Synopsis:            SmallCheck support for the Tasty test framework.
