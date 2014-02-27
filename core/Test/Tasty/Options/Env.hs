@@ -1,6 +1,6 @@
 -- | Get options from the environment
 {-# LANGUAGE DeriveDataTypeable, ScopedTypeVariables #-}
-module Test.Tasty.Options.Env where
+module Test.Tasty.Options.Env (getEnvOptions, suiteEnvOptions) where
 
 import Test.Tasty.Options
 import Test.Tasty.Core
@@ -32,6 +32,7 @@ instance Show EnvOptionException where
 
 instance Exception EnvOptionException
 
+-- | Search the environment for given options
 getEnvOptions :: [OptionDescription] -> IO OptionSet
 getEnvOptions = getApp . foldMap lookupOpt
   where
@@ -52,6 +53,7 @@ getEnvOptions = getApp . foldMap lookupOpt
 
         in Ap $ maybe err (return . singleOption) mbValue
 
+-- | Search the environment for all options relevant for this suite
 suiteEnvOptions :: [Ingredient] -> TestTree -> IO OptionSet
 suiteEnvOptions ins tree = getEnvOptions $ suiteOptions ins tree
 
