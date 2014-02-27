@@ -28,6 +28,9 @@ Version 0.8
   interrupted)
 * The type of `launchTestTree` is changed. It now takes a continuation as an
   argument. This is necessary to fix the bug mentioned above.
+* Add `flagCLParser` to be used as the `optionCLParser` implementation for
+  boolean options.
+* Add the ability to pass options via environment
 
 Version 0.7
 -----------
