@@ -23,12 +23,10 @@ import Text.Printf
 import qualified Data.IntMap as IntMap
 import Data.Maybe
 import Data.Monoid
-import Data.Tagged
 import Data.Proxy
 import Data.Typeable
 import Data.Foldable (foldMap)
 import System.IO
-import Options.Applicative
 
 #ifdef COLORS
 import System.Console.ANSI

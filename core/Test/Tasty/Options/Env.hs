@@ -13,7 +13,6 @@ import Data.Tagged
 import Data.Proxy
 import Data.Char
 import Data.Typeable
-import Data.Maybe
 import Control.Exception
 import Control.Applicative
 import Text.Printf
