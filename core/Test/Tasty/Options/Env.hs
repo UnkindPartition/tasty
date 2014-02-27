@@ -15,6 +15,7 @@ import Data.Char
 import Data.Typeable
 import Data.Maybe
 import Control.Exception
+import Control.Applicative
 import Text.Printf
 
 data EnvOptionException
@@ -42,7 +43,7 @@ getEnvOptions = getApp . foldMap lookupOpt
           if c == '-'
             then '_'
             else toUpper c
-      mbValueStr <- Ap $ lookupEnv envName
+      mbValueStr <- Ap $ myLookupEnv envName
       flip foldMap mbValueStr $ \valueStr ->
         let
           mbValue :: Maybe v
@@ -54,3 +55,7 @@ getEnvOptions = getApp . foldMap lookupOpt
 
 suiteEnvOptions :: [Ingredient] -> TestTree -> IO OptionSet
 suiteEnvOptions ins tree = getEnvOptions $ suiteOptions ins tree
+
+-- note: switch to lookupEnv once we no longer support 7.4
+myLookupEnv :: String -> IO (Maybe String)
+myLookupEnv name = either (const Nothing) Just <$> (try (getEnv name) :: IO (Either IOException String))
