@@ -59,6 +59,13 @@ resultSuccessful r =
     Success -> True
     Failure {} -> False
 
+-- | Get 'Just' 'SomeException' if a test threw it, 'Nothing' otherwise.
+resultException :: Result -> Maybe SomeException
+resultException r =
+  case resultOutcome r of
+    Failure (TestThrewException e) -> Just e
+    _ -> Nothing
+
 -- | Shortcut for creating a 'Result' that indicates exception
 exceptionResult :: SomeException -> Result
 exceptionResult e = Result
