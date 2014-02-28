@@ -59,12 +59,19 @@ resultSuccessful r =
     Success -> True
     Failure {} -> False
 
--- | Get 'Just' 'SomeException' if a test threw it, 'Nothing' otherwise.
+-- | Get the 'SomeException' if a test threw it.
 resultException :: Result -> Maybe SomeException
 resultException r =
   case resultOutcome r of
     Failure (TestThrewException e) -> Just e
     _ -> Nothing
+
+-- | 'True' for a test that timed out.
+resultTimedOut :: Result -> Bool
+resultTimedOut r =
+  case resultOutcome r of
+    Failure (TestTimedOut {}) -> True
+    _ -> False
 
 -- | Shortcut for creating a 'Result' that indicates exception
 exceptionResult :: SomeException -> Result

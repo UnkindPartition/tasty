@@ -35,6 +35,7 @@ module Test.Tasty.Runners
   , FailureReason(..)
   , resultSuccessful
   , resultException
+  , resultTimedOut
   , Progress(..)
   , StatusMap
   , launchTestTree
