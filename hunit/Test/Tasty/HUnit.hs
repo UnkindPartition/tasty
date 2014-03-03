@@ -45,9 +45,9 @@ instance IsTest TestCase where
   -- The standard HUnit's performTestCase catches (almost) all exceptions.
   --
   -- This is bad for a few reasons:
-  -- * it interferes with timeout handling
-  -- * it makes exception reporting inconsistent across providers
-  -- * it doesn't provide enough information for ingredients such as
+  -- - it interferes with timeout handling
+  -- - it makes exception reporting inconsistent across providers
+  -- - it doesn't provide enough information for ingredients such as
   -- tasty-rerun
   --
   -- So we do it ourselves.
