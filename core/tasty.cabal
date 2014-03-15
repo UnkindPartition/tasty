@@ -55,15 +55,13 @@ library
     optparse-applicative >= 0.6,
     deepseq >= 1.3,
     unbounded-delays >= 0.1,
-    async >= 2.0
+    async >= 2.0,
+    ansi-terminal >= 0.6.1
 
   if impl(ghc < 7.6)
     -- for GHC.Generics
     build-depends: ghc-prim
 
-  if flag(colors)
-    build-depends: ansi-terminal >= 0.6.1
-    cpp-options: -DCOLORS
   -- hs-source-dirs:      
   default-language:    Haskell2010
   ghc-options: -Wall -fno-warn-unused-do-bind -fno-warn-name-shadowing

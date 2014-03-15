@@ -1,5 +1,5 @@
 -- vim:fdm=marker:foldtext=foldtext()
-{-# LANGUAGE BangPatterns, CPP, ImplicitParams, MultiParamTypeClasses, DeriveDataTypeable #-}
+{-# LANGUAGE BangPatterns, ImplicitParams, MultiParamTypeClasses, DeriveDataTypeable #-}
 -- | Console reporter ingredient
 module Test.Tasty.Ingredients.ConsoleReporter
   ( consoleTestReporter
@@ -27,10 +27,7 @@ import Data.Proxy
 import Data.Typeable
 import Data.Foldable (foldMap)
 import System.IO
-
-#ifdef COLORS
 import System.Console.ANSI
-#endif
 
 --------------------------------------------------
 -- TestOutput base definitions
@@ -421,7 +418,6 @@ formatMessage msg = go 3 msg
 
 -- (Potentially) colorful output
 ok, fail, infoOk, infoFail :: (?colors :: Bool) => String -> IO ()
-#ifdef COLORS
 fail     = output BoldIntensity   Vivid Red
 ok       = output NormalIntensity Dull  Green
 infoOk   = output NormalIntensity Dull  White
@@ -444,11 +440,5 @@ output bold intensity color str
       putStr str
     ) `finally` setSGR []
   | otherwise = putStr str
-#else
-ok       = putStr
-fail     = putStr
-infoOk   = putStr
-infoFail = putStr
-#endif
 
 -- }}}
