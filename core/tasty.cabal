@@ -2,7 +2,7 @@
 --  see http://haskell.org/cabal/users-guide/
 
 name:                tasty
-version:             0.8
+version:             0.8.0.2
 synopsis:            Modern and extensible testing framework
 description:         See <http://documentup.com/feuerbach/tasty>
 license:             MIT
