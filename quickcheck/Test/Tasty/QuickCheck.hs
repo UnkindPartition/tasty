@@ -27,11 +27,11 @@ import Test.QuickCheck hiding -- for re-export
   , verbose
   , Gen
   )
+import Test.QuickCheck.Random (QCGen)
 import Data.Typeable
 import Data.Proxy
 import Data.List
 import Text.Printf
-import System.Random
 import Control.Applicative
 
 newtype QC = QC QC.Property
@@ -46,7 +46,7 @@ newtype QuickCheckTests = QuickCheckTests Int
   deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
 
 -- | Replay a previous test using a replay token
-newtype QuickCheckReplay = QuickCheckReplay (Maybe (StdGen, Int))
+newtype QuickCheckReplay = QuickCheckReplay (Maybe (QCGen, Int))
   deriving (Typeable)
 
 -- | Size of the biggest test cases
