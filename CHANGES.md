@@ -7,6 +7,11 @@ This is the common changelog for the packages `tasty`, `tasty-smallcheck`,
 Versioning across these packages is monotonic.
 Multiple packages can get the same version if they are released together.
 
+Version 0.8.0.3
+---------------
+
+tasty-quickcheck: upgrade to QuickCheck 2.7
+
 Version 0.8.0.2
 ---------------
 
