@@ -21,10 +21,6 @@ Source-repository head
   location: git://github.com/feuerbach/tasty.git
   subdir:   core
 
-flag colors
-  description: Enable colorful output
-  default: True
-
 library
   exposed-modules:
     Test.Tasty,
