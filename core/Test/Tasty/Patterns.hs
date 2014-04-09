@@ -145,7 +145,7 @@ buildTokenRegex (token:tokens) = concat (firstTokenToRegex token : map tokenToRe
 
     tokenToRegex SlashToken = "/"
     tokenToRegex WildcardToken = "[^/]*"
-    tokenToRegex DoubleWildcardToken = "*"
+    tokenToRegex DoubleWildcardToken = ".*"
     tokenToRegex (LiteralToken lit) = regexEscapeChar lit
 
 regexEscapeChar :: Char -> String
