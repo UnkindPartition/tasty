@@ -32,8 +32,12 @@ patternTests = testGroup "Pattern tests"
       (o "B/" @?= ["A.B.A","A.B.B","A.B.C"])
   , testCase "!B"
       (o "!B" @?= ["A.C.Z"])
+  , testCase "A/**B"
+      (o "A/**B" @?= ["A.B.A","A.B.B","A.B.C","A.C.BB"])
   , testCase "A**B"
-      (o "A**B" @?= ["A.B.A","A.B.B","A.B.C","A.C.BB"])
+      (o "A**B" @?= []) -- only matched against individual components
+  , testCase "**B"
+      (o "**B" @?= ["A.B.A","A.B.B","A.B.C","A.C.BB"])
   , testCase "B/A"
       (o "B/A" @?= ["A.B.A"])
   , testCase "/A"
