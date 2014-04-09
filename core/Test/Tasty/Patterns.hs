@@ -53,7 +53,7 @@ data Token = SlashToken
            | WildcardToken
            | DoubleWildcardToken
            | LiteralToken Char
-           deriving (Eq)
+           deriving (Eq, Show)
 
 tokenize :: String -> [Token]
 tokenize ('/':rest)     = SlashToken : tokenize rest
@@ -65,6 +65,7 @@ tokenize []             = []
 
 data TestPatternMatchMode = TestMatchMode
                           | PathMatchMode
+                          deriving Show
 
 -- | A pattern to filter tests. For the syntax description, see
 -- <http://documentup.com/feuerbach/tasty#using-patterns>
@@ -74,7 +75,7 @@ data TestPattern = TestPattern {
         tp_match_mode :: TestPatternMatchMode,
         tp_tokens :: [Token]
     } | NoPattern
-    deriving Typeable
+    deriving (Typeable, Show)
 
 -- | A pattern that matches anything.
 noPattern :: TestPattern
