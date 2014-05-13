@@ -25,7 +25,6 @@ import Test.QuickCheck hiding -- for re-export
   , verboseCheckWithResult
   , verboseCheckResult
   , verbose
-  , Gen
   )
 import Test.QuickCheck.Random (QCGen)
 import Data.Typeable
