@@ -1,5 +1,5 @@
 -- | Running tests
-{-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes, FlexibleContexts #-}
 module Test.Tasty.Run
   ( Status(..)
   , StatusMap
