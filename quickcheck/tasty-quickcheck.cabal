@@ -7,9 +7,11 @@ synopsis:            QuickCheck support for the Tasty test framework.
 description:         QuickCheck support for the Tasty test framework.
 license:             MIT
 license-file:        LICENSE
-author:              Roman Cheplyaka
-maintainer:          roma@ro-che.info
+author:              Roman Cheplyaka <roma@ro-che.info>
+maintainer:          Roman Cheplyaka <roma@ro-che.info>
 -- copyright:           
+homepage:            http://documentup.com/feuerbach/tasty
+bug-reports:         https://github.com/feuerbach/tasty/issues
 category:            Testing
 build-type:          Simple
 extra-source-files:  CHANGELOG
