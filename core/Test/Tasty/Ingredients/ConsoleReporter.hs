@@ -273,35 +273,40 @@ consoleTestReporter =
 
   do
   isTerm <- hIsTerminalDevice stdout
-  hSetBuffering stdout NoBuffering
 
-  let
-    ?colors = isTerm
-  let
-    Quiet quiet = lookupOption opts
-    HideSuccesses hideSuccesses = lookupOption opts
+  (\k -> if isTerm
+    then (do hideCursor; k) `finally` showCursor
+    else k) $ do
 
-    output = produceOutput opts tree
+      hSetBuffering stdout NoBuffering
 
-  case () of { _
-    | quiet -> return ()
-    | hideSuccesses && isTerm ->
-        consoleOutputHidingSuccesses output smap
-    | hideSuccesses && not isTerm ->
-        streamOutputHidingSuccesses output smap
-    | otherwise -> consoleOutput output smap
-  }
+      let
+        ?colors = isTerm
+      let
+        Quiet quiet = lookupOption opts
+        HideSuccesses hideSuccesses = lookupOption opts
 
-  if quiet
-    then do
-      fst <- failureStatus smap
-      return $ case fst of
-        OK -> True
-        _ -> False
-    else do
-      stats <- computeStatistics smap
-      printStatistics stats
-      return $ statFailures stats == 0
+        output = produceOutput opts tree
+
+      case () of { _
+        | quiet -> return ()
+        | hideSuccesses && isTerm ->
+            consoleOutputHidingSuccesses output smap
+        | hideSuccesses && not isTerm ->
+            streamOutputHidingSuccesses output smap
+        | otherwise -> consoleOutput output smap
+      }
+
+      if quiet
+        then do
+          fst <- failureStatus smap
+          return $ case fst of
+            OK -> True
+            _ -> False
+        else do
+          stats <- computeStatistics smap
+          printStatistics stats
+          return $ statFailures stats == 0
 
 -- | Do not print test results (see README for details)
 newtype Quiet = Quiet Bool
