@@ -7,6 +7,12 @@ This is the common changelog for the packages `tasty`, `tasty-smallcheck`,
 Versioning across these packages is monotonic.
 Multiple packages can get the same version if they are released together.
 
+Version 0.8.1.3
+---------------
+
+Be careful not to export the `Show (a -> b)` instance, see
+<https://github.com/feuerbach/tasty/issues/71>
+
 Version 0.8.1.2
 ---------------
 
