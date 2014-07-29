@@ -8,6 +8,7 @@ import Control.Concurrent.STM
 import Control.Exception
 import Foreign.StablePtr
 import Data.Typeable
+import GHC.Conc (labelThread)
 
 data Interrupt = Interrupt
   deriving Typeable
@@ -123,13 +124,17 @@ runInParallel nthreads actions = do
           -- Thanks to our exception handling, we won't deadlock even if
           -- an exception strikes before we 'release'. Everything will be
           -- killed, so why bother.
-          return $ do forkCarefully (do a; release); cont
+          return $ do
+            pid <- forkCarefully (do a; release)
+            labelThread pid "tasty_worker_thread"
+            cont
 
         else retry
 
   -- fork here as well, so that we can move to the UI without waiting
   -- untill all tests have finished
-  forkCarefully $ foldr go (return ()) actions
+  pid <- forkCarefully $ foldr go (return ()) actions
+  labelThread pid "tasty_thread_manager"
   return shutdownAll
 
 -- Copied from base to stay compatible with GHC 7.4.
