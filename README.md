@@ -338,16 +338,16 @@ contained in `test.hs` or spread across multiple modules (`Mod1.hs`, `Mod2.hs`,
 
 Add the following section to the cabal file (`my-project.cabal`):
 
-    Test-suite test
-      Default-language:
+    test-suite test
+      default-language:
         Haskell2010
-      Type:
+      type:
         exitcode-stdio-1.0
-      Hs-source-dirs:
+      hs-source-dirs:
         tests
-      Main-is:
+      main-is:
         test.hs
-      Build-depends:
+      build-depends:
           base >= 4 && < 5
         , tasty >= 0.7 -- insert the current version here
         , my-project   -- depend on the library we're testing
