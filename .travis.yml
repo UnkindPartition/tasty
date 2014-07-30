@@ -1,5 +1,6 @@
 env:
  - GHCVER=7.4.2
  - GHCVER=7.6.3
+ - GHCVER=7.8.3
 install: /bin/true
 script: ./ci-test
