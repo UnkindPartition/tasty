@@ -19,6 +19,7 @@ import Control.Concurrent.Async
 import Control.Exception as E
 import Control.Applicative
 import Control.Arrow
+import GHC.Conc (labelThread)
 
 import Test.Tasty.Core
 import Test.Tasty.Parallel
@@ -92,7 +93,8 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
     -- If all initializers ran successfully, actually run the test.
     -- We run it in a separate thread, so that the test's exception
     -- handler doesn't interfere with our timeout.
-    withAsync (action yieldProgress) $ \asy ->
+    withAsync (action yieldProgress) $ \asy -> do
+      labelThread (asyncThreadId asy) "tasty_test_execution_thread"
       applyTimeout timeoutOpt $ wait asy
 
   -- no matter what, try to run each finalizer

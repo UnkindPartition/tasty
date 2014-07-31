@@ -126,7 +126,7 @@ runInParallel nthreads actions = do
           -- killed, so why bother.
           return $ do
             pid <- forkCarefully (do a; release)
-            labelThread pid "tasty_worker_thread"
+            labelThread pid "tasty_test_thread"
             cont
 
         else retry
