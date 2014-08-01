@@ -47,10 +47,8 @@ instance IsOption SmallCheckDepth where
   optionName = return "smallcheck-depth"
   optionHelp = return "Depth to use for smallcheck tests"
 
-instance IsTest (MonadicProperty) where
-  testOptions = return [Option (Proxy :: Proxy SmallCheckDepth)]
 
-  run opts (MonadicProperty prop) yieldProgress = do
+defaultRun opts action yieldProgress = do
     let
       SmallCheckDepth depth = lookupOption opts
 
@@ -72,7 +70,7 @@ instance IsTest (MonadicProperty) where
           , progressPercent = 0 -- we don't know the total number of tests
           }
 
-    scResult <- prop depth hook
+    scResult <- action depth hook
 
     (total, bad) <- readIORef counter
     let
@@ -86,46 +84,19 @@ instance IsTest (MonadicProperty) where
       case scResult of
         Nothing -> testPassed desc
         Just f ->  testFailed $ ppFailure f
+
+
+instance IsTest (MonadicProperty) where
+  testOptions = return [Option (Proxy :: Proxy SmallCheckDepth)]
+
+  run opts (MonadicProperty prop) yieldProgress = do
+    defaultRun opts prop yieldProgress
 
 instance IsTest (SC.Property IO) where
   testOptions = return [Option (Proxy :: Proxy SmallCheckDepth)]
 
   run opts prop yieldProgress = do
-    let
-      SmallCheckDepth depth = lookupOption opts
-
-    counter <- newIORef (0 :: Int, 0 :: Int)
-
-    let
-      hook quality = do
-        let
-          inc (total, bad) =
-            case quality of
-              GoodTest -> ((,) $! total + 1) bad
-              BadTest -> ((,) $! total + 1) $! bad + 1
-
-        count <- myAtomicModifyIORef' counter (\c -> let c' = inc c in (c', fst c'))
-
-        -- submit progress data to tasty
-        yieldProgress $ Progress
-          { progressText = show count
-          , progressPercent = 0 -- we don't know the total number of tests
-          }
-
-    scResult <- smallCheckWithHook depth hook prop
-
-    (total, bad) <- readIORef counter
-    let
-      desc
-        | bad == 0
-          = printf "%d tests completed" total
-        | otherwise
-          = printf "%d tests completed (but %d did not meet the condition)" total bad
-
-    return $
-      case scResult of
-        Nothing -> testPassed desc
-        Just f ->  testFailed $ ppFailure f
+    defaultRun opts (\d h -> smallCheckWithHook d h prop) yieldProgress
 
 instance IsTest (Maybe SC.PropertyFailure) where
    testOptions = return []
