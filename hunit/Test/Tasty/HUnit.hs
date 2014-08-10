@@ -1,4 +1,4 @@
--- | This module allows to use HUnit tests in tasty.
+-- | Unit testing support for tasty, inspired by the HUnit package
 {-# LANGUAGE TypeFamilies, DeriveDataTypeable #-}
 module Test.Tasty.HUnit
   ( testCase
