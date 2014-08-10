@@ -24,8 +24,8 @@ Source-repository head
 
 library
   exposed-modules:     Test.Tasty.HUnit
-  -- other-modules:       
+  other-modules:       Test.Tasty.HUnit.Orig
   other-extensions:    TypeFamilies, DeriveDataTypeable
-  build-depends:       base ==4.*, tasty >= 0.8, HUnit, mtl
+  build-depends:       base ==4.*, tasty >= 0.8
   -- hs-source-dirs:      
   default-language:    Haskell2010

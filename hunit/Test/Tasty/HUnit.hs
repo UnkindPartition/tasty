@@ -2,35 +2,14 @@
 {-# LANGUAGE TypeFamilies, DeriveDataTypeable #-}
 module Test.Tasty.HUnit
   ( testCase
-  -- | We only re-export parts of "Test.HUnit.Base" related to assertions
-  -- and not tests.
-  , module Test.HUnit.Base
+  , module Test.Tasty.HUnit.Orig
   ) where
 
 import Test.Tasty.Providers
 
-import qualified Test.HUnit.Base
-import Test.HUnit.Lang
-import Test.HUnit.Base hiding -- for re-export
-  ( Test(..)
-  , Testable(..)
-  , (~=?)
-  , (~?=)
-  , (~:)
-  , (~?)
-  , State(..)
-  , Counts(..)
-  , Path
-  , Node
-  , testCasePaths
-  , testCaseCount
-  , ReportStart
-  , ReportProblem
-  , performTest
-  )
+import Test.Tasty.HUnit.Orig
 
 import Data.Typeable
-import Control.Monad.Trans
 import Control.Exception
 
 -- | Create a 'Test' for a HUnit 'Assertion'
