@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, FlexibleInstances, TypeSynonymInstances #-}
 -- | This is the code copied from the original hunit package (v. 1.2.5.2).
 -- with minor modifications
 module Test.Tasty.HUnit.Orig where
@@ -87,18 +87,11 @@ instance Assertable ()
 instance Assertable Bool
  where assert = assertBool ""
 
-instance (ListAssertable t) => Assertable [t]
- where assert = listAssert
-
 instance (Assertable t) => Assertable (IO t)
  where assert = (>>= assert)
 
--- | A specialized form of 'Assertable' to handle lists.
-class ListAssertable t
- where listAssert :: [t] -> Assertion
-
-instance ListAssertable Char
- where listAssert = assertString
+instance Assertable String
+ where assert = assertString
 
 
 -- Overloaded `assertionPredicate` Function
