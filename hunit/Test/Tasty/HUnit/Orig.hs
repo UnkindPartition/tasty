@@ -10,10 +10,6 @@ import Data.Typeable (Typeable)
 -- Interfaces
 -- ----------
 
-data HUnitFailure = HUnitFailure String
-    deriving (Show, Typeable)
-instance E.Exception HUnitFailure
-
 -- | When an assertion is evaluated, it will output a message if and only if the
 -- assertion fails.  
 --
@@ -158,3 +154,8 @@ expected @=? actual = assertEqual "" expected actual
                         -> a -- ^ The expected value
                         -> Assertion
 actual @?= expected = assertEqual "" expected actual
+
+-- | Exception thrown by 'assertFailure' etc.
+data HUnitFailure = HUnitFailure String
+    deriving (Show, Typeable)
+instance E.Exception HUnitFailure
