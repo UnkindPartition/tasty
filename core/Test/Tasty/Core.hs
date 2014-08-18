@@ -50,6 +50,8 @@ data Result = Result
     --
     -- For a failed test, 'resultDescription' should typically provide more
     -- information about the failure.
+  , resultTime :: Double
+    -- ^ How long it took to run the test, in seconds.
   }
 
 -- | 'True' for a passed test, 'False' for a failed one.
@@ -64,6 +66,7 @@ exceptionResult :: SomeException -> Result
 exceptionResult e = Result
   { resultOutcome = Failure $ TestThrewException e
   , resultDescription = "Exception: " ++ show e
+  , resultTime = 0
   }
 
 -- | Test progress information.

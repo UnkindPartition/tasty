@@ -305,16 +305,17 @@ consoleTestReporter =
         | otherwise -> consoleOutput output smap
       }
 
-      if quiet
-        then do
-          fst <- failureStatus smap
-          return $ case fst of
-            OK -> True
-            _ -> False
-        else do
-          stats <- computeStatistics smap
-          printStatistics stats
-          return $ statFailures stats == 0
+      return $ \time ->
+        if quiet
+          then do
+            fst <- failureStatus smap
+            return $ case fst of
+              OK -> True
+              _ -> False
+          else do
+            stats <- computeStatistics smap
+            printStatistics stats
+            return $ statFailures stats == 0
 
 -- | Do not print test results (see README for details)
 newtype Quiet = Quiet Bool

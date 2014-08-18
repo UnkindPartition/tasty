@@ -24,6 +24,7 @@ testPassed
 testPassed desc = Result
   { resultOutcome = Success
   , resultDescription = desc
+  , resultTime = 0
   }
 
 -- | 'Result' of a failed test
@@ -33,4 +34,5 @@ testFailed
 testFailed desc = Result
   { resultOutcome = Failure TestFailed
   , resultDescription = desc
+  , resultTime = 0
   }

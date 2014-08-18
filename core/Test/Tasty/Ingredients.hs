@@ -64,7 +64,7 @@ import Test.Tasty.Options.Core
 data Ingredient
   = TestReporter
       [OptionDescription]
-      (OptionSet -> TestTree -> Maybe (StatusMap -> IO Bool))
+      (OptionSet -> TestTree -> Maybe (StatusMap -> IO (Double -> IO Bool)))
   | TestManager
       [OptionDescription]
       (OptionSet -> TestTree -> Maybe (IO Bool))
