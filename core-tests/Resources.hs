@@ -59,6 +59,7 @@ testResources1 = testCase "Normal; a test excluded by a pattern" $ do
       rs <- runSMap smap
       assertBool "Resource is not available" $ all resultSuccessful rs
       readIORef ref >>= assertBool "Resource was not released" . not
+      return $ const $ return ()
 
 ------------------------------
 -- Exceptions
@@ -76,6 +77,7 @@ testResources2 = testCase "Exception during resource initialization" $
     Failure (TestThrewException (fromException -> Just (ErrorCall "exInit"))) ->
       return ()
     c -> assertFailure $ "Unexpected outcome: " ++ show c
+  return $ const $ return ()
 
 testTree3 :: IORef Bool -> TestTree
 testTree3 ref =
@@ -93,6 +95,7 @@ testResources3 = testCase "Exception in test body; resource is released" $ do
       c -> assertFailure $ "Unexpected outcome: " ++ show c
     b <- readIORef ref
     assertBool "Resource wasn't released" (not b)
+    return $ const $ return ()
 
 testTree4 :: IORef Bool -> TestTree
 testTree4 ref =
@@ -108,3 +111,4 @@ testResources4 = testCase "Exception in finalizer" $ do
       Failure (TestThrewException (fromException -> Just (ErrorCall "exFin"))) ->
         return ()
       c -> assertFailure $ "Unexpected outcome: " ++ show c
+    return $ const $ return ()

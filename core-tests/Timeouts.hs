@@ -31,3 +31,4 @@ testTimeouts = testCase "Timeouts" $ do
       Result { resultOutcome = Success } -> assertFailure "Slow test passed"
       Result { resultOutcome = Failure (TestTimedOut 200000) } -> return ()
       _ -> assertFailure $ "Slow test failed for wrong reason: " ++ resultDescription fast
+    return $ const $ return ()
