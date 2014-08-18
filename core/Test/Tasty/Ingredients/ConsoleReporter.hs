@@ -77,8 +77,8 @@ produceOutput opts tree =
           rDesc <- formatMessage $ resultDescription result
 
           if resultSuccessful result
-            then ok "OK\n"
-            else fail "FAIL\n"
+            then ok   (printf "OK (%.2fs)\n"   (resultTime result))
+            else fail (printf "FAIL (%.2fs)\n" (resultTime result))
 
           when (not $ null rDesc) $
             (if resultSuccessful result then infoOk else infoFail) $
@@ -221,16 +221,16 @@ computeStatistics = getApp . foldMap (\var -> Ap $
   (\r -> Statistics 1 (if resultSuccessful r then 0 else 1))
     <$> getResultFromTVar var)
 
-printStatistics :: (?colors :: Bool) => Statistics -> IO ()
-printStatistics st = do
+printStatistics :: (?colors :: Bool) => Statistics -> Double -> IO ()
+printStatistics st time = do
   printf "\n"
 
   case statFailures st of
     0 -> do
-      ok $ printf "All %d tests passed\n" (statTotal st)
+      ok $ printf "All %d tests passed (%.2fs)\n" (statTotal st) time
 
     fs -> do
-      fail $ printf "%d out of %d tests failed\n" fs (statTotal st)
+      fail $ printf "%d out of %d tests failed (%.2fs)\n" fs (statTotal st) time
 
 data FailureStatus
   = Unknown
@@ -314,7 +314,7 @@ consoleTestReporter =
               _ -> False
           else do
             stats <- computeStatistics smap
-            printStatistics stats
+            printStatistics stats time
             return $ statFailures stats == 0
 
 -- | Do not print test results (see README for details)
