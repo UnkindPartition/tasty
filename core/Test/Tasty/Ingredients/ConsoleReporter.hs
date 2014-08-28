@@ -286,12 +286,12 @@ consoleTestReporter =
       hSetBuffering stdout NoBuffering
 
       let
-        UseColor whenColor = lookupOption opts
+        UseColor useColor = lookupOption opts
         Quiet quiet = lookupOption opts
         HideSuccesses hideSuccesses = lookupOption opts
 
       let
-        ?colors = useColors whenColor isTerm
+        ?colors = useColor isTerm
 
       let
         output = produceOutput opts tree
@@ -337,10 +337,10 @@ instance IsOption HideSuccesses where
   optionCLParser = flagCLParser Nothing (HideSuccesses True)
 
 -- | Control color output
-newtype UseColor = UseColor WhenColor
-  deriving (Eq, Ord, Typeable)
+newtype UseColor = UseColor (Bool -> Bool)
+  deriving Typeable
 instance IsOption UseColor where
-  defaultValue = UseColor Auto
+  defaultValue = UseColor id
   parseValue = fmap UseColor . parseWhenColor
   optionName = return "color"
   optionHelp = return "When to use colored output. Options are 'never', 'always' and 'auto' (default: 'auto')"
@@ -357,26 +357,12 @@ instance IsOption UseColor where
         maybe (Left (ErrorMsg $ "Could not parse " ++ name)) Right .
         parseValue
 
--- | When to use color on the output
-data WhenColor
-  = Never | Always | Auto
-  deriving (Eq, Ord, Typeable)
-
--- | @useColors when isTerm@ decides if colors should be used,
---   where @isTerm@ denotes where @stdout@ is a terminal device.
-useColors :: WhenColor -> Bool -> Bool
-useColors when isTerm =
-  case when of
-    Never  -> False
-    Always -> True
-    Auto   -> isTerm
-
-parseWhenColor :: String -> Maybe WhenColor
+parseWhenColor :: String -> Maybe (Bool -> Bool)
 parseWhenColor s =
   case map toLower s of
-    "never"  -> return Never
-    "always" -> return Always
-    "auto"   -> return Auto
+    "never"  -> return (const False)
+    "always" -> return (const True)
+    "auto"   -> return id
     _        -> Nothing
 
 -- }}}
