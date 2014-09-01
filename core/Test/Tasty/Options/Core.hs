@@ -34,9 +34,8 @@ instance IsOption NumThreads where
   optionName = return "num-threads"
   optionHelp = return "Number of threads to use for tests execution"
   optionCLParser =
-    nullOption
-      (  reader parse
-      <> short 'j'
+    nullOption parse
+      (  short 'j'
       <> long name
       <> help (untag (optionHelp :: Tagged NumThreads String))
       )
@@ -65,9 +64,8 @@ instance IsOption Timeout where
   optionName = return "timeout"
   optionHelp = return "Timeout for individual tests (suffixes: ms,s,m,h; default: s)"
   optionCLParser =
-    nullOption
-      (  reader parse
-      <> short 't'
+    nullOption parse
+      (  short 't'
       <> long name
       <> help (untag (optionHelp :: Tagged Timeout String))
       )

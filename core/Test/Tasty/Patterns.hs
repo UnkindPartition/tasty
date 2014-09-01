@@ -90,9 +90,8 @@ instance IsOption TestPattern where
   optionName = return "pattern"
   optionHelp = return "Select only tests that match pattern"
   optionCLParser =
-    nullOption
-      (  reader (ReadM . Right . parseTestPattern)
-      <> short 'p'
+    option (ReadM . Right . parseTestPattern)
+      (  short 'p'
       <> long (untag (optionName :: Tagged TestPattern String))
       <> help (untag (optionHelp :: Tagged TestPattern String))
       )

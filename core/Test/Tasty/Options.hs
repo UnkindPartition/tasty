@@ -64,9 +64,8 @@ class Typeable v => IsOption v where
   -- OptionSet.)
   optionCLParser :: Parser v
   optionCLParser =
-    nullOption
-      (  reader parse
-      <> long name
+    option parse
+      (  long name
       <> help helpString
       )
     where
