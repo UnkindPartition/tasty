@@ -9,7 +9,7 @@ module Test.Tasty.Ingredients.ConsoleReporter
 
 import Prelude hiding (fail)
 import Control.Monad.State hiding (fail)
-import Control.Monad.Reader hiding (fail)
+import Control.Monad.Reader hiding (fail,reader)
 import Control.Concurrent.STM
 import Control.Exception
 import Control.DeepSeq
@@ -21,11 +21,15 @@ import Test.Tasty.Options
 import Test.Tasty.Runners.Reducers
 import Text.Printf
 import qualified Data.IntMap as IntMap
+import Data.Char
 import Data.Maybe
 import Data.Monoid
 import Data.Proxy
+import Data.Tagged
 import Data.Typeable
 import Data.Foldable (foldMap)
+import Options.Applicative
+import Options.Applicative.Types (ReadM(..))
 import System.IO
 import System.Console.ANSI
 
@@ -268,6 +272,7 @@ consoleTestReporter =
   TestReporter
     [ Option (Proxy :: Proxy Quiet)
     , Option (Proxy :: Proxy HideSuccesses)
+    , Option (Proxy :: Proxy UseColor)
     ] $
   \opts tree -> Just $ \smap ->
 
@@ -281,11 +286,14 @@ consoleTestReporter =
       hSetBuffering stdout NoBuffering
 
       let
-        ?colors = isTerm
-      let
+        UseColor useColor = lookupOption opts
         Quiet quiet = lookupOption opts
         HideSuccesses hideSuccesses = lookupOption opts
 
+      let
+        ?colors = useColor isTerm
+
+      let
         output = produceOutput opts tree
 
       case () of { _
@@ -327,6 +335,35 @@ instance IsOption HideSuccesses where
   optionName = return "hide-successes"
   optionHelp = return "Do not print tests that passed successfully"
   optionCLParser = flagCLParser Nothing (HideSuccesses True)
+
+-- | Control color output
+newtype UseColor = UseColor (Bool -> Bool)
+  deriving Typeable
+instance IsOption UseColor where
+  defaultValue = UseColor id
+  parseValue = fmap UseColor . parseWhenColor
+  optionName = return "color"
+  optionHelp = return "When to use colored output. Options are 'never', 'always' and 'auto' (default: 'auto')"
+  optionCLParser =
+    nullOption
+      (  reader parse
+      <> long name
+      <> help (untag (optionHelp :: Tagged UseColor String))
+      )
+    where
+      name = untag (optionName :: Tagged UseColor String)
+      parse =
+        ReadM .
+        maybe (Left (ErrorMsg $ "Could not parse " ++ name)) Right .
+        parseValue
+
+parseWhenColor :: String -> Maybe (Bool -> Bool)
+parseWhenColor s =
+  case map toLower s of
+    "never"  -> return (const False)
+    "always" -> return (const True)
+    "auto"   -> return id
+    _        -> Nothing
 
 -- }}}
 
