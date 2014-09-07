@@ -293,6 +293,10 @@ number of tests is large.</dd>
 <dt><code>-l,--list-tests</code></dt>
 <dd>Don't run the tests; only list their names, in the format accepted by
 <code>--pattern</code>.</dd>
+<dt><code>--color</code></dt>
+<dd>Whether to produce colorful output. Accepted values: <code>never</code>,
+<code>always</code>, <code>auto</code>. <code>auto</code> means that colors will
+only be enabled when output goes to a terminal and is the default value.</dd>
 </dl>
 
 ### Custom options
