@@ -76,9 +76,20 @@ produceOutput opts tree =
         printTestResult result = do
           rDesc <- formatMessage $ resultDescription result
 
+          -- use an appropriate printing function
+          let
+            printFn =
+              if resultSuccessful result
+                then ok
+                else fail
+            time = resultTime result
           if resultSuccessful result
-            then ok   (printf "OK (%.2fs)\n"   (resultTime result))
-            else fail (printf "FAIL (%.2fs)\n" (resultTime result))
+            then printFn "OK"
+            else printFn "FAIL"
+          -- print time only if it's significant
+          when (time >= 0.01) $
+            printFn (printf " (%.2fs)" time)
+          printFn "\n"
 
           when (not $ null rDesc) $
             (if resultSuccessful result then infoOk else infoFail) $
