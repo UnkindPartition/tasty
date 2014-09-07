@@ -4,6 +4,16 @@ Changes
 This is the common changelog for the packages `tasty`, `tasty-smallcheck`,
 `tasty-quickcheck` and `tasty-hunit`.
 
+Version 0.10
+------------
+
+* Add the `--color` option
+* Timings
+    * Introduce the `Time` type synonym
+    * Change the types of `launchTestTree` and `TestReporter` to accept the
+      total run time
+    * `consoleTestReporter` now displays the timings
+
 Version 0.9.0.1
 ---------------
 
