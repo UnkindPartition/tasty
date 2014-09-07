@@ -1,5 +1,6 @@
 -- | Running tests
-{-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes, FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes,
+             FlexibleContexts, BangPatterns #-}
 module Test.Tasty.Run
   ( Status(..)
   , StatusMap
@@ -10,6 +11,7 @@ import qualified Data.IntMap as IntMap
 import qualified Data.Sequence as Seq
 import qualified Data.Foldable as F
 import Data.Maybe
+import Data.Time.Clock.POSIX
 import Control.Monad.State
 import Control.Monad.Writer
 import Control.Monad.Reader
@@ -95,7 +97,7 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
     -- handler doesn't interfere with our timeout.
     withAsync (action yieldProgress) $ \asy -> do
       labelThread (asyncThreadId asy) "tasty_test_execution_thread"
-      applyTimeout timeoutOpt $ wait asy
+      timed $ applyTimeout timeoutOpt $ wait asy
 
   -- no matter what, try to run each finalizer
   mbExn <- destroyResources restore
@@ -103,7 +105,7 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
   atomically . writeTVar statusVar $ Done $
     case resultOrExn <* maybe (Right ()) Left mbExn of
       Left ex -> exceptionResult ex
-      Right r -> r
+      Right (t,r) -> r { resultTime = t }
 
   where
     initResources :: IO ()
@@ -138,6 +140,7 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
             { resultOutcome = Failure $ TestTimedOut t
             , resultDescription =
                 "Timed out after " ++ tstr
+            , resultTime = fromIntegral t
             }
       fromMaybe timeoutResult <$> timeout t a
 
@@ -244,17 +247,19 @@ getResource var =
 launchTestTree
   :: OptionSet
   -> TestTree
-  -> (StatusMap -> IO a)
+  -> (StatusMap -> IO (Double -> IO a))
   -> IO a
 launchTestTree opts tree k = do
   (testActions, rvars) <- createTestActions opts tree
   let NumThreads numTheads = lookupOption opts
-  abortTests <- runInParallel numTheads (fst <$> testActions)
-  (do let smap = IntMap.fromList $ zip [0..] (snd <$> testActions)
-      k smap)
-   `finally` do
-      abortTests
-      waitForResources rvars
+  (t,k) <- timed $ do
+     abortTests <- runInParallel numTheads (fst <$> testActions)
+     (do let smap = IntMap.fromList $ zip [0..] (snd <$> testActions)
+         k smap)
+      `finally` do
+         abortTests
+         waitForResources rvars
+  k t
   where
     alive :: Resource r -> Bool
     alive r = case r of
@@ -271,3 +276,13 @@ launchTestTree opts tree k = do
 
 unexpectedState :: String -> Resource r -> SomeException
 unexpectedState where_ r = toException $ UnexpectedState where_ (show r)
+
+timed :: IO a -> IO (Double, a)
+timed t = do
+  start <- getTime
+  !r    <- t
+  end   <- getTime
+  return (end-start, r)
+
+getTime :: IO Double
+getTime = realToFrac <$> getPOSIXTime
