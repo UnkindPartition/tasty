@@ -286,12 +286,12 @@ consoleTestReporter =
       hSetBuffering stdout NoBuffering
 
       let
-        UseColor whenColor = lookupOption opts
+        whenColor = lookupOption opts
         Quiet quiet = lookupOption opts
         HideSuccesses hideSuccesses = lookupOption opts
 
       let
-        ?colors = useColors whenColor isTerm
+        ?colors = useColor whenColor isTerm
 
       let
         output = produceOutput opts tree
@@ -336,18 +336,20 @@ instance IsOption HideSuccesses where
   optionHelp = return "Do not print tests that passed successfully"
   optionCLParser = flagCLParser Nothing (HideSuccesses True)
 
--- | Control color output
-newtype UseColor = UseColor WhenColor
+-- | When to use color on the output
+data UseColor
+  = Never | Always | Auto
   deriving (Eq, Ord, Typeable)
+
+-- | Control color output
 instance IsOption UseColor where
-  defaultValue = UseColor Auto
-  parseValue = fmap UseColor . parseWhenColor
+  defaultValue = Auto
+  parseValue = parseUseColor
   optionName = return "color"
   optionHelp = return "When to use colored output. Options are 'never', 'always' and 'auto' (default: 'auto')"
   optionCLParser =
-    nullOption
-      (  reader parse
-      <> long name
+    option parse
+      (  long name
       <> help (untag (optionHelp :: Tagged UseColor String))
       )
     where
@@ -357,22 +359,17 @@ instance IsOption UseColor where
         maybe (Left (ErrorMsg $ "Could not parse " ++ name)) Right .
         parseValue
 
--- | When to use color on the output
-data WhenColor
-  = Never | Always | Auto
-  deriving (Eq, Ord, Typeable)
-
--- | @useColors when isTerm@ decides if colors should be used,
+-- | @useColor when isTerm@ decides if colors should be used,
 --   where @isTerm@ denotes where @stdout@ is a terminal device.
-useColors :: WhenColor -> Bool -> Bool
-useColors when isTerm =
+useColor :: UseColor -> Bool -> Bool
+useColor when isTerm =
   case when of
     Never  -> False
     Always -> True
     Auto   -> isTerm
 
-parseWhenColor :: String -> Maybe WhenColor
-parseWhenColor s =
+parseUseColor :: String -> Maybe UseColor
+parseUseColor s =
   case map toLower s of
     "never"  -> return Never
     "always" -> return Always
