@@ -4,9 +4,6 @@ Changes
 This is the common changelog for the packages `tasty`, `tasty-smallcheck`,
 `tasty-quickcheck` and `tasty-hunit`.
 
-Versioning across these packages is monotonic.
-Multiple packages can get the same version if they are released together.
-
 Version 0.9.0.1
 ---------------
 
