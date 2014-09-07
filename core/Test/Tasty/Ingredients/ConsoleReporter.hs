@@ -221,7 +221,7 @@ computeStatistics = getApp . foldMap (\var -> Ap $
   (\r -> Statistics 1 (if resultSuccessful r then 0 else 1))
     <$> getResultFromTVar var)
 
-printStatistics :: (?colors :: Bool) => Statistics -> Double -> IO ()
+printStatistics :: (?colors :: Bool) => Statistics -> Time -> IO ()
 printStatistics st time = do
   printf "\n"
 

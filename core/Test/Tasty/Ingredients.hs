@@ -46,8 +46,7 @@ import Test.Tasty.Options.Core
 -- on if you want to create a new ingredient.
 --
 -- There are two kinds of ingredients. 'TestReporter', if it agrees to run,
--- automatically launches tests execution, and gets the 'StatusMap' which
--- it uses to report the progress and results to the user.
+-- automatically launches tests execution.
 --
 -- 'TestManager' is the second kind of ingredient. It is typically used for
 -- test management purposes (such as listing the test names), although it
@@ -64,7 +63,9 @@ import Test.Tasty.Options.Core
 data Ingredient
   = TestReporter
       [OptionDescription]
-      (OptionSet -> TestTree -> Maybe (StatusMap -> IO (Double -> IO Bool)))
+      (OptionSet -> TestTree -> Maybe (StatusMap -> IO (Time -> IO Bool)))
+   -- ^ For the explanation on how the callback works, see the
+   -- documentation for 'launchTestTree'.
   | TestManager
       [OptionDescription]
       (OptionSet -> TestTree -> Maybe (IO Bool))

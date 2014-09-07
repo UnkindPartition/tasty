@@ -239,15 +239,25 @@ getResource var =
       Destroyed -> throwSTM UseOutsideOfTest
       _ -> throwSTM $ unexpectedState "getResource" rState
 
--- | Start running all the tests in a test tree in parallel. The number of
--- threads is determined by the 'NumThreads' option.
---
--- Return a map from the test number (starting from 0) to its status
--- variable.
+-- | Start running all the tests in a test tree in parallel, without
+-- blocking the current thread. The number of test running threads is
+-- determined by the 'NumThreads' option.
 launchTestTree
   :: OptionSet
   -> TestTree
-  -> (StatusMap -> IO (Double -> IO a))
+  -> (StatusMap -> IO (Time -> IO a))
+    -- ^ A callback. First, it receives the 'StatusMap' through which it
+    -- can observe the execution of tests in real time. Typically (but not
+    -- necessarily), it waits until all the tests are finished.
+    --
+    -- After this callback returns, the test-running threads (if any) are
+    -- terminated and all resources acquired by tests are released.
+    --
+    -- The callback must return another callback (of type @'Time' -> 'IO'
+    -- a@) which additionally can report and/or record the total time
+    -- taken by the test suite. This time includes the time taken to run
+    -- all resource initializers and finalizers, which is why it is more
+    -- accurate than what could be measured from inside the first callback.
   -> IO a
 launchTestTree opts tree k = do
   (testActions, rvars) <- createTestActions opts tree
@@ -277,12 +287,14 @@ launchTestTree opts tree k = do
 unexpectedState :: String -> Resource r -> SomeException
 unexpectedState where_ r = toException $ UnexpectedState where_ (show r)
 
-timed :: IO a -> IO (Double, a)
+-- | Measure the time taken by an 'IO' action to run
+timed :: IO a -> IO (Time, a)
 timed t = do
   start <- getTime
   !r    <- t
   end   <- getTime
   return (end-start, r)
 
-getTime :: IO Double
+-- | Get system time
+getTime :: IO Time
 getTime = realToFrac <$> getPOSIXTime

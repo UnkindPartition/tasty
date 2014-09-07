@@ -10,6 +10,7 @@ module Test.Tasty.Runners
   , module Test.Tasty.Runners.Reducers
     -- * Ingredients
   , Ingredient(..)
+  , Time
   , tryIngredients
   , ingredientOptions
   , ingredientsOptions

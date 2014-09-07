@@ -37,6 +37,9 @@ data Outcome
   | Failure FailureReason -- ^ test failed because of the 'FailureReason'
   deriving (Show, Generic)
 
+-- | Time in seconds. Used to measure how long the tests took to run.
+type Time = Double
+
 -- | A test result
 data Result = Result
   { resultOutcome :: Outcome
@@ -50,7 +53,7 @@ data Result = Result
     --
     -- For a failed test, 'resultDescription' should typically provide more
     -- information about the failure.
-  , resultTime :: Double
+  , resultTime :: Time
     -- ^ How long it took to run the test, in seconds.
   }
 
