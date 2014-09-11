@@ -93,12 +93,6 @@ console runner.
 
 [tasty]: http://hackage.haskell.org/package/tasty
 
-By default the console runner produces colorful output (when output goes to the
-terminal), hence the dependency on `ansi-terminal`. But it is also possible to
-compile the `tasty` package with the `-f-colors` cabal flag, in which case the
-colorful output will be disabled and the extra dependency dropped. This may be
-useful for CI systems.
-
 In order to create a test suite, you also need to install one or more «providers» (see
 below).
 
