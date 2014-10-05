@@ -47,7 +47,6 @@ import Data.Typeable
 import Data.Tagged
 
 import Options.Applicative
-import Options.Applicative.Types (ReadM(..))
 
 data Token = SlashToken
            | WildcardToken
@@ -90,7 +89,7 @@ instance IsOption TestPattern where
   optionName = return "pattern"
   optionHelp = return "Select only tests that match pattern"
   optionCLParser =
-    option (ReadM . Right . parseTestPattern)
+    option (fmap parseTestPattern str)
       (  short 'p'
       <> long (untag (optionName :: Tagged TestPattern String))
       <> help (untag (optionHelp :: Tagged TestPattern String))
