@@ -14,7 +14,6 @@ import Data.Proxy
 import Data.Tagged
 import Data.Fixed
 import Options.Applicative
-import Options.Applicative.Types (ReadM(..))
 
 import Test.Tasty.Options
 import Test.Tasty.Patterns
@@ -34,17 +33,15 @@ instance IsOption NumThreads where
   optionName = return "num-threads"
   optionHelp = return "Number of threads to use for tests execution"
   optionCLParser =
-    nullOption parse
+    option parse
       (  short 'j'
       <> long name
       <> help (untag (optionHelp :: Tagged NumThreads String))
       )
     where
       name = untag (optionName :: Tagged NumThreads String)
-      parse =
-        ReadM .
-        maybe (Left (ErrorMsg $ "Could not parse " ++ name)) Right .
-        parseValue
+      parse = str >>=
+        maybe (readerError $ "Could not parse " ++ name) pure <$> parseValue
 
 -- | Timeout to be applied to individual tests
 data Timeout
@@ -64,17 +61,15 @@ instance IsOption Timeout where
   optionName = return "timeout"
   optionHelp = return "Timeout for individual tests (suffixes: ms,s,m,h; default: s)"
   optionCLParser =
-    nullOption parse
+    option parse
       (  short 't'
       <> long name
       <> help (untag (optionHelp :: Tagged Timeout String))
       )
     where
       name = untag (optionName :: Tagged Timeout String)
-      parse =
-        ReadM .
-        maybe (Left (ErrorMsg $ "Could not parse " ++ name)) Right .
-        parseValue
+      parse = str >>=
+        maybe (readerError $ "Could not parse " ++ name) pure <$> parseValue
 
 parseTimeout :: String -> Maybe Integer
 parseTimeout str =

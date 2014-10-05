@@ -29,7 +29,6 @@ import Data.Tagged
 import Data.Typeable
 import Data.Foldable (foldMap)
 import Options.Applicative
-import Options.Applicative.Types (ReadM(..))
 import System.IO
 import System.Console.ANSI
 
@@ -366,10 +365,8 @@ instance IsOption UseColor where
       )
     where
       name = untag (optionName :: Tagged UseColor String)
-      parse =
-        ReadM .
-        maybe (Left (ErrorMsg $ "Could not parse " ++ name)) Right .
-        parseValue
+      parse = str >>=
+        maybe (readerError $ "Could not parse " ++ name) pure <$> parseValue
 
 -- | @useColor when isTerm@ decides if colors should be used,
 --   where @isTerm@ denotes where @stdout@ is a terminal device.
