@@ -4,6 +4,11 @@ Changes
 This is the common changelog for the packages `tasty`, `tasty-smallcheck`,
 `tasty-quickcheck` and `tasty-hunit`.
 
+Version 0.10.0.1
+----------------
+
+Update to optparse-applicative 0.11
+
 Version 0.10
 ------------
 
