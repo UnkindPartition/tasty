@@ -48,6 +48,10 @@ newtype QuickCheckTests = QuickCheckTests Int
 newtype QuickCheckReplay = QuickCheckReplay (Maybe (QCGen, Int))
   deriving (Typeable)
 
+-- | If a test case fails unexpectedly, show the replay token
+newtype QuickCheckShowReplay = QuickCheckShowReplay Bool
+  deriving (Typeable)
+
 -- | Size of the biggest test cases
 newtype QuickCheckMaxSize = QuickCheckMaxSize Int
   deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
@@ -71,6 +75,12 @@ instance IsOption QuickCheckReplay where
   optionName = return "quickcheck-replay"
   optionHelp = return "Replay token to use for replaying a previous test run"
 
+instance IsOption QuickCheckShowReplay where
+  defaultValue = QuickCheckShowReplay True
+  parseValue = fmap QuickCheckShowReplay . safeRead
+  optionName = return "quickcheck-show-replay"
+  optionHelp = return "Show a replay token for replaying tests"
+
 instance IsOption QuickCheckMaxSize where
   defaultValue = fromIntegral $ QC.maxSize QC.stdArgs
   parseValue = fmap QuickCheckMaxSize . safeRead
@@ -87,23 +97,25 @@ instance IsTest QC where
   testOptions = return
     [ Option (Proxy :: Proxy QuickCheckTests)
     , Option (Proxy :: Proxy QuickCheckReplay)
+    , Option (Proxy :: Proxy QuickCheckShowReplay)
     , Option (Proxy :: Proxy QuickCheckMaxSize)
     , Option (Proxy :: Proxy QuickCheckMaxRatio)
     ]
 
   run opts (QC prop) yieldProgress = do
     let
-      QuickCheckTests    nTests   = lookupOption opts
-      QuickCheckReplay   replay   = lookupOption opts
-      QuickCheckMaxSize  maxSize  = lookupOption opts
-      QuickCheckMaxRatio maxRatio = lookupOption opts
+      QuickCheckTests      nTests     = lookupOption opts
+      QuickCheckReplay     replay     = lookupOption opts
+      QuickCheckShowReplay showReplay = lookupOption opts
+      QuickCheckMaxSize    maxSize    = lookupOption opts
+      QuickCheckMaxRatio   maxRatio   = lookupOption opts
       args = QC.stdArgs { QC.chatty = False, QC.maxSuccess = nTests, QC.maxSize = maxSize, QC.replay = replay, QC.maxDiscardRatio = maxRatio}
     -- TODO yield progress
     r <- QC.quickCheckWithResult args prop
 
     return $
       (if successful r then testPassed else testFailed)
-      (if unexpected r
+      (if unexpected r && showReplay
          then QC.output r ++ reproduceMsg r
          else QC.output r
       )
