@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.9.0.1
+---------------
+
+Split the changelog out of the main tasty changelog
+
 Version 0.9
 -----------
 

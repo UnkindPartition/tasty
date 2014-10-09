@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.10.0.2
+----------------
+
+Split the changelog into per-project changelogs
+
 Version 0.10.0.1
 ----------------
 
