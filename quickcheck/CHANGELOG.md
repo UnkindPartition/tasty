@@ -1,6 +1,12 @@
 Changes
 =======
 
+Version 0.8.2
+-------------
+
+* Allow suppressing the --quickcheck-replay hint
+* Split the changelog out of the main tasty changelog
+
 Version 0.8.1
 -------------
 
