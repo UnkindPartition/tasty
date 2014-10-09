@@ -14,7 +14,7 @@ homepage:            http://documentup.com/feuerbach/tasty
 bug-reports:         https://github.com/feuerbach/tasty/issues
 category:            Testing
 build-type:          Simple
-extra-source-files:  CHANGELOG
+extra-source-files:  CHANGELOG.md
 cabal-version:       >=1.10
 
 Source-repository head

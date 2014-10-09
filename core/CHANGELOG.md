@@ -1,9 +1,6 @@
 Changes
 =======
 
-This is the common changelog for the packages `tasty`, `tasty-smallcheck`,
-`tasty-quickcheck` and `tasty-hunit`.
-
 Version 0.10.0.1
 ----------------
 
@@ -24,21 +21,6 @@ Version 0.9.0.1
 
 Upgrade to optparse-applicative-0.10.
 
-Version 0.9
------------
-
-tasty-hunit now does not depend on the original HUnit package. The functions
-that were previously re-exported from HUnit have been simply copied to
-tasty-hunit.
-
-This is motivated by:
-
-* efficiency (one less package to compile/install)
-* reliability (if something happens with HUnit, we won't be affected)
-
-The two packages are still compatible, except for the name clashes and
-distinct exception types being thrown on assertion failures.
-
 Version 0.8.1.3
 ---------------
 
@@ -55,30 +37,15 @@ Version 0.8.1.1
 
 Fix for GHC 7.9
 
-Version 0.8.1
--------------
-
-Re-export `Gen` from `Test.Tasty.QuickCheck`
-
 Version 0.8.0.4
 ---------------
 
 Remove the old 'colors' flag description from the cabal file
 
-Version 0.8.0.3
----------------
-
-tasty-quickcheck: upgrade to QuickCheck 2.7
-
 Version 0.8.0.2
 ---------------
 
 Make ansi-terminal an unconditional dependency
-
-Version 0.8.0.1
----------------
-
-tasty-hunit: fix unbuildable haddock
 
 Version 0.8
 -----------
@@ -94,7 +61,6 @@ Version 0.8
 * Add «hide successes» mode (see README)
 * Add short command-line options: `-j` for `--num-threads`, `-p` for `--pattern`
 * Add timeout support
-* hunit: exceptions are now handled by tasty rather than by HUnit
 * `AppMonoid` is renamed to `Traversal` for consistency with the 'reducers'
   package. Another similar wrapper, `Ap`, is introduced.
 * Fix a resources bug (resources were not released if the test suite was
@@ -160,11 +126,6 @@ Version 0.4.1.1
 
 Print the failure description in red
 
-Version 0.4.1
--------------
-
-tasty-hunit: do not re-export HUnit's `Testable` class
-
 Version 0.4.0.1
 ---------------
 
@@ -202,22 +163,18 @@ Version 0.3.1
 
 * Proper reporting of (some) non-terminating tests (#15)
 * Upgrade to optparse-applicative 0.6
-* QuickCheck: use the original QuickCheck's output format
 
 Version 0.3
 -----------
 
 * Restrict dependency versions
 * Fix a bug where non-terminating test would lead to a deadlock (#15)
-* QuickCheck: add options for maximum size and maximum ratio; support replay.
 
 Version 0.2
 -----------
 
 * Add an `execRunner` function
 * Make `Runner` return `IO Bool`
-* Re-export useful bits of `Test.QuickCheck` from `Test.Tasty.QuickCheck` (and the
-  same for SmallCheck and HUnit)
 
 Version 0.1.1
 -------------
