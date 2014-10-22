@@ -18,7 +18,9 @@ Features:
 
 [![Build Status](https://travis-ci.org/feuerbach/tasty.png?branch=master)](https://travis-ci.org/feuerbach/tasty)
 
-To find out what's new, read the **[change log](https://github.com/feuerbach/tasty/blob/master/CHANGES.md)**.
+To find out what's new, read the **[change log][]**.
+
+[change log]: https://github.com/feuerbach/tasty/blob/master/core/CHANGELOG.md
 
 Ask any tasty-related questions on the **[mailing list][]** or IRC channel
 **#tasty** at FreeNode ([logs & stats][ircbrowse]).
