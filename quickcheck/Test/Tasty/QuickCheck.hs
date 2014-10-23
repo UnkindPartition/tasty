@@ -115,10 +115,8 @@ instance IsTest QC where
 
     return $
       (if successful r then testPassed else testFailed)
-      (if isFailure r && showReplay
-         then QC.output r ++ reproduceMsg r
-         else QC.output r
-      )
+      (QC.output r ++
+        (if showReplay then reproduceMsg r else ""))
 
 successful :: QC.Result -> Bool
 successful r =
@@ -126,21 +124,9 @@ successful r =
     QC.Success {} -> True
     _ -> False
 
-unexpected :: QC.Result -> Bool
-unexpected r =
-  case r of
-    QC.Failure {} -> True
-    QC.NoExpectedFailure {} -> True
-    _ -> False
-
-isFailure :: QC.Result -> Bool
-isFailure r =
-  case r of
-    QC.Failure {} -> True
-    _ -> False
-
+-- | If the result is a failure, produce a message that explains how to
+-- reproduce it. If the result is not a failure, return an empty string.
 reproduceMsg :: QC.Result -> String
-reproduceMsg r =
-  printf "Use --quickcheck-replay '%d %s' to reproduce."
-    (QC.usedSize r)
-    (show $ QC.usedSeed r)
+reproduceMsg QC.Failure { QC.usedSize = size, QC.usedSeed = seed } =
+  printf "Use --quickcheck-replay '%d %s' to reproduce." size (show seed)
+reproduceMsg _ = ""
