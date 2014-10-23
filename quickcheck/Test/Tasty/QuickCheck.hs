@@ -4,6 +4,7 @@ module Test.Tasty.QuickCheck
   ( testProperty
   , QuickCheckTests(..)
   , QuickCheckReplay(..)
+  , QuickCheckShowReplay(..)
   , QuickCheckMaxSize(..)
   , QuickCheckMaxRatio(..)
   , module Test.QuickCheck
