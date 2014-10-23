@@ -78,10 +78,11 @@ executeTest
     -- a parameter
   -> TVar Status -- ^ variable to write status to
   -> Timeout -- ^ optional timeout to apply
+  -> SoftTimeout -- ^ optional soft timeout to apply
   -> Seq.Seq Initializer -- ^ initializers (to be executed in this order)
   -> Seq.Seq Finalizer -- ^ finalizers (to be executed in this order)
   -> IO ()
-executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
+executeTest action statusVar timeoutOpt stimeoutOpt inits fins = mask $ \restore -> do
   resultOrExn <- try $ restore $ do
     -- N.B. this can (re-)throw an exception. It's okay. By design, the
     -- actual test will not be run, then. We still run all the
@@ -95,7 +96,7 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
     -- If all initializers ran successfully, actually run the test.
     -- We run it in a separate thread, so that the test's exception
     -- handler doesn't interfere with our timeout.
-    withAsync (action yieldProgress) $ \asy -> do
+    withAsync (applySoftTimeout stimeoutOpt $ action yieldProgress) $ \asy -> do
       labelThread (asyncThreadId asy) "tasty_test_execution_thread"
       timed $ applyTimeout timeoutOpt $ wait asy
 
@@ -130,6 +131,9 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
             FailedToCreate exn -> return $ throwIO exn
             _ -> return $ throwIO $
               unexpectedState "initResources" resStatus
+
+    applySoftTimeout :: SoftTimeout -> IO Result -> IO Result
+    applySoftTimeout (SoftTimeout to) = applyTimeout to
 
     applyTimeout :: Timeout -> IO Result -> IO Result
     applyTimeout NoTimeout a = a
@@ -214,7 +218,7 @@ createTestActions opts tree = do
       statusVar <- liftIO $ atomically $ newTVar NotStarted
       let
         act (inits, fins) =
-          executeTest (run opts test) statusVar (lookupOption opts) inits fins
+          executeTest (run opts test) statusVar (lookupOption opts) (lookupOption opts) inits fins
       tell ([(act, statusVar)], mempty)
     addInitAndRelease (ResourceSpec doInit doRelease) a = wrap $ do
       initVar <- atomically $ newTVar NotCreated

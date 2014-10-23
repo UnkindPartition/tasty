@@ -24,7 +24,9 @@ module Test.Tasty
   , askOption
   -- ** Standard options
   , Timeout(..)
+  , SoftTimeout(..)
   , mkTimeout
+  , mkSoftTimeout
   -- * Resources
   -- | Sometimes several tests need to access the same resource — say,
   -- a file or a socket. We want to create or grab the resource before
