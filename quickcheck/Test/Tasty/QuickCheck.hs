@@ -111,7 +111,6 @@ instance IsTest QC where
       QuickCheckMaxSize    maxSize    = lookupOption opts
       QuickCheckMaxRatio   maxRatio   = lookupOption opts
       args = QC.stdArgs { QC.chatty = False, QC.maxSuccess = nTests, QC.maxSize = maxSize, QC.replay = replay, QC.maxDiscardRatio = maxRatio}
-    -- TODO yield progress
     r <- QC.quickCheckWithResult args prop
 
     return $
