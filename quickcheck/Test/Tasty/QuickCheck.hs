@@ -116,7 +116,7 @@ instance IsTest QC where
 
     return $
       (if successful r then testPassed else testFailed)
-      (if unexpected r && showReplay
+      (if isFailure r && showReplay
          then QC.output r ++ reproduceMsg r
          else QC.output r
       )
@@ -132,6 +132,12 @@ unexpected r =
   case r of
     QC.Failure {} -> True
     QC.NoExpectedFailure {} -> True
+    _ -> False
+
+isFailure :: QC.Result -> Bool
+isFailure r =
+  case r of
+    QC.Failure {} -> True
     _ -> False
 
 reproduceMsg :: QC.Result -> String
