@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.10.0.3
+----------------
+
+Better handle the situation when there are no ingredients to run
+
 Version 0.10.0.2
 ----------------
 
