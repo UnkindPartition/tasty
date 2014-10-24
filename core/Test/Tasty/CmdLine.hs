@@ -12,6 +12,7 @@ import Data.Monoid
 import Data.Proxy
 import Data.Foldable
 import System.Exit
+import System.IO
 
 import Test.Tasty.Core
 import Test.Tasty.Ingredients
@@ -45,9 +46,10 @@ defaultMainWithIngredients ins testTree = do
   let opts = envOpts <> cmdlineOpts
 
   case tryIngredients ins opts testTree of
-    Nothing ->
-      putStrLn
-        "This doesn't taste right. Check your ingredients — did you forget a test reporter?"
+    Nothing -> do
+      hPutStrLn stderr
+        "No ingredients agreed to run. Something is wrong either with your ingredient set or the options."
+      exitFailure
     Just act -> do
       ok <- act
       if ok then exitSuccess else exitFailure
