@@ -1,6 +1,12 @@
 Changes
 =======
 
+Version 0.8.3
+-------------
+
+* Export 'show replay' option
+* Fixed a run-time error when using QuickCheck's `expectFailure`
+
 Version 0.8.2
 -------------
 
