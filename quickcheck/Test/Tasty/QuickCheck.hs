@@ -8,6 +8,11 @@ module Test.Tasty.QuickCheck
   , QuickCheckMaxSize(..)
   , QuickCheckMaxRatio(..)
   , module Test.QuickCheck
+    -- * Internal
+    -- | This is exposed for testing purposes and not considered as a part
+    -- of the public API.
+    -- You probably shouldn't need it.
+  , QC(..)
   ) where
 
 import Test.Tasty.Providers
