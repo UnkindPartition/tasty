@@ -287,7 +287,7 @@ consoleTestReporter =
   \opts tree -> Just $ \smap ->
 
   do
-  isTerm <- hIsTerminalDevice stdout
+  isTerm <- hSupportsANSI stdout
 
   (\k -> if isTerm
     then (do hideCursor; k) `finally` showCursor
