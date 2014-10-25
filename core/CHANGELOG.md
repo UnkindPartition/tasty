@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.10.0.4
+----------------
+
+Don't output ANSI codes for the Emacs terminal emulator
+
 Version 0.10.0.3
 ----------------
 
