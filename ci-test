@@ -12,7 +12,7 @@ cabal-1.18 update
 for i in core hunit quickcheck smallcheck core-tests
 do
   cd $i
-  cabal-1.18 install
+  cabal-1.18 install --enable-tests
   cd ..
 done
 
