@@ -44,6 +44,8 @@ module Test.Tasty.Runners
   , coreOptions
     -- ** Patterns
   , module Test.Tasty.Patterns
+    -- * Utilities
+  , module Test.Tasty.Runners.Utils
   )
   where
 
@@ -55,3 +57,4 @@ import Test.Tasty.Patterns
 import Test.Tasty.CmdLine
 import Test.Tasty.Ingredients.Basic
 import Test.Tasty.Runners.Reducers
+import Test.Tasty.Runners.Utils
