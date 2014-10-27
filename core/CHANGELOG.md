@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.10.1
+--------------
+
+Export `Test.Tasty.Runners.formatMessage`
+
 Version 0.10.0.4
 ----------------
 
