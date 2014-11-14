@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.8.3.1
+---------------
+
+When QC message throws an exception, still print the replay message
+
 Version 0.8.3
 -------------
 
