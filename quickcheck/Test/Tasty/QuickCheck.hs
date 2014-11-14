@@ -18,6 +18,7 @@ module Test.Tasty.QuickCheck
 import Test.Tasty.Providers
 import Test.Tasty.Options
 import qualified Test.QuickCheck as QC
+import Test.Tasty.Runners (formatMessage)
 import Test.QuickCheck hiding -- for re-export
   ( quickCheck
   , Args(..)
@@ -118,9 +119,15 @@ instance IsTest QC where
       args = QC.stdArgs { QC.chatty = False, QC.maxSuccess = nTests, QC.maxSize = maxSize, QC.replay = replay, QC.maxDiscardRatio = maxRatio}
     r <- QC.quickCheckWithResult args prop
 
+    qcOutput <- formatMessage $ QC.output r
+    let qcOutputNl =
+          if "\n" `isSuffixOf` qcOutput
+            then qcOutput
+            else qcOutput ++ "\n"
+
     return $
       (if successful r then testPassed else testFailed)
-      (QC.output r ++
+      (qcOutputNl ++
         (if showReplay then reproduceMsg r else ""))
 
 successful :: QC.Result -> Bool
