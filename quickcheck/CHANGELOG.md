@@ -1,6 +1,12 @@
 Changes
 =======
 
+Version 0.8.3.2
+---------------
+
+* Put correct lower version bound on tasty
+* Allow use of older QuickCheck for HP compatibility
+
 Version 0.8.3.1
 ---------------
 
