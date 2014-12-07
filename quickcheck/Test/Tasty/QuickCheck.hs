@@ -1,5 +1,5 @@
 -- | This module allows to use QuickCheck properties in tasty.
-{-# LANGUAGE GeneralizedNewtypeDeriving, DeriveDataTypeable #-}
+{-# LANGUAGE CPP, GeneralizedNewtypeDeriving, DeriveDataTypeable #-}
 module Test.Tasty.QuickCheck
   ( testProperty
   , QuickCheckTests(..)
@@ -33,12 +33,18 @@ import Test.QuickCheck hiding -- for re-export
   , verboseCheckResult
   , verbose
   )
-import Test.QuickCheck.Random (QCGen)
+
 import Data.Typeable
 import Data.Proxy
 import Data.List
 import Text.Printf
 import Control.Applicative
+
+#if MIN_VERSION_QuickCheck(2,7,0)
+import Test.QuickCheck.Random (QCGen)
+#else
+import System.Random (StdGen)
+#endif
 
 newtype QC = QC QC.Property
   deriving Typeable
@@ -52,7 +58,11 @@ newtype QuickCheckTests = QuickCheckTests Int
   deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
 
 -- | Replay a previous test using a replay token
+#if MIN_VERSION_QuickCheck(2,7,0)
 newtype QuickCheckReplay = QuickCheckReplay (Maybe (QCGen, Int))
+#else
+newtype QuickCheckReplay = QuickCheckReplay (Maybe (StdGen, Int))
+#endif
   deriving (Typeable)
 
 -- | If a test case fails unexpectedly, show the replay token
