@@ -2,12 +2,14 @@
 {-# LANGUAGE TypeFamilies, DeriveDataTypeable #-}
 module Test.Tasty.HUnit
   ( testCase
+  , testCaseSteps
   , module Test.Tasty.HUnit.Orig
   ) where
 
 import Test.Tasty.Providers
 
 import Test.Tasty.HUnit.Orig
+import Test.Tasty.HUnit.Steps
 
 import Data.Typeable
 import Control.Exception

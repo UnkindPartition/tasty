@@ -25,6 +25,7 @@ Source-repository head
 library
   exposed-modules:     Test.Tasty.HUnit
   other-modules:       Test.Tasty.HUnit.Orig
+                       Test.Tasty.HUnit.Steps
   other-extensions:    TypeFamilies, DeriveDataTypeable
   build-depends:       base ==4.*, tasty >= 0.8
   -- hs-source-dirs:      
