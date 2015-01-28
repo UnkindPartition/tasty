@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.9.1
+-------------
+
+Add `testCaseSteps` for multi-step tests
+
 Version 0.9.0.1
 ---------------
 
