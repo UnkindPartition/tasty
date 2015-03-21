@@ -9,6 +9,7 @@ module Test.Tasty.Options.Core
   )
   where
 
+import Control.Monad (mfilter)
 import Data.Typeable
 import Data.Proxy
 import Data.Tagged
@@ -29,7 +30,7 @@ newtype NumThreads = NumThreads { getNumThreads :: Int }
   deriving (Eq, Ord, Num, Typeable)
 instance IsOption NumThreads where
   defaultValue = 1
-  parseValue = fmap NumThreads . safeRead
+  parseValue = mfilter onlyPositive . fmap NumThreads . safeRead
   optionName = return "num-threads"
   optionHelp = return "Number of threads to use for tests execution"
   optionCLParser =
@@ -42,6 +43,10 @@ instance IsOption NumThreads where
       name = untag (optionName :: Tagged NumThreads String)
       parse = str >>=
         maybe (readerError $ "Could not parse " ++ name) pure <$> parseValue
+
+-- | Filtering function to prevent non-positive number of threads
+onlyPositive :: NumThreads -> Bool
+onlyPositive (NumThreads x) = x > 0
 
 -- | Timeout to be applied to individual tests
 data Timeout
