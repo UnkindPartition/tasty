@@ -15,6 +15,7 @@ import Data.Proxy
 import Data.Tagged
 import Data.Fixed
 import Options.Applicative
+import GHC.Conc
 
 import Test.Tasty.Options
 import Test.Tasty.Patterns
@@ -29,7 +30,7 @@ import Test.Tasty.Patterns
 newtype NumThreads = NumThreads { getNumThreads :: Int }
   deriving (Eq, Ord, Num, Typeable)
 instance IsOption NumThreads where
-  defaultValue = 1
+  defaultValue = NumThreads numCapabilities
   parseValue = mfilter onlyPositive . fmap NumThreads . safeRead
   optionName = return "num-threads"
   optionHelp = return "Number of threads to use for tests execution"
