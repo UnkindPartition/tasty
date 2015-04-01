@@ -253,7 +253,7 @@ In order to run tests in parallel, you have to do the following:
 
 * Compile (or, more precisely, *link*) your test program with the `-threaded`
   flag;
-* Launch the program with `-j 4 +RTS -N4 -RTS` (to use 4 threads).
+* Launch the program with `+RTS -N -RTS`.
 
 ### Timeout
 
