@@ -68,9 +68,10 @@ produceOutput opts tree =
       level <- ask
 
       let
-        printTestName =
+        printTestName = do
           printf "%s%s: %s" (indent level) name
             (replicate (alignment - indentSize * level - length name) ' ')
+          hFlush stdout
 
         printTestResult result = do
           rDesc <- formatMessage $ resultDescription result
@@ -293,7 +294,7 @@ consoleTestReporter =
     then (do hideCursor; k) `finally` showCursor
     else k) $ do
 
-      hSetBuffering stdout NoBuffering
+      hSetBuffering stdout LineBuffering
 
       let
         whenColor = lookupOption opts
