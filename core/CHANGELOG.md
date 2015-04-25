@@ -1,6 +1,13 @@
 Changes
 =======
 
+Version 0.10.1.1
+----------------
+
+* Prevent parsing non-positive number of threads via program options (#104)
+* Buffer output to avoid slowdowns when printing test results (#101)
+* Default to using the maximum number of available cores for test execution
+
 Version 0.10.1
 --------------
 
