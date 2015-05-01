@@ -45,14 +45,20 @@ import Test.Tasty.Options.Core
 -- That's all you need to know from an (advanced) user perspective. Read
 -- on if you want to create a new ingredient.
 --
--- There are two kinds of ingredients. 'TestReporter', if it agrees to run,
--- automatically launches tests execution.
+-- There are two kinds of ingredients.
+--
+-- The first kind is 'TestReporter'. If the ingredient that agrees to run
+-- is a 'TestReporter', then tasty will automatically launch the tests and
+-- pass a 'StatusMap' to the ingredient. All the ingredient needs to do
+-- then is to process the test results and probably report them to the user
+-- in some way (hence the name).
 --
 -- 'TestManager' is the second kind of ingredient. It is typically used for
 -- test management purposes (such as listing the test names), although it
 -- can also be used for running tests (but, unlike 'TestReporter', it has
--- to launch the tests manually).  It is therefore more general than
--- 'TestReporter'. 'TestReporter' is provided just for convenience.
+-- to launch the tests manually if it wants them to be run).  It is
+-- therefore more general than 'TestReporter'. 'TestReporter' is provided
+-- just for convenience.
 --
 -- The function's result should indicate whether all the tests passed.
 --
