@@ -1,6 +1,12 @@
 Changes
 =======
 
+Version 0.10.1.2
+----------------
+
+* Improve the docs
+* Fix compatibility with GHC HEAD
+
 Version 0.10.1.1
 ----------------
 
