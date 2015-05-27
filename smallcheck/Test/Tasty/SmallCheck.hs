@@ -1,7 +1,7 @@
 -- | This module allows to use SmallCheck properties in tasty.
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FlexibleContexts,
              TypeOperators, DeriveDataTypeable, TypeFamilies,
-             GeneralizedNewtypeDeriving #-}
+             GeneralizedNewtypeDeriving, StandaloneDeriving #-}
 module Test.Tasty.SmallCheck
   ( testProperty
   , SmallCheckDepth(..)
@@ -23,9 +23,23 @@ import Text.Printf
 testProperty :: SC.Testable IO a => TestName -> a -> TestTree
 testProperty name prop = singleTest name $ (SC.test prop :: SC.Property IO)
 
+-- | Create a 'Test' for a Smallcheck using custom monad stack
+--
+-- > testPropertyM "test" $ MonadicProperty $ \depth hook -> 
+-- >   runMonad $ smallCheckWithHook depth hook $ property
+testPropertyM :: TestName -> MonadicProperty -> TestTree
+testPropertyM name prop = singleTest name prop
+
 -- | The \"depth\" parameter for SmallCheck
 newtype SmallCheckDepth = SmallCheckDepth Int
   deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+
+-- | Wrapper for a monadic test
+--
+-- current depth and default hook are supplied by tasty-smallcheck.
+newtype MonadicProperty = MonadicProperty
+  (Depth -> (TestQuality -> IO ()) -> IO (Maybe PropertyFailure))
+  deriving (Typeable)
 
 instance IsOption SmallCheckDepth where
   defaultValue = 5
@@ -33,10 +47,8 @@ instance IsOption SmallCheckDepth where
   optionName = return "smallcheck-depth"
   optionHelp = return "Depth to use for smallcheck tests"
 
-instance IsTest (SC.Property IO) where
-  testOptions = return [Option (Proxy :: Proxy SmallCheckDepth)]
 
-  run opts prop yieldProgress = do
+defaultRun opts action yieldProgress = do
     let
       SmallCheckDepth depth = lookupOption opts
 
@@ -58,7 +70,7 @@ instance IsTest (SC.Property IO) where
           , progressPercent = 0 -- we don't know the total number of tests
           }
 
-    scResult <- smallCheckWithHook depth hook prop
+    scResult <- action depth hook
 
     (total, bad) <- readIORef counter
     let
@@ -72,6 +84,31 @@ instance IsTest (SC.Property IO) where
       case scResult of
         Nothing -> testPassed desc
         Just f ->  testFailed $ ppFailure f
+
+
+instance IsTest (MonadicProperty) where
+  testOptions = return [Option (Proxy :: Proxy SmallCheckDepth)]
+
+  run opts (MonadicProperty prop) yieldProgress = do
+    defaultRun opts prop yieldProgress
+
+instance IsTest (SC.Property IO) where
+  testOptions = return [Option (Proxy :: Proxy SmallCheckDepth)]
+
+  run opts prop yieldProgress = do
+    defaultRun opts (\d h -> smallCheckWithHook d h prop) yieldProgress
+
+instance IsTest (Maybe SC.PropertyFailure) where
+   testOptions = return []
+
+   run opts scResult yeildProgress = do
+     return $
+       case scResult of
+         Nothing -> testPassed "??"
+	 Just f  -> testFailed $ ppFailure f 
+
+
+deriving instance Typeable SC.PropertyFailure
 
 -- Copied from base to stay compatible with GHC 7.4.
 myAtomicModifyIORef' :: IORef a -> (a -> (a,b)) -> IO b
