@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.11
+------------
+
+New field `resultShortDescription` of `Result`
+
 Version 0.10.1.2
 ----------------
 
