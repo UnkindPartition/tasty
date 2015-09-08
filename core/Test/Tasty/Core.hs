@@ -53,6 +53,9 @@ data Result = Result
     --
     -- For a failed test, 'resultDescription' should typically provide more
     -- information about the failure.
+  , resultShortDescription :: String
+    -- ^ The short description printed in the test run summary, usually @OK@ or
+    -- @FAIL@.
   , resultTime :: Time
     -- ^ How long it took to run the test, in seconds.
   }
@@ -69,6 +72,7 @@ exceptionResult :: SomeException -> Result
 exceptionResult e = Result
   { resultOutcome = Failure $ TestThrewException e
   , resultDescription = "Exception: " ++ show e
+  , resultShortDescription = "FAIL"
   , resultTime = 0
   }
 

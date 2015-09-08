@@ -83,9 +83,7 @@ produceOutput opts tree =
                 then ok
                 else fail
             time = resultTime result
-          if resultSuccessful result
-            then printFn "OK"
-            else printFn "FAIL"
+          printFn (resultShortDescription result)
           -- print time only if it's significant
           when (time >= 0.01) $
             printFn (printf " (%.2fs)" time)
