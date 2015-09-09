@@ -4,7 +4,9 @@
 module Test.Tasty.Options.Core
   ( NumThreads(..)
   , Timeout(..)
+  , SoftTimeout(..)
   , mkTimeout
+  , mkSoftTimeout
   , coreOptions
   )
   where
@@ -77,6 +79,28 @@ instance IsOption Timeout where
       parse = str >>=
         maybe (readerError $ "Could not parse " ++ name) pure <$> parseValue
 
+newtype SoftTimeout = SoftTimeout Timeout
+  deriving (Show, Typeable)
+
+instance IsOption SoftTimeout where
+  defaultValue = SoftTimeout $ NoTimeout
+  parseValue str =
+    SoftTimeout <$>
+    (Timeout
+      <$> parseTimeout str
+      <*> pure str)
+  optionName = return "soft-timeout"
+  optionHelp = return "Soft timeout for individual tests (suffixes: ms,s,m,h; default: s)"
+  optionCLParser =
+    option parse
+      (  long name
+      <> help (untag (optionHelp :: Tagged SoftTimeout String))
+      )
+    where
+      name = untag (optionName :: Tagged SoftTimeout String)
+      parse = str >>=
+        maybe (readerError $ "Could not parse " ++ name) pure <$> parseValue
+
 parseTimeout :: String -> Maybe Integer
 parseTimeout str =
   -- it sucks that there's no more direct way to convert to a number of
@@ -100,12 +124,19 @@ mkTimeout
 mkTimeout n =
   Timeout n $
     showFixed True (fromInteger n / (10^6) :: Micro) ++ "s"
+--
+-- | A shortcut for creating 'SoftTimeout' values
+mkSoftTimeout
+  :: Integer -- ^ microseconds
+  -> SoftTimeout
+mkSoftTimeout = SoftTimeout . mkTimeout
 
 -- | The list of all core options, i.e. the options not specific to any
 -- provider or ingredient, but to tasty itself. Currently contains
--- 'TestPattern' and 'Timeout'.
+-- 'TestPattern', 'Timeout' and SoftTimeout.
 coreOptions :: [OptionDescription]
 coreOptions =
   [ Option (Proxy :: Proxy TestPattern)
   , Option (Proxy :: Proxy Timeout)
+  , Option (Proxy :: Proxy SoftTimeout)
   ]

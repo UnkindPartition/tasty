@@ -270,6 +270,10 @@ Example:
 
 sets a 30 seconds timeout for each individual test.
 
+The `--soft-timeout` applies a timeout, but gives the test runner the option to
+intercept the timeout. Best used in conjunction with a slightly larger
+`--timeout` value.
+
 ### Options controlling console output
 
 The following options control behavior of the standard console interface:
