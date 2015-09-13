@@ -11,7 +11,6 @@ import qualified Data.IntMap as IntMap
 import qualified Data.Sequence as Seq
 import qualified Data.Foldable as F
 import Data.Maybe
-import Data.Time.Clock.POSIX
 import Control.Monad.State
 import Control.Monad.Writer
 import Control.Monad.Reader
@@ -22,6 +21,7 @@ import Control.Exception as E
 import Control.Applicative
 import Control.Arrow
 import GHC.Conc (labelThread)
+import qualified System.Clock as Clock
 
 import Test.Tasty.Core
 import Test.Tasty.Parallel
@@ -296,6 +296,12 @@ timed t = do
   end   <- getTime
   return (end-start, r)
 
--- | Get system time
+-- | Get monotonic time
+--
+-- Warning: This is not the system time, but a monotonically increasing time
+-- that facilitates reliable measurement of time differences.
 getTime :: IO Time
-getTime = realToFrac <$> getPOSIXTime
+getTime = do
+  t <- Clock.getTime Clock.Monotonic
+  let ns = realToFrac $ Clock.timeSpecAsNanoSecs t
+  return $ ns / 10^9

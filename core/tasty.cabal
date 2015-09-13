@@ -59,7 +59,7 @@ library
     unbounded-delays >= 0.1,
     async >= 2.0,
     ansi-terminal >= 0.6.2,
-    time >= 1.4
+    clock >= 0.4.4.0
 
   if impl(ghc < 7.6)
     -- for GHC.Generics
