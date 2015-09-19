@@ -7,6 +7,7 @@ module Test.Tasty.QuickCheck
   , QuickCheckShowReplay(..)
   , QuickCheckMaxSize(..)
   , QuickCheckMaxRatio(..)
+  , QuickCheckVerbose(..)
   , module Test.QuickCheck
     -- * Internal
     -- | This is exposed for testing purposes and not considered as a part
@@ -77,6 +78,10 @@ newtype QuickCheckMaxSize = QuickCheckMaxSize Int
 newtype QuickCheckMaxRatio = QuickCheckMaxRatio Int
   deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
 
+-- | Show the test cases that QuickCheck generates
+newtype QuickCheckVerbose = QuickCheckVerbose Bool
+  deriving (Typeable)
+
 instance IsOption QuickCheckTests where
   defaultValue = 100
   parseValue = fmap QuickCheckTests . safeRead
@@ -110,6 +115,12 @@ instance IsOption QuickCheckMaxRatio where
   optionName = return "quickcheck-max-ratio"
   optionHelp = return "Maximum number of discared tests per successful test before giving up"
 
+instance IsOption QuickCheckVerbose where
+  defaultValue = QuickCheckVerbose False
+  parseValue = fmap QuickCheckVerbose . safeRead
+  optionName = return "quickcheck-verbose"
+  optionHelp = return "Show the generated test cases"
+
 instance IsTest QC where
   testOptions = return
     [ Option (Proxy :: Proxy QuickCheckTests)
@@ -117,6 +128,7 @@ instance IsTest QC where
     , Option (Proxy :: Proxy QuickCheckShowReplay)
     , Option (Proxy :: Proxy QuickCheckMaxSize)
     , Option (Proxy :: Proxy QuickCheckMaxRatio)
+    , Option (Proxy :: Proxy QuickCheckVerbose)
     ]
 
   run opts (QC prop) yieldProgress = do
@@ -126,8 +138,12 @@ instance IsTest QC where
       QuickCheckShowReplay showReplay = lookupOption opts
       QuickCheckMaxSize    maxSize    = lookupOption opts
       QuickCheckMaxRatio   maxRatio   = lookupOption opts
+      QuickCheckVerbose    verbose    = lookupOption opts
       args = QC.stdArgs { QC.chatty = False, QC.maxSuccess = nTests, QC.maxSize = maxSize, QC.replay = replay, QC.maxDiscardRatio = maxRatio}
-    r <- QC.quickCheckWithResult args prop
+      testRunner = if verbose
+                     then QC.verboseCheckWithResult
+                     else QC.quickCheckWithResult
+    r <- testRunner args prop
 
     qcOutput <- formatMessage $ QC.output r
     let qcOutputNl =
