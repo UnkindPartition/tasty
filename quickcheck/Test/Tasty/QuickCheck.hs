@@ -120,6 +120,7 @@ instance IsOption QuickCheckVerbose where
   parseValue = fmap QuickCheckVerbose . safeRead
   optionName = return "quickcheck-verbose"
   optionHelp = return "Show the generated test cases"
+  optionCLParser = flagCLParser Nothing (QuickCheckVerbose True)
 
 instance IsTest QC where
   testOptions = return
