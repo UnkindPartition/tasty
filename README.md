@@ -174,27 +174,36 @@ your test suite with the `--help` flag. The output will look something like this
 % ./test --help
 Mmm... tasty test suite
 
-Usage: ex [-p|--pattern ARG] [-l|--list-tests] [-j|--num-threads ARG]
-          [-q|--quiet] [--hide-successes] [--smallcheck-depth ARG]
-          [--quickcheck-tests ARG] [--quickcheck-replay ARG]
-          [--quickcheck-max-size ARG] [--quickcheck-max-ratio ARG]
+Usage: test [-p|--pattern ARG] [-t|--timeout ARG] [-l|--list-tests]
+            [-j|--num-threads ARG] [-q|--quiet] [--hide-successes] [--color ARG]
+            [--quickcheck-tests ARG] [--quickcheck-replay ARG]
+            [--quickcheck-show-replay ARG] [--quickcheck-max-size ARG]
+            [--quickcheck-max-ratio ARG] [--quickcheck-verbose]
+            [--smallcheck-depth ARG]
 
 Available options:
   -h,--help                Show this help text
   -p,--pattern ARG         Select only tests that match pattern
+  -t,--timeout ARG         Timeout for individual tests (suffixes: ms,s,m,h;
+                           default: s)
   -l,--list-tests          Do not run the tests; just print their names
   -j,--num-threads ARG     Number of threads to use for tests execution
   -q,--quiet               Do not produce any output; indicate success only by
                            the exit code
   --hide-successes         Do not print tests that passed successfully
-  --smallcheck-depth ARG   Depth to use for smallcheck tests
+  --color ARG              When to use colored output. Options are 'never',
+                           'always' and 'auto' (default: 'auto')
   --quickcheck-tests ARG   Number of test cases for QuickCheck to generate
   --quickcheck-replay ARG  Replay token to use for replaying a previous test run
+  --quickcheck-show-replay ARG
+                           Show a replay token for replaying tests
   --quickcheck-max-size ARG
                            Size of the biggest test cases quickcheck generates
   --quickcheck-max-ratio ARG
                            Maximum number of discared tests per successful test
                            before giving up
+  --quickcheck-verbose     Show the generated test cases
+  --smallcheck-depth ARG   Depth to use for smallcheck tests
 ```
 
 Every option can be passed via environment. To obtain the environment variable
