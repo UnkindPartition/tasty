@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.11.0.1
+----------------
+
+Use monotonic clock when measuring durations.
+
 Version 0.11
 ------------
 
