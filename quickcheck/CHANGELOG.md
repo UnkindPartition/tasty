@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.8.4
+-------------
+
+Add a "--quickcheck-verbose" option
+
 Version 0.8.3.2
 ---------------
 
