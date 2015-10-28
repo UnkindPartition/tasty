@@ -17,6 +17,7 @@ import Data.Fixed
 import Data.Monoid
 import Options.Applicative
 import GHC.Conc
+import Prelude  -- Silence FTP import warnings
 
 import Test.Tasty.Options
 import Test.Tasty.Patterns

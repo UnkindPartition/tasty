@@ -21,6 +21,7 @@ import Control.Exception as E
 import Control.Applicative
 import Control.Arrow
 import GHC.Conc (labelThread)
+import Prelude  -- Silence AMP and FTP import warnings
 import qualified System.Clock as Clock
 
 import Test.Tasty.Core

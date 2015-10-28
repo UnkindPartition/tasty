@@ -29,6 +29,7 @@ import Data.Tagged
 import Data.Proxy
 import Data.Monoid
 import Data.Foldable
+import Prelude  -- Silence FTP import warnings
 
 import Options.Applicative
 
