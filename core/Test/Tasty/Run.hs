@@ -305,4 +305,4 @@ getTime :: IO Time
 getTime = do
   t <- Clock.getTime Clock.Monotonic
   let ns = realToFrac $ Clock.timeSpecAsNanoSecs t
-  return $ ns / 10^9
+  return $ ns / 10 ^ (9 :: Int)
