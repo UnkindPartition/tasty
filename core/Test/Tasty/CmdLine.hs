@@ -11,6 +11,7 @@ import Options.Applicative
 import Data.Monoid
 import Data.Proxy
 import Data.Foldable
+import Prelude  -- Silence AMP and FTP import warnings
 import System.Exit
 import System.IO
 

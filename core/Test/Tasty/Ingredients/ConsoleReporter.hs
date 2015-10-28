@@ -7,7 +7,6 @@ module Test.Tasty.Ingredients.ConsoleReporter
   , HideSuccesses(..)
   ) where
 
-import Prelude hiding (fail)
 import Control.Monad.State hiding (fail)
 import Control.Monad.Reader hiding (fail,reader)
 import Control.Concurrent.STM
@@ -27,8 +26,9 @@ import Data.Monoid
 import Data.Proxy
 import Data.Tagged
 import Data.Typeable
-import Data.Foldable (foldMap)
+import Data.Foldable hiding (concatMap,elem,sequence_)
 import Options.Applicative
+import Prelude hiding (fail)  -- Silence AMP and FTP import warnings
 import System.IO
 import System.Console.ANSI
 

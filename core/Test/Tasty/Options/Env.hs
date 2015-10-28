@@ -15,6 +15,7 @@ import Data.Char
 import Data.Typeable
 import Control.Exception
 import Control.Applicative
+import Prelude  -- Silence AMP and FTP import warnings
 import Text.Printf
 
 data EnvOptionException
