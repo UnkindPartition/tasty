@@ -10,8 +10,8 @@ module Test.Tasty.Options.Core
   where
 
 import Control.Monad (mfilter)
-import Data.Typeable
 import Data.Proxy
+import Data.Typeable
 import Data.Tagged
 import Data.Fixed
 import Data.Monoid

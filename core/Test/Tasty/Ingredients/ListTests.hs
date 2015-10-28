@@ -6,8 +6,8 @@ module Test.Tasty.Ingredients.ListTests
   , listingTests
   ) where
 
-import Data.Typeable
 import Data.Proxy
+import Data.Typeable
 import Data.Monoid
 import Options.Applicative
 
