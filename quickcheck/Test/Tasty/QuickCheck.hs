@@ -144,6 +144,8 @@ instance IsTest QC where
       testRunner = if verbose
                      then QC.verboseCheckWithResult
                      else QC.quickCheckWithResult
+
+    -- Quickcheck already catches exceptions, no need to do it here.
     r <- testRunner args prop
 
     qcOutput <- formatMessage $ QC.output r

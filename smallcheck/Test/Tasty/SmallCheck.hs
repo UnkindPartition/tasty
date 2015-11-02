@@ -14,6 +14,7 @@ import qualified Test.SmallCheck as SC
 import qualified Test.SmallCheck.Drivers as SC
 import Test.SmallCheck hiding (smallCheck) -- for re-export
 import Test.SmallCheck.Drivers
+import Control.Exception
 import Data.Typeable
 import Data.Proxy
 import Data.IORef
@@ -58,7 +59,8 @@ instance IsTest (SC.Property IO) where
           , progressPercent = 0 -- we don't know the total number of tests
           }
 
-    scResult <- smallCheckWithHook depth hook prop
+    -- small check does not catch exceptions on its own, so lets do it
+    scResult <- try $ smallCheckWithHook depth hook prop
 
     (total, bad) <- readIORef counter
     let
@@ -70,8 +72,9 @@ instance IsTest (SC.Property IO) where
 
     return $
       case scResult of
-        Nothing -> testPassed desc
-        Just f ->  testFailed $ ppFailure f
+        Left e         -> testFailed $ show (e :: SomeException)
+        Right Nothing  -> testPassed desc
+        Right (Just f) -> testFailed $ ppFailure f
 
 -- Copied from base to stay compatible with GHC 7.4.
 myAtomicModifyIORef' :: IORef a -> (a -> (a,b)) -> IO b

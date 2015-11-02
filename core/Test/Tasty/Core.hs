@@ -18,12 +18,14 @@ import Text.Printf
 -- | If a test failed, 'FailureReason' describes why
 data FailureReason
   = TestFailed
-    -- ^ test provider indicated failure
+    -- ^ test provider indicated failure of the code to test, either because
+    -- the tested code returned wrong results, or raised an exception
   | TestThrewException SomeException
-    -- ^ test resulted in an exception. Note that some test providers may
-    -- catch exceptions in order to provide more meaningful errors. In that
-    -- case, the 'FailureReason' will be 'TestFailed', not
-    -- 'TestThrewException'.
+    -- ^ the test code itself raised an exception. Typical cases include missing
+    -- example input or output files.
+    --
+    -- Usually, providers do not have to implement this, as their 'run' method
+    -- may simply raise an exception.
   | TestTimedOut Integer
     -- ^ test didn't complete in allotted time
   deriving Show
@@ -95,6 +97,12 @@ data Progress = Progress
 -- the provider.
 class Typeable t => IsTest t where
   -- | Run the test
+  --
+  -- This method should cleanly catch any exceptions in the code to test, and
+  -- return them as part of the 'Result', see 'FailureReason' for an
+  -- explanation. It is ok for 'run' to raise an exception if there is a
+  -- problem with the test suite code itself (for example, if a file that
+  -- should contain example data or expected output is not found).
   run
     :: OptionSet -- ^ options
     -> t -- ^ the test to run
