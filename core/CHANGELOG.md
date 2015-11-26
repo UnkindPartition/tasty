@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.11.0.2
+----------------
+
+Clarify `IsTest`’s specification with regard to exceptions
+
 Version 0.11.0.1
 ----------------
 

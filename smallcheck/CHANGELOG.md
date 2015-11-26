@@ -2,6 +2,12 @@
 Changes
 =======
 
+Version 0.8.1
+-------------
+
+Intercept exceptions thrown by the property, adhering to the new tasty API
+contract.
+
 Version 0.8.0.1
 ---------------
 
