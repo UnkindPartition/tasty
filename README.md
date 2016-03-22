@@ -149,8 +149,10 @@ discovers tests based on the function names and generate the boilerplate code fo
 you
 * [tasty-hunit-adapter](http://hackage.haskell.org/package/tasty-hunit-adapter)
   converts existing HUnit test suites into tasty test suites
-* [tasty-discover](https://github.com/lwm/tasty-discover), automatically discovers
+* [tasty-discover](https://github.com/lwm/tasty-discover) automatically discovers
 your tests and generates the necessary boilerplate for you using `tasty-th`.
+* [tasty-expected-failure](https://github.com/nomeata/tasty-expected-failure) provides
+test markers for when you expect failures or wish to ignore tests.
 
 
 ## Options
