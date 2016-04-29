@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.11.0.3
+----------------
+
+Switch from `regex-tdfa-rc` to `regex-tdfa`, which got a new maintainer.
+
 Version 0.11.0.2
 ----------------
 
