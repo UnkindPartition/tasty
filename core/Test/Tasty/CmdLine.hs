@@ -32,7 +32,11 @@ suiteOptionParser :: [Ingredient] -> TestTree -> Parser OptionSet
 suiteOptionParser ins tree = optionParser $ suiteOptions ins tree
 
 -- | Parse the command line arguments and run the tests using the provided
--- ingredient list
+-- ingredient list.
+--
+-- When the tests finish, this function calls 'exitWith' with the exit code
+-- that indicates whether any tests have failed. See 'defaultMain' for
+-- details.
 defaultMainWithIngredients :: [Ingredient] -> TestTree -> IO ()
 defaultMainWithIngredients ins testTree = do
   cmdlineOpts <- execParser $

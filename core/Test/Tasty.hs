@@ -45,7 +45,29 @@ import Test.Tasty.Ingredients.Basic
 defaultIngredients :: [Ingredient]
 defaultIngredients = [listingTests, consoleTestReporter]
 
--- | Parse the command line arguments and run the tests
+-- | Parse the command line arguments and run the tests.
+--
+-- When the tests finish, this function calls 'exitWith' with the exit code
+-- that indicates whether any tests have failed. Most external systems
+-- (stack, cabal, travis-ci, jenkins etc.) rely on the exit code to detect
+-- whether the tests pass. If you want to do something else after
+-- `defaultMain` returns, you need to catch the exception and then re-throw
+-- it. Example:
+--
+-- >import Test.Tasty
+-- >import Test.Tasty.HUnit
+-- >import System.Exit
+-- >import Control.Exception
+-- >
+-- >test = testCase "Test 1" (2 @?= 3)
+-- >
+-- >main = defaultMain test
+-- >  `catch` (\e -> do
+-- >    if e == ExitSuccess
+-- >      then putStrLn "Yea"
+-- >      else putStrLn "Nay"
+-- >    throwIO e)
+
 defaultMain :: TestTree -> IO ()
 defaultMain = defaultMainWithIngredients defaultIngredients
 
