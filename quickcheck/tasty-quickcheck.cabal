@@ -30,10 +30,10 @@ library
   exposed-modules:     Test.Tasty.QuickCheck
   -- other-modules:       
   other-extensions:    GeneralizedNewtypeDeriving, DeriveDataTypeable
-  build-depends:       base == 4.*, tagged, tasty >= 0.10.1
+  build-depends:       base == 4.*, tagged, tasty >= 0.10.1, random
 
   if flag(old-QuickCheck)
-    build-depends:     QuickCheck >= 2.5 && < 2.7, random
+    build-depends:     QuickCheck >= 2.5 && < 2.7
   else
     build-depends:     QuickCheck >= 2.7 && < 3
 
