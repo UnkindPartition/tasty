@@ -47,6 +47,7 @@ import Data.Typeable
 import Data.Tagged
 
 import Options.Applicative
+import Data.Monoid
 
 data Token = SlashToken
            | WildcardToken
