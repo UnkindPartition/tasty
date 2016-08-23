@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.11.0.4
+----------------
+
+Fix compatibility with `optparse-applicative-0.13`
+
 Version 0.11.0.3
 ----------------
 
