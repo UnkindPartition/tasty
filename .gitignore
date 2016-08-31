@@ -1,5 +1,6 @@
 .cabal-sandbox
 cabal.sandbox.config
+.stack-work
 core-tests/dist
 core/dist
 hunit/dist
