@@ -4,6 +4,7 @@ module Test.Tasty.Runners.Utils where
 import Control.Exception
 import Control.DeepSeq
 import Control.Applicative
+import Prelude  -- Silence AMP import warnings
 import Text.Printf
 
 -- | Catch possible exceptions that may arise when evaluating a string.

@@ -13,6 +13,7 @@ import Data.Typeable
 import qualified Data.Map as Map
 import Data.Tagged
 import GHC.Generics
+import Prelude  -- Silence AMP and FTP import warnings
 import Text.Printf
 
 -- | If a test failed, 'FailureReason' describes why

@@ -21,6 +21,7 @@ import Control.Exception as E
 import Control.Applicative
 import Control.Arrow
 import GHC.Conc (labelThread)
+import Prelude  -- Silence AMP and FTP import warnings
 import qualified System.Clock as Clock
 
 import Test.Tasty.Core
@@ -304,4 +305,4 @@ getTime :: IO Time
 getTime = do
   t <- Clock.getTime Clock.Monotonic
   let ns = realToFrac $ Clock.timeSpecAsNanoSecs t
-  return $ ns / 10^9
+  return $ ns / 10 ^ (9 :: Int)

@@ -20,13 +20,14 @@ module Test.Tasty.Options
   , safeRead
   ) where
 
-import Data.Typeable
 import qualified Data.Map as Map
 import Data.Map (Map)
 import Data.Tagged
 import Data.Proxy
+import Data.Typeable
 import Data.Monoid
 import Data.Foldable
+import Prelude  -- Silence FTP import warnings
 
 import Options.Applicative
 

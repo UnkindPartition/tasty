@@ -10,13 +10,14 @@ module Test.Tasty.Options.Core
   where
 
 import Control.Monad (mfilter)
-import Data.Typeable
 import Data.Proxy
+import Data.Typeable
 import Data.Tagged
 import Data.Fixed
 import Data.Monoid
 import Options.Applicative
 import GHC.Conc
+import Prelude  -- Silence FTP import warnings
 
 import Test.Tasty.Options
 import Test.Tasty.Patterns

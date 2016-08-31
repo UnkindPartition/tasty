@@ -5,6 +5,7 @@ import Control.Applicative
 import Control.Exception
 import Data.IORef
 import Data.Typeable (Typeable)
+import Prelude  -- Silence AMP import warnings
 import Test.Tasty.HUnit.Orig
 import Test.Tasty.Providers
 
