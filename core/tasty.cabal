@@ -57,8 +57,12 @@ library
     deepseq >= 1.3,
     unbounded-delays >= 0.1,
     async >= 2.0,
-    ansi-terminal >= 0.6.2,
-    clock >= 0.4.4.0
+    ansi-terminal >= 0.6.2
+
+  if !impl(ghcjs)
+    build-depends: clock >= 0.4.4.0
+  else
+    build-depends: time >= 1.4
 
   if impl(ghc < 7.6)
     -- for GHC.Generics
