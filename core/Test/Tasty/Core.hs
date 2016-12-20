@@ -172,7 +172,7 @@ testGroup = TestGroup
 -- instead. This way your code won't break when new nodes/fields are
 -- indroduced.
 data TreeFold b = TreeFold
-  { foldSingle :: forall t . IsTest t => OptionSet -> TestName -> t -> b
+  { foldSingle :: forall t . IsTest t => OptionSet -> TestName -> [TestName] -> t -> b
   , foldGroup :: TestName -> b -> b
   , foldResource :: forall a . ResourceSpec a -> (IO a -> b) -> b
   }
@@ -230,7 +230,7 @@ foldTestTree (TreeFold fTest fGroup fResource) opts tree =
       case tree of
         SingleTest name test
           | testPatternMatches pat (path ++ [name])
-            -> fTest opts name test
+            -> fTest opts name path test
           | otherwise -> mempty
         TestGroup name trees ->
           fGroup name $ foldMap (go pat (path ++ [name]) opts) trees
@@ -246,7 +246,7 @@ treeOptions =
   Map.elems .
 
   foldTestTree
-    trivialFold { foldSingle = \_ _ -> getTestOptions }
+    trivialFold { foldSingle = \_ _ _ -> getTestOptions }
     mempty
 
   where

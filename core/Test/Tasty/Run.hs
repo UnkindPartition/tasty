@@ -211,7 +211,7 @@ createTestActions opts tree = do
   return (tests', rvars)
 
   where
-    runSingleTest opts _ test = Traversal $ do
+    runSingleTest opts _ _ test = Traversal $ do
       statusVar <- liftIO $ atomically $ newTVar NotStarted
       let
         act (inits, fins) =
