@@ -17,6 +17,7 @@ module Test.Tasty.Options
   , OptionDescription(..)
     -- * Utilities
   , flagCLParser
+  , mkOptionCLParser
   , safeRead
   ) where
 
@@ -46,7 +47,8 @@ class Typeable v => IsOption v where
   -- | A command-line option parser.
   --
   -- It has a default implementation in terms of the other methods.
-  -- You may want to override it in some cases (e.g. add a short flag).
+  -- You may want to override it in some cases (e.g. add a short flag) and
+  -- 'flagCLParser', 'mkOptionCLParser' might come in handy.
   --
   -- Even if you override this, you still should implement all the methods
   -- above, to allow alternative interfaces.
@@ -62,16 +64,7 @@ class Typeable v => IsOption v where
   -- failing parser into an always-succeeding one that may return an empty
   -- OptionSet.)
   optionCLParser :: Parser v
-  optionCLParser =
-    option parse
-      (  long name
-      <> help helpString
-      )
-    where
-      name = untag (optionName :: Tagged v String)
-      helpString = untag (optionHelp :: Tagged v String)
-      parse = str >>=
-        maybe (readerError $ "Could not parse " ++ name) pure <$> parseValue
+  optionCLParser = mkOptionCLParser mempty
 
 
 data OptionValue = forall v . IsOption v => OptionValue v
@@ -124,6 +117,19 @@ flagCLParser mbShort v = flag' v
   <> long (untag (optionName :: Tagged v String))
   <> help (untag (optionHelp :: Tagged v String))
   )
+
+-- | Command-line option parser that takes additional option modifiers.
+mkOptionCLParser :: forall v . IsOption v => Mod OptionFields v -> Parser v
+mkOptionCLParser mod =
+  option parse
+    (  long name
+    <> help (untag (optionHelp :: Tagged v String))
+    <> mod
+    )
+  where
+    name = untag (optionName :: Tagged v String)
+    parse = str >>=
+      maybe (readerError $ "Could not parse " ++ name) pure <$> parseValue
 
 -- | Safe read function. Defined here for convenience to use for
 -- 'parseValue'.

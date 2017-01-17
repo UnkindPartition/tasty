@@ -357,15 +357,6 @@ instance IsOption UseColor where
   parseValue = parseUseColor
   optionName = return "color"
   optionHelp = return "When to use colored output. Options are 'never', 'always' and 'auto' (default: 'auto')"
-  optionCLParser =
-    option parse
-      (  long name
-      <> help (untag (optionHelp :: Tagged UseColor String))
-      )
-    where
-      name = untag (optionName :: Tagged UseColor String)
-      parse = str >>=
-        maybe (readerError $ "Could not parse " ++ name) pure <$> parseValue
 
 -- | @useColor when isTerm@ decides if colors should be used,
 --   where @isTerm@ denotes where @stdout@ is a terminal device.

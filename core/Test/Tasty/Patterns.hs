@@ -89,12 +89,7 @@ instance IsOption TestPattern where
   parseValue = Just . parseTestPattern
   optionName = return "pattern"
   optionHelp = return "Select only tests that match pattern"
-  optionCLParser =
-    option (fmap parseTestPattern str)
-      (  short 'p'
-      <> long (untag (optionName :: Tagged TestPattern String))
-      <> help (untag (optionHelp :: Tagged TestPattern String))
-      )
+  optionCLParser = mkOptionCLParser (short 'p')
 
 -- | Parse a pattern
 parseTestPattern :: String -> TestPattern

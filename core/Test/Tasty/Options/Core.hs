@@ -35,16 +35,7 @@ instance IsOption NumThreads where
   parseValue = mfilter onlyPositive . fmap NumThreads . safeRead
   optionName = return "num-threads"
   optionHelp = return "Number of threads to use for tests execution"
-  optionCLParser =
-    option parse
-      (  short 'j'
-      <> long name
-      <> help (untag (optionHelp :: Tagged NumThreads String))
-      )
-    where
-      name = untag (optionName :: Tagged NumThreads String)
-      parse = str >>=
-        maybe (readerError $ "Could not parse " ++ name) pure <$> parseValue
+  optionCLParser = mkOptionCLParser (short 'j')
 
 -- | Filtering function to prevent non-positive number of threads
 onlyPositive :: NumThreads -> Bool
@@ -67,16 +58,7 @@ instance IsOption Timeout where
       <*> pure str
   optionName = return "timeout"
   optionHelp = return "Timeout for individual tests (suffixes: ms,s,m,h; default: s)"
-  optionCLParser =
-    option parse
-      (  short 't'
-      <> long name
-      <> help (untag (optionHelp :: Tagged Timeout String))
-      )
-    where
-      name = untag (optionName :: Tagged Timeout String)
-      parse = str >>=
-        maybe (readerError $ "Could not parse " ++ name) pure <$> parseValue
+  optionCLParser = mkOptionCLParser (short 't')
 
 parseTimeout :: String -> Maybe Integer
 parseTimeout str =
