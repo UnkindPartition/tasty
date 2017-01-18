@@ -17,6 +17,7 @@ module Test.Tasty.Options
   , OptionDescription(..)
     -- * Utilities
   , flagCLParser
+  , mkFlagCLParser
   , mkOptionCLParser
   , safeRead
   ) where
@@ -48,7 +49,8 @@ class Typeable v => IsOption v where
   --
   -- It has a default implementation in terms of the other methods.
   -- You may want to override it in some cases (e.g. add a short flag) and
-  -- 'flagCLParser', 'mkOptionCLParser' might come in handy.
+  -- 'flagCLParser', 'mkFlagCLParser' and 'mkOptionCLParser' might come in
+  -- handy.
   --
   -- Even if you override this, you still should implement all the methods
   -- above, to allow alternative interfaces.
@@ -112,10 +114,18 @@ flagCLParser
   => Maybe Char -- ^ optional short flag
   -> v          -- ^ non-default value (when the flag is supplied)
   -> Parser v
-flagCLParser mbShort v = flag' v
-  (  foldMap short mbShort
-  <> long (untag (optionName :: Tagged v String))
+flagCLParser mbShort = mkFlagCLParser (foldMap short mbShort)
+
+-- | Command-line flag parser that takes additional option modifiers.
+mkFlagCLParser
+  :: forall v . IsOption v
+  => Mod FlagFields v -- ^ option modifier
+  -> v                -- ^ non-default value (when the flag is supplied)
+  -> Parser v
+mkFlagCLParser mod v = flag' v
+  (  long (untag (optionName :: Tagged v String))
   <> help (untag (optionHelp :: Tagged v String))
+  <> mod
   )
 
 -- | Command-line option parser that takes additional option modifiers.

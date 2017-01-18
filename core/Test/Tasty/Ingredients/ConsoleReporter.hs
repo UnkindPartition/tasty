@@ -334,7 +334,7 @@ instance IsOption Quiet where
   parseValue = fmap Quiet . safeRead
   optionName = return "quiet"
   optionHelp = return "Do not produce any output; indicate success only by the exit code"
-  optionCLParser = flagCLParser (Just 'q') (Quiet True)
+  optionCLParser = mkFlagCLParser (short 'q') (Quiet True)
 
 -- | Report only failed tests
 newtype HideSuccesses = HideSuccesses Bool
@@ -344,7 +344,7 @@ instance IsOption HideSuccesses where
   parseValue = fmap HideSuccesses . safeRead
   optionName = return "hide-successes"
   optionHelp = return "Do not print tests that passed successfully"
-  optionCLParser = flagCLParser Nothing (HideSuccesses True)
+  optionCLParser = mkFlagCLParser mempty (HideSuccesses True)
 
 -- | When to use color on the output
 data UseColor

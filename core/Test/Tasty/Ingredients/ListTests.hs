@@ -8,6 +8,8 @@ module Test.Tasty.Ingredients.ListTests
 
 import Data.Typeable
 import Data.Proxy
+import Data.Monoid
+import Options.Applicative
 
 import Test.Tasty.Core
 import Test.Tasty.Options
@@ -22,7 +24,7 @@ instance IsOption ListTests where
   parseValue = fmap ListTests . safeRead
   optionName = return "list-tests"
   optionHelp = return "Do not run the tests; just print their names"
-  optionCLParser = flagCLParser (Just 'l') (ListTests True)
+  optionCLParser = mkFlagCLParser (short 'l') (ListTests True)
 
 -- | Obtain the list of all tests in the suite
 testsNames :: OptionSet -> TestTree -> [TestName]

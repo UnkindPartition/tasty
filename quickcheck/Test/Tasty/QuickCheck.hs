@@ -38,6 +38,7 @@ import Test.QuickCheck hiding -- for re-export
 import Data.Typeable
 import Data.Proxy
 import Data.List
+import Data.Monoid
 import Text.Printf
 import Control.Applicative
 
@@ -120,7 +121,7 @@ instance IsOption QuickCheckVerbose where
   parseValue = fmap QuickCheckVerbose . safeRead
   optionName = return "quickcheck-verbose"
   optionHelp = return "Show the generated test cases"
-  optionCLParser = flagCLParser Nothing (QuickCheckVerbose True)
+  optionCLParser = mkFlagCLParser mempty (QuickCheckVerbose True)
 
 instance IsTest QC where
   testOptions = return
