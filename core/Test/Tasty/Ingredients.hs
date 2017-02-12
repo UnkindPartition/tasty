@@ -8,6 +8,7 @@ module Test.Tasty.Ingredients
   , ingredientOptions
   , ingredientsOptions
   , suiteOptions
+  , composeReporters
   ) where
 
 import Control.Monad
@@ -18,6 +19,7 @@ import Test.Tasty.Core
 import Test.Tasty.Run
 import Test.Tasty.Options
 import Test.Tasty.Options.Core
+import Control.Concurrent.Async (concurrently)
 
 -- | 'Ingredient's make your test suite tasty.
 --
@@ -119,3 +121,21 @@ suiteOptions ins tree =
   coreOptions ++
   ingredientsOptions ins ++
   treeOptions tree
+
+-- | Compose two 'TestReporter' ingredients which are then executed
+-- in parallel. This can be useful if you want to have two reporters
+-- active at the same time, e.g., one which prints to the console and
+-- one which writes the test results to a file.
+--
+-- Be aware that it is not possible to use 'composeReporters' with a 'TestManager',
+-- it only works for 'TestReporter' ingredients.
+composeReporters :: Ingredient -> Ingredient -> Ingredient
+composeReporters (TestReporter o1 f1) (TestReporter o2 f2) =
+  TestReporter (o1 ++ o2) $ \o t ->
+  case (f1 o t, f2 o t) of
+    (g, Nothing) -> g
+    (Nothing, g) -> g
+    (Just g1, Just g2) -> Just $ \s -> do
+      (h1, h2) <- concurrently (g1 s) (g2 s)
+      return $ \x -> fmap (uncurry (&&)) $ concurrently (h1 x) (h2 x)
+composeReporters _ _ = error "Only TestReporters can be composed"
