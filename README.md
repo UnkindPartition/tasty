@@ -141,6 +141,8 @@ Some ingredients that can enhance your test suite are:
   failed tests, or only run tests that threw an exception.
 * [tasty-html](http://hackage.haskell.org/package/tasty-html) adds the
   possibility to write the test results as a HTML file
+* [tasty-stats](http://hackage.haskell.org/package/tasty-stats) adds the
+  possibility to collect statistics of the test suite in a CSV file.
 
 ### Other packages
 
