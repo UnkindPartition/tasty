@@ -135,12 +135,12 @@ Some ingredients that can enhance your test suite are:
 * [tasty-ant-xml](http://hackage.haskell.org/package/tasty-ant-xml) adds a
   possibility to write the test results in a machine-readable XML format, which
   is understood by various CI systems and IDEs
-* If you use [tasty-golden][] to write unit tests, there's an ingredient in
-  `Test.Tasty.Golden.Manage` that helps you manage your golden files
 * [tasty-rerun](http://hackage.haskell.org/package/tasty-rerun) adds support for
   minimal test reruns by recording previous test runs and using this information
   to filter the test tree. For example, you can use this ingredient to only run
   failed tests, or only run tests that threw an exception.
+* [tasty-html](http://hackage.haskell.org/package/tasty-html) adds the
+  possibility to write the test results as a HTML file
 
 ### Other packages
 
