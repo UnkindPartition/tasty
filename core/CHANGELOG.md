@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.11.2
+--------------
+
+Add `composeReporters`, a function to run multiple reporter ingredients
+
 Version 0.11.1
 --------------
 
