@@ -238,7 +238,19 @@ during the run time, but increase or decrease it slightly for individual
 tests.
 
 This method currently doesn't work for ingredient options, such as `--quiet` or
-`--num-threads`.
+`--num-threads`. You can set them by setting the corresponding environment
+variable before calling `defaultMain`:
+
+<a id="num_threads_example">
+
+```haskell
+import Test.Tasty
+import System.Environment
+
+main = do
+  setEnv "TASTY_NUM_THREADS" "1"
+  defaultMain _
+```
 
 ### Patterns
 
@@ -381,6 +393,14 @@ library. You have two options:
 * Add your program sources directory to the `Hs-source-dirs`. Note that this
   will lead to double compilation (once for the program and once for the test
   suite).
+
+## FAQ
+
+1.  How do I make some tests execute after others?
+
+    Currently, your only option is to make all tests execute sequentially by
+    setting the number of tasty threads to 1 ([example](#num_threads_example)).
+    See [#48](https://github.com/feuerbach/tasty/issues/48) for the discussion.
 
 ## Press
 
