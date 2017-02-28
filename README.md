@@ -135,6 +135,9 @@ Some ingredients that can enhance your test suite are:
 * [tasty-ant-xml](http://hackage.haskell.org/package/tasty-ant-xml) adds a
   possibility to write the test results in a machine-readable XML format, which
   is understood by various CI systems and IDEs
+* [tasty-jenkins-xml](https://hackage.haskell.org/package/tasty-jenkins-xml)
+  extends [tasty-ant-xml](http://hackage.haskell.org/package/tasty-ant-xml) with
+  a possibility to output to console/HTML/… and XML at the same time
 * [tasty-rerun](http://hackage.haskell.org/package/tasty-rerun) adds support for
   minimal test reruns by recording previous test runs and using this information
   to filter the test tree. For example, you can use this ingredient to only run
