@@ -43,6 +43,7 @@ library
     Test.Tasty.Run,
     Test.Tasty.Runners.Reducers,
     Test.Tasty.Runners.Utils,
+    Test.Tasty.Runners.Wrap,
     Test.Tasty.CmdLine,
     Test.Tasty.Ingredients.ConsoleReporter
     Test.Tasty.Ingredients.ListTests

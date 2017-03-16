@@ -44,6 +44,8 @@ module Test.Tasty.Runners
   , coreOptions
     -- ** Patterns
   , module Test.Tasty.Patterns
+    -- * Ignoring tests or expecting failure
+  , module Test.Tasty.Runners.Wrap
     -- * Utilities
   , module Test.Tasty.Runners.Utils
   )
@@ -57,4 +59,5 @@ import Test.Tasty.Patterns
 import Test.Tasty.CmdLine
 import Test.Tasty.Ingredients.Basic
 import Test.Tasty.Runners.Reducers
+import Test.Tasty.Runners.Wrap
 import Test.Tasty.Runners.Utils
