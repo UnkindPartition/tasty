@@ -43,11 +43,12 @@ import Text.Printf
 import Control.Applicative
 
 #if MIN_VERSION_QuickCheck(2,7,0)
-import Test.QuickCheck.Random (QCGen)
+import Test.QuickCheck.Random (QCGen, mkQCGen)
 #else
-import System.Random (StdGen)
+import System.Random (StdGen, mkStdGen)
 #endif
 
+import System.Random (getStdRandom, randomR)
 newtype QC = QC QC.Property
   deriving Typeable
 
@@ -60,11 +61,17 @@ newtype QuickCheckTests = QuickCheckTests Int
   deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
 
 -- | Replay a previous test using a replay token
+mkGen :: Int -> GenType
+
 #if MIN_VERSION_QuickCheck(2,7,0)
-newtype QuickCheckReplay = QuickCheckReplay (Maybe (QCGen, Int))
+type GenType = QCGen
+mkGen = mkQCGen
 #else
-newtype QuickCheckReplay = QuickCheckReplay (Maybe (StdGen, Int))
+type GenType = QCGen
+mkGen = mkStdGen
 #endif
+
+newtype QuickCheckReplay = QuickCheckReplay (Maybe Int)
   deriving (Typeable)
 
 -- | If a test case fails unexpectedly, show the replay token
@@ -91,21 +98,22 @@ instance IsOption QuickCheckTests where
 
 instance IsOption QuickCheckReplay where
   defaultValue = QuickCheckReplay Nothing
-  parseValue v = QuickCheckReplay . Just <$> replay
-    -- Reads a replay token in the form "{size} {seed}"
-    where replay = (,) <$> safeRead (intercalate " " seed) <*> safeRead (concat size)
-          (size, seed) = splitAt 1 $ words v
+  -- Reads a replay int seed 
+  parseValue v = QuickCheckReplay . Just <$> safeRead v
   optionName = return "quickcheck-replay"
-  optionHelp = return "Replay token to use for replaying a previous test run"
+  optionHelp = return "Random seed to use for replaying a previous test run (use same --quickcheck-max-size)"
 
 instance IsOption QuickCheckShowReplay where
-  defaultValue = QuickCheckShowReplay True
+  defaultValue = QuickCheckShowReplay False
   parseValue = fmap QuickCheckShowReplay . safeRead
   optionName = return "quickcheck-show-replay"
   optionHelp = return "Show a replay token for replaying tests"
 
+defaultMaxSize :: Int
+defaultMaxSize = QC.maxSize QC.stdArgs
+
 instance IsOption QuickCheckMaxSize where
-  defaultValue = fromIntegral $ QC.maxSize QC.stdArgs
+  defaultValue = fromIntegral defaultMaxSize
   parseValue = fmap QuickCheckMaxSize . safeRead
   optionName = return "quickcheck-max-size"
   optionHelp = return "Size of the biggest test cases quickcheck generates"
@@ -136,15 +144,21 @@ instance IsTest QC where
   run opts (QC prop) yieldProgress = do
     let
       QuickCheckTests      nTests     = lookupOption opts
-      QuickCheckReplay     replay     = lookupOption opts
+      QuickCheckReplay     mReplay    = lookupOption opts
       QuickCheckShowReplay showReplay = lookupOption opts
       QuickCheckMaxSize    maxSize    = lookupOption opts
       QuickCheckMaxRatio   maxRatio   = lookupOption opts
       QuickCheckVerbose    verbose    = lookupOption opts
-      args = QC.stdArgs { QC.chatty = False, QC.maxSuccess = nTests, QC.maxSize = maxSize, QC.replay = replay, QC.maxDiscardRatio = maxRatio}
       testRunner = if verbose
                      then QC.verboseCheckWithResult
                      else QC.quickCheckWithResult
+    replaySeed <- case mReplay of 
+      Nothing -> getStdRandom (randomR (1,999999))
+      Just seed -> return seed
+    let 
+      replay = Just (mkGen replaySeed, 0)
+      args = QC.stdArgs { QC.chatty = False, QC.maxSuccess = nTests, QC.maxSize = maxSize, QC.replay = replay, QC.maxDiscardRatio = maxRatio}
+      replayMsg = makeReplayMsg replaySeed maxSize
 
     -- Quickcheck already catches exceptions, no need to do it here.
     r <- testRunner args prop
@@ -154,11 +168,12 @@ instance IsTest QC where
           if "\n" `isSuffixOf` qcOutput
             then qcOutput
             else qcOutput ++ "\n"
-
+        testSuccessful = successful r
+        putReplayInDesc = (not testSuccessful) || showReplay
     return $
-      (if successful r then testPassed else testFailed)
+      (if testSuccessful then testPassed else testFailed)
       (qcOutputNl ++
-        (if showReplay then reproduceMsg r else ""))
+        (if putReplayInDesc then replayMsg else ""))
 
 successful :: QC.Result -> Bool
 successful r =
@@ -166,9 +181,9 @@ successful r =
     QC.Success {} -> True
     _ -> False
 
--- | If the result is a failure, produce a message that explains how to
--- reproduce it. If the result is not a failure, return an empty string.
-reproduceMsg :: QC.Result -> String
-reproduceMsg QC.Failure { QC.usedSize = size, QC.usedSeed = seed } =
-  printf "Use --quickcheck-replay '%d %s' to reproduce." size (show seed)
-reproduceMsg _ = ""
+makeReplayMsg :: Int -> Int -> String
+makeReplayMsg seed size = let
+    sizeStr = if (size /= defaultMaxSize)
+                 then printf "--quickcheck-max-size=%d" size
+                 else ""
+  in printf "Use --quickcheck-replay=%d%s to reproduce." seed sizeStr
