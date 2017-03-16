@@ -2,17 +2,10 @@
 
 set -e
 
-sudo add-apt-repository -y ppa:hvr/ghc
-sudo apt-get update
-sudo apt-get install cabal-install-1.18 ghc-$GHCVER happy
-export PATH=$HOME/.cabal/bin:/opt/ghc/$GHCVER/bin:$PATH
-
-cabal-1.18 update
-
 for i in core hunit quickcheck smallcheck core-tests
 do
   cd $i
-  cabal-1.18 install --enable-tests
+  cabal install --enable-tests --force-reinstalls
   cd ..
 done
 
