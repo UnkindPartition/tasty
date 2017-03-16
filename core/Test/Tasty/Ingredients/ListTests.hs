@@ -31,7 +31,7 @@ testsNames :: OptionSet -> TestTree -> [TestName]
 testsNames {- opts -} {- tree -} =
   foldTestTree
     trivialFold
-      { foldSingle = \_opts name _test -> [name]
+      { foldSingle = \_opts name _ _test -> [name]
       , foldGroup = \groupName names -> map ((groupName ++ "/") ++) names
       }
 
