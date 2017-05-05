@@ -152,10 +152,7 @@ you
 * [tasty-hunit-adapter](http://hackage.haskell.org/package/tasty-hunit-adapter)
   converts existing HUnit test suites into tasty test suites
 * [tasty-discover](https://github.com/lwm/tasty-discover) automatically discovers
-your tests and generates the necessary boilerplate for you using `tasty-th`.
-* [tasty-auto](https://github.com/minad/tasty-auto) automatically discovers
-your tests. `tasty-auto` doesn't rely on `TemplateHaskell` and supports `TestTree`initialization
-in the IO Monad.
+your tests.
 * [tasty-expected-failure](https://github.com/nomeata/tasty-expected-failure) provides
 test markers for when you expect failures or wish to ignore tests.
 
