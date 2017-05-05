@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.11.2.1
+----------------
+
+Fix compatibility with the latest `unbounded-delays`
+
 Version 0.11.2
 --------------
 
