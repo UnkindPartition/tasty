@@ -1,6 +1,6 @@
 -- | Running tests
 {-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes,
-             FlexibleContexts, BangPatterns #-}
+             FlexibleContexts, BangPatterns, CPP #-}
 module Test.Tasty.Run
   ( Status(..)
   , StatusMap
@@ -11,6 +11,9 @@ import qualified Data.IntMap as IntMap
 import qualified Data.Sequence as Seq
 import qualified Data.Foldable as F
 import Data.Maybe
+#ifndef VERSION_clock
+import Data.Time.Clock.POSIX (getPOSIXTime)
+#endif
 import Control.Monad.State
 import Control.Monad.Writer
 import Control.Monad.Reader
@@ -21,7 +24,9 @@ import Control.Exception as E
 import Control.Applicative
 import Control.Arrow
 import GHC.Conc (labelThread)
+#ifdef VERSION_clock
 import qualified System.Clock as Clock
+#endif
 
 import Test.Tasty.Core
 import Test.Tasty.Parallel
@@ -296,6 +301,7 @@ timed t = do
   end   <- getTime
   return (end-start, r)
 
+#ifdef VERSION_clock
 -- | Get monotonic time
 --
 -- Warning: This is not the system time, but a monotonically increasing time
@@ -305,3 +311,8 @@ getTime = do
   t <- Clock.getTime Clock.Monotonic
   let ns = realToFrac $ Clock.timeSpecAsNanoSecs t
   return $ ns / 10^9
+#else
+-- | Get system time
+getTime :: IO Time
+getTime = realToFrac <$> getPOSIXTime
+#endif
