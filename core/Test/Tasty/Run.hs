@@ -15,7 +15,7 @@ import Control.Monad.State
 import Control.Monad.Writer
 import Control.Monad.Reader
 import Control.Concurrent.STM
-import Control.Concurrent.Timeout
+import Control.Concurrent.Timeout (timeout)
 import Control.Concurrent.Async
 import Control.Exception as E
 import Control.Applicative
