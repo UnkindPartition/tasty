@@ -4,7 +4,7 @@
 name:                core-tests
 version:             0.1
 synopsis:            Tests for tasty
--- description:         
+description:         Tests for tasty
 license:             MIT
 license-file:        LICENSE
 author:              Roman Cheplyaka
