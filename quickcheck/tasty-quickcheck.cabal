@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                tasty-quickcheck
-version:             0.8.4
+version:             0.9
 synopsis:            QuickCheck support for the Tasty test framework.
 description:         QuickCheck support for the Tasty test framework.
 license:             MIT

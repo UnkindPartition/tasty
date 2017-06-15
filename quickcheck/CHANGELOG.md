@@ -1,6 +1,19 @@
 Changes
 =======
 
+Version 0.9
+-------------
+
+* Drop support for QuickCheck < 2.7
+* Change the `--quickcheck-show-replay` semantics
+
+    Previously, when the flag was set to `True`, the seed was only shown on failure.
+
+    Now, the seed is shown on failure regardless of the value of the flag,
+    and the flag causes the seed to be shown on success.
+
+    The default value for `--quickcheck-show-replay` is now `False`.
+
 Version 0.8.4
 -------------
 
