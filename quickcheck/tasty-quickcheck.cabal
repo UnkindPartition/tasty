@@ -22,20 +22,11 @@ Source-repository head
   location: git://github.com/feuerbach/tasty.git
   subdir:   quickcheck
 
-flag old-QuickCheck
-  description:         Use Quick-Check < 2.7
-  default:             False
-
 library
   exposed-modules:     Test.Tasty.QuickCheck
   -- other-modules:       
   other-extensions:    GeneralizedNewtypeDeriving, DeriveDataTypeable
-  build-depends:       base == 4.*, tagged, tasty >= 0.10.1, random
-
-  if flag(old-QuickCheck)
-    build-depends:     QuickCheck >= 2.5 && < 2.7
-  else
-    build-depends:     QuickCheck >= 2.7 && < 3
+  build-depends:       base == 4.*, tagged, tasty >= 0.10.1, random, QuickCheck >= 2.7
 
   -- hs-source-dirs:      
   default-language:    Haskell2010
