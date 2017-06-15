@@ -46,6 +46,18 @@ main =
             Tasty.Success -> return ()
             _ -> assertFailure $ show resultOutcome
           resultDescription =~ "OK, passed 100 tests"
+          resultDescription !~ "Use .* to reproduce"
+
+      , testCase "Success, replay requested" $ do
+          Result{..} <- runReplay $ \x -> x >= (x :: Int)
+          -- there is no instance Show Outcome(
+          -- (because there is no instance Show SomeException),
+          -- so we can't use @?= for this
+          case resultOutcome of
+            Tasty.Success -> return ()
+            _ -> assertFailure $ show resultOutcome
+          resultDescription =~ "OK, passed 100 tests"
+          resultDescription =~ "Use .* to reproduce"
 
       , testCase "Unexpected failure" $ do
           Result{..} <- run' $ \x -> x > (x :: Int)
@@ -55,21 +67,13 @@ main =
           resultDescription =~ "Failed"
           resultDescription =~ "Use .* to reproduce"
 
-      , testCase "Unexpected failure, no replay message" $ do
-          Result{..} <- runNoReplay $ \x -> x > (x :: Int)
-          case resultOutcome of
-            Tasty.Failure {} -> return ()
-            _ -> assertFailure $ show resultOutcome
-          resultDescription =~ "Failed"
-          resultDescription !~ "Use .* to reproduce"
-
       , testCase "Gave up" $ do
           Result{..} <- run' $ \x -> x > x ==> x > (x :: Int)
           case resultOutcome of
             Tasty.Failure {} -> return ()
             _ -> assertFailure $ show resultOutcome
           resultDescription =~ "Gave up"
-          resultDescription !~ "Use .* to reproduce"
+          resultDescription =~ "Use .* to reproduce"
 
       , testCase "No expected failure" $ do
           Result{..} <- run' $ expectFailure $ \x -> x >= (x :: Int)
@@ -77,7 +81,7 @@ main =
             Tasty.Failure {} -> return ()
             _ -> assertFailure $ show resultOutcome
           resultDescription =~ "Failed.*expected failure"
-          resultDescription !~ "Use .* to reproduce"
+          resultDescription =~ "Use .* to reproduce"
 
       ]
 
@@ -88,9 +92,9 @@ run' p =
     (QC $ property p)
     (const $ return ()) -- callback
 
-runNoReplay :: Testable p => p -> IO Result
-runNoReplay p =
+runReplay :: Testable p => p -> IO Result
+runReplay p =
   run
-    (singleOption $ QuickCheckShowReplay False)
+    (singleOption $ QuickCheckShowReplay True)
     (QC $ property p)
     (const $ return ())
