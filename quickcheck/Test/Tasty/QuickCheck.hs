@@ -14,6 +14,7 @@ module Test.Tasty.QuickCheck
     -- of the public API.
     -- You probably shouldn't need it.
   , QC(..)
+  , optionSetToArgs
   ) where
 
 import Test.Tasty.Providers
@@ -115,6 +116,28 @@ instance IsOption QuickCheckVerbose where
   optionHelp = return "Show the generated test cases"
   optionCLParser = mkFlagCLParser mempty (QuickCheckVerbose True)
 
+optionSetToArgs :: OptionSet -> IO (Int, QC.Args)
+optionSetToArgs opts = do
+  replaySeed <- case mReplay of
+    Nothing -> getStdRandom (randomR (1,999999))
+    Just seed -> return seed
+
+  let args = QC.stdArgs
+        { QC.chatty          = False
+        , QC.maxSuccess      = nTests
+        , QC.maxSize         = maxSize
+        , QC.replay          = Just (mkQCGen replaySeed, 0)
+        , QC.maxDiscardRatio = maxRatio
+        }
+
+  return (replaySeed, args)
+
+  where
+    QuickCheckTests    nTests   = lookupOption opts
+    QuickCheckReplay   mReplay  = lookupOption opts
+    QuickCheckMaxSize  maxSize  = lookupOption opts
+    QuickCheckMaxRatio maxRatio = lookupOption opts
+
 instance IsTest QC where
   testOptions = return
     [ Option (Proxy :: Proxy QuickCheckTests)
@@ -126,22 +149,15 @@ instance IsTest QC where
     ]
 
   run opts (QC prop) yieldProgress = do
+    (replaySeed, args) <- optionSetToArgs opts
+
     let
-      QuickCheckTests      nTests     = lookupOption opts
-      QuickCheckReplay     mReplay    = lookupOption opts
       QuickCheckShowReplay showReplay = lookupOption opts
-      QuickCheckMaxSize    maxSize    = lookupOption opts
-      QuickCheckMaxRatio   maxRatio   = lookupOption opts
       QuickCheckVerbose    verbose    = lookupOption opts
+      maxSize = QC.maxSize args
       testRunner = if verbose
                      then QC.verboseCheckWithResult
                      else QC.quickCheckWithResult
-    replaySeed <- case mReplay of
-      Nothing -> getStdRandom (randomR (1,999999))
-      Just seed -> return seed
-    let
-      replay = Just (mkQCGen replaySeed, 0)
-      args = QC.stdArgs { QC.chatty = False, QC.maxSuccess = nTests, QC.maxSize = maxSize, QC.replay = replay, QC.maxDiscardRatio = maxRatio}
       replayMsg = makeReplayMsg replaySeed maxSize
 
     -- Quickcheck already catches exceptions, no need to do it here.
