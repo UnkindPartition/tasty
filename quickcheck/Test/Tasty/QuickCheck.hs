@@ -10,9 +10,9 @@ module Test.Tasty.QuickCheck
   , QuickCheckVerbose(..)
   , module Test.QuickCheck
     -- * Internal
-    -- | This is exposed for testing purposes and not considered as a part
-    -- of the public API.
-    -- You probably shouldn't need it.
+    -- | If you are building a test suite, you don't need these functions.
+    --
+    -- They may be used by other tasty add-on packages (such as tasty-hspec).
   , QC(..)
   , optionSetToArgs
   ) where
@@ -116,6 +116,12 @@ instance IsOption QuickCheckVerbose where
   optionHelp = return "Show the generated test cases"
   optionCLParser = mkFlagCLParser mempty (QuickCheckVerbose True)
 
+-- | Convert tasty options into QuickCheck options.
+--
+-- This is a low-level function that was originally added for tasty-hspec
+-- but may be used by others.
+--
+-- @since 0.9.1
 optionSetToArgs :: OptionSet -> IO (Int, QC.Args)
 optionSetToArgs opts = do
   replaySeed <- case mReplay of
