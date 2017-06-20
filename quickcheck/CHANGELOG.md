@@ -1,8 +1,8 @@
 Changes
 =======
 
-Version 0.9.0.1
----------------
+Version 0.9.1
+-------------
 
 * Expose internal `optionSetToArgs` function
 
