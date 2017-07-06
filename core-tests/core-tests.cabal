@@ -17,7 +17,7 @@ cabal-version:       >=1.10
 
 executable tasty-core-tests
   main-is:             test.hs
-  -- other-modules:       
+  other-modules:       Resources, Timeouts, Utils
   -- other-extensions:    
   build-depends:       base <= 5, tasty, tasty-hunit, containers, stm, mtl
   -- hs-source-dirs:      
