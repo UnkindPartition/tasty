@@ -1,6 +1,12 @@
 Changes
 =======
 
+Version 0.11.2.2
+----------------
+
+Fix a critical bug in the quiet mode (`-q`/`--quiet`):
+the exit status could be wrong or the test suite could hang.
+
 Version 0.11.2.1
 ----------------
 
