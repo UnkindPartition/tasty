@@ -147,6 +147,7 @@ script:
     stack)
       stack --no-terminal $ARGS test --bench --no-run-benchmarks --haddock --no-haddock-deps
       stack --no-terminal $ARGS exec tasty-core-tests
+      stack --no-terminal $ARGS exec core-tests/exit-status-tests.sh
       ;;
     cabal)
       cabal install --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS $PACKAGES
