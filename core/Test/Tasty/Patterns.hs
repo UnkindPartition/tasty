@@ -68,7 +68,7 @@ data TestPatternMatchMode = TestMatchMode
                           deriving Show
 
 -- | A pattern to filter tests. For the syntax description, see
--- <http://documentup.com/feuerbach/tasty#using-patterns>
+-- the README.
 data TestPattern = TestPattern {
         tp_categories_only :: Bool,
         tp_negated :: Bool,

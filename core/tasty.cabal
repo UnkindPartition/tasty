@@ -8,17 +8,16 @@ description:         Tasty is a modern testing framework for Haskell.
                      It lets you combine your unit tests, golden
                      tests, QuickCheck/SmallCheck properties, and any
                      other types of tests into a single test suite.
-                     See <http://documentup.com/feuerbach/tasty>.
 license:             MIT
 license-file:        LICENSE
 author:              Roman Cheplyaka <roma@ro-che.info>
 maintainer:          Roman Cheplyaka <roma@ro-che.info>
-homepage:            http://documentup.com/feuerbach/tasty
+homepage:            https://github.com/feuerbach/tasty
 bug-reports:         https://github.com/feuerbach/tasty/issues
 -- copyright:           
 category:            Testing
 build-type:          Simple
-extra-source-files:  CHANGELOG.md
+extra-source-files:  CHANGELOG.md, README.md
 cabal-version:       >=1.10
 
 Source-repository head

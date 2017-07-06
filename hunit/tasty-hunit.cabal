@@ -9,7 +9,7 @@ license:             MIT
 license-file:        LICENSE
 author:              Roman Cheplyaka <roma@ro-che.info>
 maintainer:          Roman Cheplyaka <roma@ro-che.info>
-homepage:            http://documentup.com/feuerbach/tasty
+homepage:            https://github.com/feuerbach/tasty
 bug-reports:         https://github.com/feuerbach/tasty/issues
 -- copyright:           
 category:            Testing
