@@ -256,8 +256,13 @@ instance Monoid FailureStatus where
 
   mempty = OK
 
-failureStatus :: StatusMap -> IO FailureStatus
-failureStatus smap = atomically $ do
+-- | Wait until
+--
+-- * all tests have finished successfully, and return 'True', or
+--
+-- * at least one test has failed, and return 'False'
+statusMapResult :: StatusMap -> IO Bool
+statusMapResult smap = atomically $ do
   fst <- getApp $ flip foldMap smap $ \svar -> Ap $ do
     status <- readTVar svar
     return $ case status of
@@ -265,8 +270,9 @@ failureStatus smap = atomically $ do
           if resultSuccessful r then OK else Failed
         _ -> Unknown
   case fst of
+    OK -> return True
+    Failed -> return False
     Unknown -> retry
-    _ -> return fst
 
 -- }}}
 
@@ -283,45 +289,44 @@ consoleTestReporter =
     , Option (Proxy :: Proxy HideSuccesses)
     , Option (Proxy :: Proxy UseColor)
     ] $
-  \opts tree -> Just $ \smap ->
+  \opts tree -> Just $ \smap -> do
 
-  do
-  isTerm <- hSupportsANSI stdout
+  let
+    whenColor = lookupOption opts
+    Quiet quiet = lookupOption opts
+    HideSuccesses hideSuccesses = lookupOption opts
 
-  (\k -> if isTerm
-    then (do hideCursor; k) `finally` showCursor
-    else k) $ do
+  if quiet
+    then do
+      b <- statusMapResult smap
+      return $ \_time -> return b
+    else
 
-      hSetBuffering stdout LineBuffering
+      do
+      isTerm <- hSupportsANSI stdout
 
-      let
-        whenColor = lookupOption opts
-        Quiet quiet = lookupOption opts
-        HideSuccesses hideSuccesses = lookupOption opts
+      (\k -> if isTerm
+        then (do hideCursor; k) `finally` showCursor
+        else k) $ do
 
-      let
-        ?colors = useColor whenColor isTerm
+          hSetBuffering stdout LineBuffering
 
-      let
-        output = produceOutput opts tree
+          let
+            ?colors = useColor whenColor isTerm
 
-      case () of { _
-        | quiet -> return ()
-        | hideSuccesses && isTerm ->
-            consoleOutputHidingSuccesses output smap
-        | hideSuccesses && not isTerm ->
-            streamOutputHidingSuccesses output smap
-        | otherwise -> consoleOutput output smap
-      }
+          let
+            output = produceOutput opts tree
 
-      return $ \time ->
-        if quiet
-          then do
-            fst <- failureStatus smap
-            return $ case fst of
-              OK -> True
-              _ -> False
-          else do
+          case () of { _
+            | quiet -> return ()
+            | hideSuccesses && isTerm ->
+                consoleOutputHidingSuccesses output smap
+            | hideSuccesses && not isTerm ->
+                streamOutputHidingSuccesses output smap
+            | otherwise -> consoleOutput output smap
+          }
+
+          return $ \time -> do
             stats <- computeStatistics smap
             printStatistics stats time
             return $ statFailures stats == 0
