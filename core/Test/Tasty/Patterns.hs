@@ -115,20 +115,27 @@ parseTestPattern string = TestPattern {
 -- | Test a path (which is the sequence of group titles, possibly followed
 -- by the test title) against a pattern
 testPatternMatches :: TestPattern -> [String] -> Bool
-testPatternMatches NoPattern _ = True
-testPatternMatches test_pattern path = not_maybe $ any (=~ tokens_regex) things_to_match
+testPatternMatches test_pattern =
+  -- It is important that GHC assigns arity 1 to this function,
+  -- so that compilation of the regex is shared among the invocations.
+  -- See #175.
+  case test_pattern of
+    NoPattern -> const True
+    TestPattern {} -> \path ->
+      let
+        path_to_consider | tp_categories_only test_pattern = dropLast 1 path
+                         | otherwise                       = path
+        things_to_match = case tp_match_mode test_pattern of
+            -- See if the tokens match any single path component
+            TestMatchMode -> path_to_consider
+            -- See if the tokens match any prefix of the path
+            PathMatchMode -> map pathToString $ inits path_to_consider
+      in not_maybe . any (match tokens_regex) $ things_to_match
   where
     not_maybe | tp_negated test_pattern = not
               | otherwise               = id
-    path_to_consider | tp_categories_only test_pattern = dropLast 1 path
-                     | otherwise                       = path
-    tokens_regex = buildTokenRegex (tp_tokens test_pattern)
-
-    things_to_match = case tp_match_mode test_pattern of
-        -- See if the tokens match any single path component
-        TestMatchMode -> path_to_consider
-        -- See if the tokens match any prefix of the path
-        PathMatchMode -> map pathToString $ inits path_to_consider
+    tokens_regex :: Regex
+    tokens_regex = makeRegex $ buildTokenRegex (tp_tokens test_pattern)
 
 
 buildTokenRegex :: [Token] -> String
