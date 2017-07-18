@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.11.2.3
+----------------
+
+Make filtering tests (`-p`) work faster
+
 Version 0.11.2.2
 ----------------
 
