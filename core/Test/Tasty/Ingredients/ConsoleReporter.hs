@@ -252,7 +252,7 @@ statusMapResult
   -> StatusMap
   -> IO Bool
 statusMapResult lookahead0 smap
-  | null smap = return True
+  | IntMap.null smap = return True
   | otherwise =
       join . atomically $
         IntMap.foldrWithKey f finish smap mempty lookahead0
@@ -285,7 +285,7 @@ statusMapResult lookahead0 smap
       -- If we made no progress at all, wait until at least some tests
       -- complete.
       -- Otherwise, reduce the set of tests we are looking at.
-      if null ok_tests
+      if IntMap.null ok_tests
         then retry
         else return $ statusMapResult lookahead0 (IntMap.difference smap ok_tests)
 
