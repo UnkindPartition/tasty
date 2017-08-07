@@ -318,7 +318,6 @@ consoleTestReporter =
             output = produceOutput opts tree
 
           case () of { _
-            | quiet -> return ()
             | hideSuccesses && isTerm ->
                 consoleOutputHidingSuccesses output smap
             | hideSuccesses && not isTerm ->
