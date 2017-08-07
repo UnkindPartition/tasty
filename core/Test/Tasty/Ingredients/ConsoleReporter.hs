@@ -16,6 +16,7 @@ import Test.Tasty.Core
 import Test.Tasty.Run
 import Test.Tasty.Ingredients
 import Test.Tasty.Options
+import Test.Tasty.Options.Core
 import Test.Tasty.Runners.Reducers
 import Test.Tasty.Runners.Utils
 import Text.Printf
@@ -241,38 +242,55 @@ printStatistics st time = do
     fs -> do
       fail $ printf "%d out of %d tests failed (%.2fs)\n" fs (statTotal st) time
 
-data FailureStatus
-  = Unknown
-  | Failed
-  | OK
-
-instance Monoid FailureStatus where
-  mappend Failed _ = Failed
-  mappend _ Failed = Failed
-
-  mappend OK OK = OK
-
-  mappend _ _ = Unknown
-
-  mempty = OK
-
 -- | Wait until
 --
 -- * all tests have finished successfully, and return 'True', or
 --
 -- * at least one test has failed, and return 'False'
-statusMapResult :: StatusMap -> IO Bool
-statusMapResult smap = atomically $ do
-  fst <- getApp $ flip foldMap smap $ \svar -> Ap $ do
-    status <- readTVar svar
-    return $ case status of
-        Done r ->
-          if resultSuccessful r then OK else Failed
-        _ -> Unknown
-  case fst of
-    OK -> return True
-    Failed -> return False
-    Unknown -> retry
+statusMapResult
+  :: Int -- ^ lookahead
+  -> StatusMap
+  -> IO Bool
+statusMapResult lookahead0 smap
+  | null smap = return True
+  | otherwise =
+      join . atomically $
+        IntMap.foldrWithKey f finish smap mempty lookahead0
+  where
+    f :: Int
+      -> TVar Status
+      -> (IntMap.IntMap () -> Int -> STM (IO Bool))
+      -> (IntMap.IntMap () -> Int -> STM (IO Bool))
+    -- ok_tests is a set of tests that completed successfully
+    -- lookahead is the number of unfinished tests that we are allowed to
+    -- look at
+    f key tvar k ok_tests lookahead
+      | lookahead <= 0 =
+          -- We looked at too many unfinished tests.
+          next_iter ok_tests
+      | otherwise = do
+          this_status <- readTVar tvar
+          case this_status of
+            Done r ->
+              if resultSuccessful r
+                then k (IntMap.insert key () ok_tests) lookahead
+                else return $ return False
+            _ -> k ok_tests (lookahead-1)
+
+    -- next_iter is called when we end the current iteration,
+    -- either because we reached the end of the test tree
+    -- or because we exhausted the lookahead
+    next_iter :: IntMap.IntMap () -> STM (IO Bool)
+    next_iter ok_tests =
+      -- If we made no progress at all, wait until at least some tests
+      -- complete.
+      -- Otherwise, reduce the set of tests we are looking at.
+      if null ok_tests
+        then retry
+        else return $ statusMapResult lookahead0 (IntMap.difference smap ok_tests)
+
+    finish :: IntMap.IntMap () -> Int -> STM (IO Bool)
+    finish ok_tests _ = next_iter ok_tests
 
 -- }}}
 
@@ -295,10 +313,11 @@ consoleTestReporter =
     whenColor = lookupOption opts
     Quiet quiet = lookupOption opts
     HideSuccesses hideSuccesses = lookupOption opts
+    NumThreads numThreads = lookupOption opts
 
   if quiet
     then do
-      b <- statusMapResult smap
+      b <- statusMapResult numThreads smap
       return $ \_time -> return b
     else
 
