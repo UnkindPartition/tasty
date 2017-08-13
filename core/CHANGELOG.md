@@ -1,6 +1,13 @@
 Changes
 =======
 
+Version 0.11.2.4
+----------------
+
+1. Make the `--quiet` mode more efficient on a large number of tests
+2. Fix a bug where a cursor would disappear if the test suite was terminated by
+   a signal other than SIGINT.
+
 Version 0.11.2.3
 ----------------
 
