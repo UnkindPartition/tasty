@@ -22,8 +22,11 @@ executable tasty-core-tests
   build-depends:       base <= 5, tasty, tasty-hunit, containers, stm, mtl
   -- hs-source-dirs:      
   default-language:    Haskell2010
+  ghc-options:         -Wall
 
 executable exit-status-test
   main-is:             exit-status-test.hs
-  build-depends:       base <= 5, tasty, tasty-hunit
+  build-depends:       base <= 5, tasty, tasty-hunit,
+                       random, random-shuffle
   default-language:    Haskell2010
+  ghc-options:         -Wall -fno-warn-type-defaults -threaded -with-rtsopts=-N
