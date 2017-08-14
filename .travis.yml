@@ -133,7 +133,7 @@ install:
       travis_retry cabal update
 
       # Get the list of packages from the stack.yaml file
-      PACKAGES=$(stack --install-ghc query locals | grep '^ *path' | sed 's@^ *path:@@')
+      PACKAGES=$(stack --install-ghc query locals | grep '^ *path' | sed 's@^ *path:@@' | grep -v 'core-tests')
 
       cabal install --only-dependencies --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS $PACKAGES
       ;;
@@ -155,18 +155,23 @@ script:
       ORIGDIR=$(pwd)
       for dir in $PACKAGES
       do
-        cd $dir
-        cabal sdist
-        PKGVER=$(cabal info . | awk '{print $2;exit}')
-        SRC_TGZ=$PKGVER.tar.gz
-        cd dist
-        tar zxfv "$SRC_TGZ"
-        cd "$PKGVER"
-        cabal configure --enable-tests
-        cabal build
-        cd $ORIGDIR
+        # do not build/run the tests on cabal;
+        # stack should be enough
+        # one of the reasons is that I don't want to bother to make core-tests
+        # compatible with older versions of ghc (7.6 and earlier)
+        if [ "$dir" != core-tests ]; then
+          cd $dir
+          cabal sdist
+          PKGVER=$(cabal info . | awk '{print $2;exit}')
+          SRC_TGZ=$PKGVER.tar.gz
+          cd dist
+          tar zxfv "$SRC_TGZ"
+          cd "$PKGVER"
+          cabal configure --enable-tests
+          cabal build
+          cd $ORIGDIR
+        fi
       done
-      core-tests/dist/build/tasty-core-tests/tasty-core-tests
       ;;
   esac
   set +ex
