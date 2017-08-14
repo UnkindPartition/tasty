@@ -15,8 +15,13 @@ import Prelude  -- Silence AMP and FTP import warnings
 import System.Exit
 import System.IO
 
--- for installSignalHandlers
-#ifdef UNIX
+-- We install handlers only on UNIX (obviously) and on GHC >= 7.6.
+-- GHC 7.4 lacks mkWeakThreadId (see #181), and this is not important
+-- enough to look for an alternative implementation, so we just disable it
+-- there.
+#define INSTALL_HANDLERS defined UNIX && MIN_VERSION_base(4,6,0)
+
+#if INSTALL_HANDLERS
 import Control.Concurrent (mkWeakThreadId, myThreadId)
 import Control.Exception (Exception(..), throwTo)
 import Control.Monad (forM_)
@@ -76,7 +81,7 @@ defaultMainWithIngredients ins testTree = do
 -- suite is killed by SIGTERM.
 installSignalHandlers :: IO ()
 installSignalHandlers = do
-#ifdef UNIX
+#if INSTALL_HANDLERS
   main_thread_id <- myThreadId
   weak_tid <- mkWeakThreadId main_thread_id
   forM_ [ sigABRT, sigBUS, sigFPE, sigHUP, sigILL, sigQUIT, sigSEGV,
