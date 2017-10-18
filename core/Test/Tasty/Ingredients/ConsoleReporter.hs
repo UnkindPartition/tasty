@@ -5,6 +5,20 @@ module Test.Tasty.Ingredients.ConsoleReporter
   ( consoleTestReporter
   , Quiet(..)
   , HideSuccesses(..)
+  -- * Internals
+  -- | The following functions and datatypes are internals that are exposed to
+  -- simplify the task of rolling your own custom console reporter UI.
+
+  -- ** Output colouring
+  , UseColor(..)
+  , useColor
+  -- ** Test failure statistics
+  , Statistics(..)
+  , printStatistics
+  -- ** Outputting results
+  , TestOutput(..)
+  , buildTestOutput
+  , foldTestOutput
   ) where
 
 import Control.Monad.State hiding (fail)
@@ -40,13 +54,19 @@ import System.Console.ANSI
 -- | 'TestOutput' is an intermediary between output formatting and output
 -- printing. It lets us have several different printing modes (normal; print
 -- failures only; quiet).
+--
+-- @since 0.11.3
 data TestOutput
   = PrintTest
       {- print test name   -} (IO ())
       {- print test result -} (Result -> IO ())
+      -- ^ Action that prints the test name and an action that renders the
+      -- result of the action.
   | PrintHeading (IO ()) TestOutput
-  | Skip
-  | Seq TestOutput TestOutput
+      -- ^ Action that prints the heading of a test group and the 'TestOutput'
+      -- for that test group.
+  | Skip -- ^ Inactive test (e.g. not matching the current pattern)
+  | Seq TestOutput TestOutput -- ^ Two sets of 'TestOuput' on the same level
 
 -- The monoid laws should hold observationally w.r.t. the semantics defined
 -- in this module
@@ -56,8 +76,12 @@ instance Monoid TestOutput where
 
 type Level = Int
 
-produceOutput :: (?colors :: Bool) => OptionSet -> TestTree -> TestOutput
-produceOutput opts tree =
+-- | Build the 'TestOutput' for a 'TestTree' and 'OptionSet'. The @colors@
+-- ImplicitParam controls whether the output is colored.
+--
+-- @since 0.11.3
+buildTestOutput :: (?colors :: Bool) => OptionSet -> TestTree -> TestOutput
+buildTestOutput opts tree =
   let
     -- Do not retain the reference to the tree more than necessary
     !alignment = computeAlignment opts tree
@@ -113,11 +137,21 @@ produceOutput opts tree =
           }
           opts tree
 
+-- | Fold function for the 'TestOutput' tree into a 'Monoid'.
+--
+-- @since 0.11.3
 foldTestOutput
-  :: (?colors :: Bool, Monoid b)
+  :: Monoid b
   => (IO () -> IO Result -> (Result -> IO ()) -> b)
+  -- ^ Eliminator for test cases. The @IO ()@ prints the testname. The
+  -- @IO Result@ blocks until the test is finished, returning it's 'Result'.
+  -- The @Result -> IO ()@ function prints the formatted output.
   -> (IO () -> b -> b)
-  -> TestOutput -> StatusMap -> b
+  -- ^ Eliminator for test groups. The @IO ()@ prints the test group's name.
+  -- The @b@ is the result of folding the test group.
+  -> TestOutput -- ^ The @TestOutput@ being rendered.
+  -> StatusMap -- ^ The @StatusMap@ received by the 'TestReporter'
+  -> b
 foldTestOutput foldTest foldHeading outputTree smap =
   flip evalState 0 $ getApp $ go outputTree where
   go (PrintTest printName printResult) = Ap $ do
@@ -217,9 +251,15 @@ streamOutputHidingSuccesses output smap =
 --------------------------------------------------
 -- {{{
 
+-- | Track the number of tests that were run and failures of a 'TestTree' or
+-- sub-tree.
+--
+-- @since 0.11.3
 data Statistics = Statistics
-  { statTotal :: !Int
-  , statFailures :: !Int
+  { statTotal :: !Int -- ^ Number of active tests (e.g., that match the
+                      -- pattern specified on the commandline), inactive tests
+                      -- are not counted.
+  , statFailures :: !Int -- ^ Number of active tests that failed.
   }
 
 instance Monoid Statistics where
@@ -231,6 +271,12 @@ computeStatistics = getApp . foldMap (\var -> Ap $
   (\r -> Statistics 1 (if resultSuccessful r then 0 else 1))
     <$> getResultFromTVar var)
 
+-- | @printStatistics@ reports test success/failure statistics and time it took
+-- to run. The 'Time' results is intended to be filled in by the 'TestReporter'
+-- callback. The @colors@ ImplicitParam controls whether coloured output is
+-- used.
+--
+-- @since 0.11.3
 printStatistics :: (?colors :: Bool) => Statistics -> Time -> IO ()
 printStatistics st time = do
   printf "\n"
@@ -334,7 +380,7 @@ consoleTestReporter =
             ?colors = useColor whenColor isTerm
 
           let
-            output = produceOutput opts tree
+            output = buildTestOutput opts tree
 
           case () of { _
             | hideSuccesses && isTerm ->
@@ -370,8 +416,12 @@ instance IsOption HideSuccesses where
   optionCLParser = mkFlagCLParser mempty (HideSuccesses True)
 
 -- | When to use color on the output
+--
+-- @since 0.11.3
 data UseColor
-  = Never | Always | Auto
+  = Never
+  | Always
+  | Auto -- ^ Only if stdout is an ANSI color supporting terminal
   deriving (Eq, Ord, Typeable)
 
 -- | Control color output
@@ -382,7 +432,9 @@ instance IsOption UseColor where
   optionHelp = return "When to use colored output. Options are 'never', 'always' and 'auto' (default: 'auto')"
 
 -- | @useColor when isTerm@ decides if colors should be used,
---   where @isTerm@ denotes where @stdout@ is a terminal device.
+--   where @isTerm@ indicates whether @stdout@ is a terminal device.
+--
+--   @since 0.11.3
 useColor :: UseColor -> Bool -> Bool
 useColor when isTerm =
   case when of

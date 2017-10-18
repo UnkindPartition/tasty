@@ -2,7 +2,7 @@
 --  see http://haskell.org/cabal/users-guide/
 
 name:                tasty
-version:             0.11.2.5
+version:             0.11.3
 synopsis:            Modern and extensible testing framework
 description:         Tasty is a modern testing framework for Haskell.
                      It lets you combine your unit tests, golden
@@ -33,6 +33,7 @@ library
     Test.Tasty.Runners
     Test.Tasty.Ingredients,
     Test.Tasty.Ingredients.Basic
+    Test.Tasty.Ingredients.ConsoleReporter
   other-modules:
     Test.Tasty.Parallel,
     Test.Tasty.Core,
@@ -43,7 +44,6 @@ library
     Test.Tasty.Runners.Reducers,
     Test.Tasty.Runners.Utils,
     Test.Tasty.CmdLine,
-    Test.Tasty.Ingredients.ConsoleReporter
     Test.Tasty.Ingredients.ListTests
     Test.Tasty.Ingredients.IncludingOptions
   build-depends:
