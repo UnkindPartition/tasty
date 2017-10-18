@@ -1,6 +1,12 @@
 Changes
 =======
 
+Version 0.11.3
+--------------
+
+Expose and document several of the internals of
+`Test.Tasty.Ingredients.ConsoleReporter`.
+
 Version 0.11.2.5
 ----------------
 
