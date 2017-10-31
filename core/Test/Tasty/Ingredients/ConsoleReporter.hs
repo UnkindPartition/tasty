@@ -15,6 +15,7 @@ module Test.Tasty.Ingredients.ConsoleReporter
   -- ** Test failure statistics
   , Statistics(..)
   , printStatistics
+  , printStatisticsNoTime
   -- ** Outputting results
   , TestOutput(..)
   , buildTestOutput
@@ -55,16 +56,17 @@ import System.Console.ANSI
 -- printing. It lets us have several different printing modes (normal; print
 -- failures only; quiet).
 --
--- @since 0.11.3
+-- @since 0.12
 data TestOutput
   = PrintTest
+      {- test name         -} String
       {- print test name   -} (IO ())
       {- print test result -} (Result -> IO ())
-      -- ^ Action that prints the test name and an action that renders the
-      -- result of the action.
-  | PrintHeading (IO ()) TestOutput
-      -- ^ Action that prints the heading of a test group and the 'TestOutput'
-      -- for that test group.
+      -- ^ Name of a test, an action that prints the test name, and an action
+      -- that renders the result of the action.
+  | PrintHeading String (IO ()) TestOutput
+      -- ^ Name of a test group, an action that prints the heading of a test
+      -- group and the 'TestOutput' for that test group.
   | Skip -- ^ Inactive test (e.g. not matching the current pattern)
   | Seq TestOutput TestOutput -- ^ Two sets of 'TestOuput' on the same level
 
@@ -118,7 +120,7 @@ buildTestOutput opts tree =
             (if resultSuccessful result then infoOk else infoFail) $
               printf "%s%s\n" (indent $ level + 1) (formatDesc (level+1) rDesc)
 
-      return $ PrintTest printTestName printTestResult
+      return $ PrintTest name printTestName printTestResult
 
     runGroup :: TestName -> Ap (Reader Level) TestOutput -> Ap (Reader Level) TestOutput
     runGroup name grp = Ap $ do
@@ -126,7 +128,7 @@ buildTestOutput opts tree =
       let
         printHeading = printf "%s%s\n" (indent level) name
         printBody = runReader (getApp grp) (level + 1)
-      return $ PrintHeading printHeading printBody
+      return $ PrintHeading name printHeading printBody
 
   in
     flip runReader 0 $ getApp $
@@ -139,14 +141,14 @@ buildTestOutput opts tree =
 
 -- | Fold function for the 'TestOutput' tree into a 'Monoid'.
 --
--- @since 0.11.3
+-- @since 0.12
 foldTestOutput
   :: Monoid b
-  => (IO () -> IO Result -> (Result -> IO ()) -> b)
+  => (String -> IO () -> IO Result -> (Result -> IO ()) -> b)
   -- ^ Eliminator for test cases. The @IO ()@ prints the testname. The
   -- @IO Result@ blocks until the test is finished, returning it's 'Result'.
   -- The @Result -> IO ()@ function prints the formatted output.
-  -> (IO () -> b -> b)
+  -> (String -> IO () -> b -> b)
   -- ^ Eliminator for test groups. The @IO ()@ prints the test group's name.
   -- The @b@ is the result of folding the test group.
   -> TestOutput -- ^ The @TestOutput@ being rendered.
@@ -154,7 +156,7 @@ foldTestOutput
   -> b
 foldTestOutput foldTest foldHeading outputTree smap =
   flip evalState 0 $ getApp $ go outputTree where
-  go (PrintTest printName printResult) = Ap $ do
+  go (PrintTest name printName printResult) = Ap $ do
     ix <- get
     put $! ix + 1
     let
@@ -162,9 +164,9 @@ foldTestOutput foldTest foldHeading outputTree smap =
         fromMaybe (error "internal error: index out of bounds") $
         IntMap.lookup ix smap
       readStatusVar = getResultFromTVar statusVar
-    return $ foldTest printName readStatusVar printResult
-  go (PrintHeading printName printBody) = Ap $
-    foldHeading printName <$> getApp (go printBody)
+    return $ foldTest name printName readStatusVar printResult
+  go (PrintHeading name printName printBody) = Ap $
+    foldHeading name printName <$> getApp (go printBody)
   go (Seq a b) = mappend (go a) (go b)
   go Skip = mempty
 
@@ -178,13 +180,13 @@ consoleOutput :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
 consoleOutput output smap =
   getTraversal . fst $ foldTestOutput foldTest foldHeading output smap
   where
-    foldTest printName getResult printResult =
+    foldTest _name printName getResult printResult =
       ( Traversal $ do
           printName
           r <- getResult
           printResult r
       , Any True)
-    foldHeading printHeading (printBody, Any nonempty) =
+    foldHeading _name printHeading (printBody, Any nonempty) =
       ( Traversal $ do
           when nonempty $ do printHeading; getTraversal printBody
       , Any nonempty
@@ -194,7 +196,7 @@ consoleOutputHidingSuccesses :: (?colors :: Bool) => TestOutput -> StatusMap -> 
 consoleOutputHidingSuccesses output smap =
   void . getApp $ foldTestOutput foldTest foldHeading output smap
   where
-    foldTest printName getResult printResult =
+    foldTest _name printName getResult printResult =
       Ap $ do
           printName
           r <- getResult
@@ -202,7 +204,7 @@ consoleOutputHidingSuccesses output smap =
             then do clearThisLine; return $ Any False
             else do printResult r; return $ Any True
 
-    foldHeading printHeading printBody =
+    foldHeading _name printHeading printBody =
       Ap $ do
         printHeading
         Any failed <- getApp printBody
@@ -217,7 +219,7 @@ streamOutputHidingSuccesses output smap =
   void . flip evalStateT [] . getApp $
     foldTestOutput foldTest foldHeading output smap
   where
-    foldTest printName getResult printResult =
+    foldTest _name printName getResult printResult =
       Ap $ do
           r <- liftIO $ getResult
           if resultSuccessful r
@@ -233,7 +235,7 @@ streamOutputHidingSuccesses output smap =
 
               return $ Any True
 
-    foldHeading printHeading printBody =
+    foldHeading _name printHeading printBody =
       Ap $ do
         modify (printHeading :)
         Any failed <- getApp printBody
@@ -271,6 +273,11 @@ computeStatistics = getApp . foldMap (\var -> Ap $
   (\r -> Statistics 1 (if resultSuccessful r then 0 else 1))
     <$> getResultFromTVar var)
 
+reportStatistics :: (?colors :: Bool) => Statistics -> IO ()
+reportStatistics st = case statFailures st of
+    0 -> ok $ printf "All %d tests passed" (statTotal st)
+    fs -> fail $ printf "%d out of %d tests failed" fs (statTotal st)
+
 -- | @printStatistics@ reports test success/failure statistics and time it took
 -- to run. The 'Time' results is intended to be filled in by the 'TestReporter'
 -- callback. The @colors@ ImplicitParam controls whether coloured output is
@@ -280,13 +287,17 @@ computeStatistics = getApp . foldMap (\var -> Ap $
 printStatistics :: (?colors :: Bool) => Statistics -> Time -> IO ()
 printStatistics st time = do
   printf "\n"
-
+  reportStatistics st
   case statFailures st of
-    0 -> do
-      ok $ printf "All %d tests passed (%.2fs)\n" (statTotal st) time
+    0 -> ok $ printf " (%.2fs)\n" time
+    _ -> fail $ printf " (%.2fs)\n" time
 
-    fs -> do
-      fail $ printf "%d out of %d tests failed (%.2fs)\n" fs (statTotal st) time
+-- | @printStatisticsNoTime@ reports test success/failure statistics
+-- The @colors@ ImplicitParam controls whether coloured output is used.
+--
+-- @since 0.12
+printStatisticsNoTime :: (?colors :: Bool) => Statistics -> IO ()
+printStatisticsNoTime st = reportStatistics st >> printf "\n"
 
 -- | Wait until
 --

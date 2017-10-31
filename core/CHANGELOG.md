@@ -1,6 +1,12 @@
 Changes
 =======
 
+Version 0.12
+--------------
+
+Backward compat breaking revision of `Test.Tasty.Ingredients.ConsoleReporter`
+that exposes the name of tests/groups.
+
 Version 0.11.3
 --------------
 
