@@ -16,17 +16,9 @@ Features:
 * Extensibility: add your own test providers and ingredients (runners) above and
   beyond those provided
 
-[![Build Status](https://travis-ci.org/feuerbach/tasty.png?branch=master)](https://travis-ci.org/feuerbach/tasty)
-
 To find out what's new, read the **[change log][]**.
 
 [change log]: https://github.com/feuerbach/tasty/blob/master/core/CHANGELOG.md
-
-Ask any tasty-related questions on the **[mailing list][]** or IRC channel
-**#tasty** at FreeNode ([logs & stats][ircbrowse]).
-
-[mailing list]: https://groups.google.com/forum/#!forum/haskell-tasty
-[ircbrowse]: http://ircbrowse.net/tasty
 
 ## Example
 
@@ -415,26 +407,6 @@ something not mentioned here, send a pull request!
 * [Code testing in Haskell revisited (with Tasty)](http://lambda.jstolarek.com/2014/01/code-testing-in-haskell-revisited-with-tasty/)
 
 [custom-options-article]: http://ro-che.info/articles/2013-12-20-tasty-custom-options.html
-
-## Background
-
-Tasty is heavily influenced by [test-framework][].
-
-The problems with test-framework are:
-
-* Poor code style (some lines of the code wouldn't even fit in a twitter message!)
-* Poor architecture — e.g. relying on laziness for IO and control flow. The
-  whole story with `:~>` and `ImprovingIO` is really obscure.
-* Non-extensible options. For example, when I integrated SmallCheck with
-  test-framework (in the form of the `test-framework-smallcheck` package), I
-  still had to submit patches to the main package to make SmallCheck depth
-  customizable by the user.
-* The project is effectively unmaintained.
-
-So I decided to recreate everything that I liked in test-framework from scratch
-in this package.
-
-[test-framework]: http://batterseapower.github.io/test-framework/
 
 Maintainers
 -----------
