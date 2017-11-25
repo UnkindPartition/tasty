@@ -29,14 +29,14 @@ instance IsTest TestCaseSteps where
 
         Right {} -> testPassed (unlines msgs)
 
-        Left (HUnitFailure errMsg) -> testFailed $
+        Left (HUnitFailure mbloc errMsg) -> testFailed $
           if null msgs
             then
               errMsg
             else
               -- Indent the error msg w.r.t. step messages
               unlines $
-                msgs ++ map ("  " ++) (lines errMsg)
+                msgs ++ map ("  " ++) (lines . prependLocation mbloc $ errMsg)
 
   testOptions = return []
 

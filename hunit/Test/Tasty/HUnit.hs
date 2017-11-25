@@ -49,6 +49,6 @@ instance IsTest TestCase where
     return $
       case hunitResult of
         Right info -> testPassed info
-        Left (HUnitFailure message) -> testFailed message
+        Left (HUnitFailure mbloc message) -> testFailed $ prependLocation mbloc message
 
   testOptions = return []

@@ -31,7 +31,12 @@ assertFailure
   :: HasCallStack
   => String -- ^ A message that is displayed with the assertion failure
   -> IO a
-assertFailure msg = E.throwIO (HUnitFailure msg)
+assertFailure msg = E.throwIO (HUnitFailure location msg)
+  where
+    location :: Maybe SrcLoc
+    location = case reverse callStack of
+      (_, loc) : _ -> Just loc
+      [] -> Nothing
 
 -- Conditional Assertion Functions
 -- -------------------------------
@@ -80,9 +85,15 @@ expected @=? actual = assertEqual "" expected actual
 actual @?= expected = assertEqual "" expected actual
 
 -- | Exception thrown by 'assertFailure' etc.
-data HUnitFailure = HUnitFailure String
-    deriving (Show, Typeable)
+data HUnitFailure = HUnitFailure (Maybe SrcLoc) String
+    deriving (Eq, Show, Typeable)
 instance E.Exception HUnitFailure
+
+prependLocation :: Maybe SrcLoc -> String -> String
+prependLocation mbloc s =
+  case mbloc of
+    Nothing -> s
+    Just loc -> srcLocFile loc ++ ":" ++ show (srcLocStartLine loc) ++ ":\n" ++ s
 
 ----------------------------------------------------------------------
 --                          DEPRECATED CODE
