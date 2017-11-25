@@ -31,6 +31,23 @@ module Test.Tasty.HUnit
     -- * Data types
   , Assertion
   , HUnitFailure(..)
+    -- * Accurate location for domain-specific assertion functions
+    -- | It is common to define domain-specific assertion functions based
+    -- on the standard ones, e.g.
+    --
+    -- > assertNonEmpty = assertBool "List is empty" . not . null
+    --
+    -- The problem is that if a test fails, tasty-hunit will point to the
+    -- definition site of @assertNonEmpty@ as the source of failure, not
+    -- its use site.
+    --
+    -- To correct this, add a 'HasCallStack' constraint (re-exported from
+    -- this module) to your function:
+    --
+    -- > assertNonEmpty :: HasCallStack => [a] -> Assertion
+    -- > assertNonEmpty = assertBool "List is empty" . not . null
+    --
+    , HasCallStack
     -- * Deprecated functions and types
     -- | These definitions come from HUnit, but I don't see why one would
     -- need them. If you have a valid use case for them, please contact me
@@ -49,6 +66,7 @@ import Test.Tasty.HUnit.Orig
 import Test.Tasty.HUnit.Steps
 
 import Data.Typeable
+import Data.CallStack (HasCallStack)
 import Control.Exception
 
 -- | Turn an 'Assertion' into a tasty test case
