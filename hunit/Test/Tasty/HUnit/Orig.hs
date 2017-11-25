@@ -27,7 +27,7 @@ type Assertion = IO ()
 -- @ 
 
 assertFailure :: String -- ^ A message that is displayed with the assertion failure 
-              -> Assertion
+              -> IO a
 assertFailure msg = E.throwIO (HUnitFailure msg)
 
 -- Conditional Assertion Functions
