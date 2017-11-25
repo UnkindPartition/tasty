@@ -6,6 +6,7 @@ module Test.Tasty.HUnit.Orig where
 import qualified Control.Exception as E
 import Control.Monad
 import Data.Typeable (Typeable)
+import Data.CallStack
 
 -- Interfaces
 -- ----------
@@ -26,23 +27,29 @@ type Assertion = IO ()
 --        else assertFailure msg
 -- @ 
 
-assertFailure :: String -- ^ A message that is displayed with the assertion failure 
-              -> IO a
+assertFailure
+  :: HasCallStack
+  => String -- ^ A message that is displayed with the assertion failure
+  -> IO a
 assertFailure msg = E.throwIO (HUnitFailure msg)
 
 -- Conditional Assertion Functions
 -- -------------------------------
 
 -- | Asserts that the specified condition holds.
-assertBool :: String    -- ^ The message that is displayed if the assertion fails
-           -> Bool      -- ^ The condition
-           -> Assertion
+assertBool
+  :: HasCallStack
+  => String    -- ^ The message that is displayed if the assertion fails
+  -> Bool      -- ^ The condition
+  -> Assertion
 assertBool msg b = unless b (assertFailure msg)
 
 -- | Signals an assertion failure if a non-empty message (i.e., a message
 -- other than @\"\"@) is passed.
-assertString :: String    -- ^ The message that is displayed with the assertion failure 
-             -> Assertion
+assertString
+  :: HasCallStack
+  => String    -- ^ The message that is displayed with the assertion failure
+  -> Assertion
 assertString s = unless (null s) (assertFailure s)
 
 -- | Asserts that the specified actual value is equal to the expected value.
@@ -51,10 +58,12 @@ assertString s = unless (null s) (assertFailure s)
 --  
 -- If the prefix is the empty string (i.e., @\"\"@), then the prefix is omitted
 -- and only the expected and actual values are output.
-assertEqual :: (Eq a, Show a) => String -- ^ The message prefix 
-                              -> a      -- ^ The expected value 
-                              -> a      -- ^ The actual value
-                              -> Assertion
+assertEqual
+  :: (Eq a, Show a, HasCallStack)
+  => String -- ^ The message prefix
+  -> a      -- ^ The expected value
+  -> a      -- ^ The actual value
+  -> Assertion
 assertEqual preface expected actual =
   unless (actual == expected) (assertFailure msg)
  where msg = (if null preface then "" else preface ++ "\n") ++
@@ -143,16 +152,20 @@ predi @? msg = assertionPredicate predi >>= assertBool msg
 
 -- | Asserts that the specified actual value is equal to the expected value
 --   (with the expected value on the left-hand side).
-(@=?) :: (Eq a, Show a) => a -- ^ The expected value
-                        -> a -- ^ The actual value
-                        -> Assertion
+(@=?)
+  :: (Eq a, Show a, HasCallStack)
+  => a -- ^ The expected value
+  -> a -- ^ The actual value
+  -> Assertion
 expected @=? actual = assertEqual "" expected actual
 
 -- | Asserts that the specified actual value is equal to the expected value
 --   (with the actual value on the left-hand side).
-(@?=) :: (Eq a, Show a) => a -- ^ The actual value
-                        -> a -- ^ The expected value
-                        -> Assertion
+(@?=)
+  :: (Eq a, Show a, HasCallStack)
+  => a -- ^ The actual value
+  -> a -- ^ The expected value
+  -> Assertion
 actual @?= expected = assertEqual "" expected actual
 
 -- | Exception thrown by 'assertFailure' etc.
