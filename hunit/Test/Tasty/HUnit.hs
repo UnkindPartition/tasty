@@ -1,10 +1,46 @@
--- | Unit testing support for tasty, inspired by the HUnit package
+-- | Unit testing support for tasty, inspired by the HUnit package.
+--
+-- Here's an example (a single tasty test case consisting of three
+-- assertions):
+--
+-- >import Test.Tasty
+-- >import Test.Tasty.HUnit
+-- >
+-- >main = defaultMain $
+-- >  testCase "Example test case" $ do
+-- >    -- assertion no. 1 (passes)
+-- >    2 + 2 @?= 4
+-- >    -- assertion no. 2 (fails)
+-- >    assertBool "the list is not empty" $ null [1]
+-- >    -- assertion no. 3 (would have failed, but won't be executed because
+-- >    -- the previous assertion has already failed)
+-- >    "foo" @?= "bar"
 {-# LANGUAGE TypeFamilies, DeriveDataTypeable #-}
 module Test.Tasty.HUnit
-  ( testCase
+  (
+    -- * Constructing test cases
+    testCase
   , testCaseInfo
   , testCaseSteps
-  , module Test.Tasty.HUnit.Orig
+    -- * Constructing assertions
+  , assertFailure
+  , assertBool
+  , assertEqual
+  , (@=?)
+  , (@?=)
+    -- * Data types
+  , Assertion
+  , HUnitFailure(..)
+    -- * Deprecated functions and types
+    -- | These definitions come from HUnit, but I don't see why one would
+    -- need them. If you have a valid use case for them, please contact me
+    -- or file an issue for tasty. Otherwise, they will eventually be
+    -- removed.
+  , assertString
+  , Assertable(..)
+  , AssertionPredicate
+  , AssertionPredicable(..)
+  , (@?)
   ) where
 
 import Test.Tasty.Providers
@@ -15,7 +51,7 @@ import Test.Tasty.HUnit.Steps
 import Data.Typeable
 import Control.Exception
 
--- | Create a 'Test' for a HUnit 'Assertion'
+-- | Turn an 'Assertion' into a tasty test case
 testCase :: TestName -> Assertion -> TestTree
 testCase name = singleTest name . TestCase . (fmap (const ""))
 

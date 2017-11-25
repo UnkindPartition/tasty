@@ -11,8 +11,11 @@ import Data.CallStack
 -- Interfaces
 -- ----------
 
--- | When an assertion is evaluated, it will output a message if and only if the
--- assertion fails.
+-- | An assertion is simply an 'IO' action. Assertion failure is indicated
+-- by throwing an exception, typically 'HUnitFailure'.
+--
+-- Instead of throwing the exception directly, you should use
+-- functions like 'assertFailure' and 'assertBool'.
 --
 -- Test cases are composed of a sequence of one or more assertions.
 
@@ -23,7 +26,7 @@ type Assertion = IO ()
 --
 -- @
 --    if conditionIsMet
---        then IO ()
+--        then return ()
 --        else assertFailure msg
 -- @
 
