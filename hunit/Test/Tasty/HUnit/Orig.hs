@@ -44,14 +44,6 @@ assertBool
   -> Assertion
 assertBool msg b = unless b (assertFailure msg)
 
--- | Signals an assertion failure if a non-empty message (i.e., a message
--- other than @\"\"@) is passed.
-assertString
-  :: HasCallStack
-  => String    -- ^ The message that is displayed with the assertion failure
-  -> Assertion
-assertString s = unless (null s) (assertFailure s)
-
 -- | Asserts that the specified actual value is equal to the expected value.
 -- The output message will contain the prefix, the expected value, and the
 -- actual value.
@@ -69,6 +61,44 @@ assertEqual preface expected actual =
  where msg = (if null preface then "" else preface ++ "\n") ++
              "expected: " ++ show expected ++ "\n but got: " ++ show actual
 
+-- | Asserts that the specified actual value is equal to the expected value
+--   (with the expected value on the left-hand side).
+(@=?)
+  :: (Eq a, Show a, HasCallStack)
+  => a -- ^ The expected value
+  -> a -- ^ The actual value
+  -> Assertion
+expected @=? actual = assertEqual "" expected actual
+
+-- | Asserts that the specified actual value is equal to the expected value
+--   (with the actual value on the left-hand side).
+(@?=)
+  :: (Eq a, Show a, HasCallStack)
+  => a -- ^ The actual value
+  -> a -- ^ The expected value
+  -> Assertion
+actual @?= expected = assertEqual "" expected actual
+
+-- | Exception thrown by 'assertFailure' etc.
+data HUnitFailure = HUnitFailure String
+    deriving (Show, Typeable)
+instance E.Exception HUnitFailure
+
+----------------------------------------------------------------------
+--                          DEPRECATED CODE
+----------------------------------------------------------------------
+
+{-# DEPRECATED assertString "Why not use assertBool instead?" #-}
+{-# DEPRECATED Assertable, AssertionPredicate, AssertionPredicable, (@?)
+   "This class or function seems dubious. If you have a good use case for it, please create an issue for tasty. Otherwise, it may be removed in a future version." #-}
+
+-- | Signals an assertion failure if a non-empty message (i.e., a message
+-- other than @\"\"@) is passed.
+assertString
+  :: HasCallStack
+  => String    -- ^ The message that is displayed with the assertion failure
+  -> Assertion
+assertString s = unless (null s) (assertFailure s)
 
 -- Overloaded `assert` Function
 -- ----------------------------
@@ -150,25 +180,3 @@ infix  1 @?, @=?, @?=
                                 -> Assertion
 predi @? msg = assertionPredicate predi >>= assertBool msg
 
--- | Asserts that the specified actual value is equal to the expected value
---   (with the expected value on the left-hand side).
-(@=?)
-  :: (Eq a, Show a, HasCallStack)
-  => a -- ^ The expected value
-  -> a -- ^ The actual value
-  -> Assertion
-expected @=? actual = assertEqual "" expected actual
-
--- | Asserts that the specified actual value is equal to the expected value
---   (with the actual value on the left-hand side).
-(@?=)
-  :: (Eq a, Show a, HasCallStack)
-  => a -- ^ The actual value
-  -> a -- ^ The expected value
-  -> Assertion
-actual @?= expected = assertEqual "" expected actual
-
--- | Exception thrown by 'assertFailure' etc.
-data HUnitFailure = HUnitFailure String
-    deriving (Show, Typeable)
-instance E.Exception HUnitFailure
