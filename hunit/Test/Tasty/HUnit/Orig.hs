@@ -12,7 +12,7 @@ import Data.CallStack
 -- ----------
 
 -- | When an assertion is evaluated, it will output a message if and only if the
--- assertion fails.  
+-- assertion fails.
 --
 -- Test cases are composed of a sequence of one or more assertions.
 
@@ -22,10 +22,10 @@ type Assertion = IO ()
 -- other assertions can be expressed with the form:
 --
 -- @
---    if conditionIsMet 
---        then IO () 
+--    if conditionIsMet
+--        then IO ()
 --        else assertFailure msg
--- @ 
+-- @
 
 assertFailure
   :: HasCallStack
@@ -53,9 +53,9 @@ assertString
 assertString s = unless (null s) (assertFailure s)
 
 -- | Asserts that the specified actual value is equal to the expected value.
--- The output message will contain the prefix, the expected value, and the 
+-- The output message will contain the prefix, the expected value, and the
 -- actual value.
---  
+--
 -- If the prefix is the empty string (i.e., @\"\"@), then the prefix is omitted
 -- and only the expected and actual values are output.
 assertEqual
@@ -75,10 +75,10 @@ assertEqual preface expected actual =
 
 -- | Allows the extension of the assertion mechanism.
 --
--- Since an 'Assertion' can be a sequence of @Assertion@s and @IO@ actions, 
+-- Since an 'Assertion' can be a sequence of @Assertion@s and @IO@ actions,
 -- there is a fair amount of flexibility of what can be achieved.  As a rule,
 -- the resulting @Assertion@ should be the body of a 'TestCase' or part of
--- a @TestCase@; it should not be used to assert multiple, independent 
+-- a @TestCase@; it should not be used to assert multiple, independent
 -- conditions.
 --
 -- If more complex arrangements of assertions are needed, 'Test's and
@@ -120,13 +120,13 @@ instance Assertable String
 -- 2. Read data from a file, evaluate conditions.
 --
 -- 3. Clean up the file.
--- 
+--
 -- 4. Assert that the side effects of the read operation meet certain conditions.
 --
 -- 5. Assert that the conditions evaluated in step 2 are met.
 type AssertionPredicate = IO Bool
 
--- | Used to signify that a data type can be converted to an assertion 
+-- | Used to signify that a data type can be converted to an assertion
 -- predicate.
 class AssertionPredicable t
  where assertionPredicate :: t -> AssertionPredicate
