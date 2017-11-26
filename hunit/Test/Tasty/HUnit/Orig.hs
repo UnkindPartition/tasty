@@ -1,4 +1,8 @@
 {-# LANGUAGE DeriveDataTypeable, FlexibleInstances, TypeSynonymInstances #-}
+
+-- required for HasCallStack by different versions of GHC
+{-# LANGUAGE ConstraintKinds, FlexibleContexts #-}
+
 -- | This is the code copied from the original hunit package (v. 1.2.5.2).
 -- with minor modifications
 module Test.Tasty.HUnit.Orig where
