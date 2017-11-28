@@ -103,6 +103,8 @@ The following providers exist:
   (based on [smallcheck](http://hackage.haskell.org/package/smallcheck))
 * [tasty-quickcheck](http://hackage.haskell.org/package/tasty-quickcheck) — for randomized
   property-based testing (based on [QuickCheck](http://hackage.haskell.org/package/QuickCheck))
+* [tasty-hedgehog](https://github.com/qfpl/tasty-hedgehog) — for randomized
+  property-based testing (based on [Hedgehog](http://hackage.haskell.org/package/hedgehog))
 * [tasty-hspec](http://hackage.haskell.org/package/tasty-hspec) — for
   [Hspec](http://hspec.github.io/) tests
 * [tasty-program](http://hackage.haskell.org/package/tasty-program) — run
