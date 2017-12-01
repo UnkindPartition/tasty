@@ -1,6 +1,13 @@
 Changes
 =======
 
+Version 0.10
+------------
+
+* Make `assertFailure`'s return type polymorphic
+* When a test fails, print the source location of the failing assertion
+* Deprecate `Assertable`, `AssertionPredicate`, `AssertionPredicable`, `(@?)`
+
 Version 0.9.2
 -------------
 
