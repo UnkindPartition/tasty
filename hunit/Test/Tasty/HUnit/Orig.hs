@@ -73,6 +73,8 @@ assertEqual preface expected actual =
  where msg = (if null preface then "" else preface ++ "\n") ++
              "expected: " ++ show expected ++ "\n but got: " ++ show actual
 
+infix  1 @?, @=?, @?=
+
 -- | Asserts that the specified actual value is equal to the expected value
 --   (with the expected value on the left-hand side).
 (@=?)
@@ -91,6 +93,45 @@ expected @=? actual = assertEqual "" expected actual
   -> Assertion
 actual @?= expected = assertEqual "" expected actual
 
+-- | An infix and flipped version of 'assertBool'. E.g. instead of
+--
+-- >assertBool "Non-empty list" (null [1])
+--
+-- you can write
+--
+-- >null [1] @? "Non-empty list"
+--
+-- '@?' is also overloaded to accept @'IO' 'Bool'@ predicates, so instead
+-- of
+--
+-- > do
+-- >   e <- doesFileExist "test"
+-- >   e @? "File does not exist"
+--
+-- you can write
+--
+-- > doesFileExist "test" @? "File does not exist"
+(@?) :: (AssertionPredicable t, HasCallStack)
+  => t          -- ^ A value of which the asserted condition is predicated
+  -> String     -- ^ A message that is displayed if the assertion fails
+  -> Assertion
+predi @? msg = assertionPredicate predi >>= assertBool msg
+
+-- | An ad-hoc class used to overload the '@?' operator.
+--
+-- The only intended instances of this class are @'Bool'@ and @'IO' 'Bool'@.
+--
+-- You shouldn't need to interact with this class directly.
+class AssertionPredicable t
+ where assertionPredicate :: t -> IO Bool
+
+instance AssertionPredicable Bool
+ where assertionPredicate = return
+
+instance (AssertionPredicable t) => AssertionPredicable (IO t)
+ where assertionPredicate = (>>= assertionPredicate)
+
+
 -- | Exception thrown by 'assertFailure' etc.
 data HUnitFailure = HUnitFailure (Maybe SrcLoc) String
     deriving (Eq, Show, Typeable)
@@ -107,8 +148,8 @@ prependLocation mbloc s =
 ----------------------------------------------------------------------
 
 {-# DEPRECATED assertString "Why not use assertBool instead?" #-}
-{-# DEPRECATED Assertable, AssertionPredicate, AssertionPredicable, (@?)
-   "This class or function seems dubious. If you have a good use case for it, please create an issue for tasty. Otherwise, it may be removed in a future version." #-}
+{-# DEPRECATED Assertable, AssertionPredicate
+   "This class or type seems dubious. If you have a good use case for it, please create an issue for tasty. Otherwise, it may be removed in a future version." #-}
 
 -- | Signals an assertion failure if a non-empty message (i.e., a message
 -- other than @\"\"@) is passed.
@@ -173,28 +214,4 @@ instance Assertable String
 --
 -- 5. Assert that the conditions evaluated in step 2 are met.
 type AssertionPredicate = IO Bool
-
--- | Used to signify that a data type can be converted to an assertion
--- predicate.
-class AssertionPredicable t
- where assertionPredicate :: t -> AssertionPredicate
-
-instance AssertionPredicable Bool
- where assertionPredicate = return
-
-instance (AssertionPredicable t) => AssertionPredicable (IO t)
- where assertionPredicate = (>>= assertionPredicate)
-
-
--- Assertion Construction Operators
--- --------------------------------
-
-infix  1 @?, @=?, @?=
-
--- | Asserts that the condition obtained from the specified
---   'AssertionPredicable' holds.
-(@?) :: (AssertionPredicable t) => t          -- ^ A value of which the asserted condition is predicated
-                                -> String     -- ^ A message that is displayed if the assertion fails
-                                -> Assertion
-predi @? msg = assertionPredicate predi >>= assertBool msg
 

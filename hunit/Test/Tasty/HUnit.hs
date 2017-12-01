@@ -28,6 +28,8 @@ module Test.Tasty.HUnit
   , assertEqual
   , (@=?)
   , (@?=)
+  , (@?)
+  , AssertionPredicable(..)
     -- * Data types
   , Assertion
   , HUnitFailure(..)
@@ -56,8 +58,6 @@ module Test.Tasty.HUnit
   , assertString
   , Assertable(..)
   , AssertionPredicate
-  , AssertionPredicable(..)
-  , (@?)
   ) where
 
 import Test.Tasty.Providers
