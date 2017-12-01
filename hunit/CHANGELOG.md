@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.10.0.1
+----------------
+
+Un-deprecate `(@?)` and `AssertionPredicable` and improve their docs
+
 Version 0.10
 ------------
 
