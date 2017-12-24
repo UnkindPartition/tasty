@@ -28,7 +28,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --
 -- (Most of the code borrowed from the test-framework)
 
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE CPP, DeriveDataTypeable #-}
 
 module Test.Tasty.Patterns
   ( TestPattern
@@ -44,10 +44,12 @@ import Text.Regex.TDFA.String()
 
 import Data.List
 import Data.Typeable
+#if !MIN_VERSION_base(4,8,0)
 import Data.Tagged
+import Data.Monoid
+#endif
 
 import Options.Applicative
-import Data.Monoid
 
 data Token = SlashToken
            | WildcardToken

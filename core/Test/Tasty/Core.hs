@@ -223,12 +223,12 @@ foldTestTree
   -> TestTree
      -- ^ the tree to fold
   -> b
-foldTestTree (TreeFold fTest fGroup fResource) opts tree =
-  let pat = lookupOption opts
-  in go pat [] opts tree
+foldTestTree (TreeFold fTest fGroup fResource) opts0 tree0 =
+  let pat = lookupOption opts0
+  in go pat [] opts0 tree0
   where
-    go pat path opts tree =
-      case tree of
+    go pat path opts tree1 =
+      case tree1 of
         SingleTest name test
           | testPatternMatches pat (path ++ [name])
             -> fTest opts name test
@@ -236,7 +236,7 @@ foldTestTree (TreeFold fTest fGroup fResource) opts tree =
         TestGroup name trees ->
           fGroup name $ foldMap (go pat (path ++ [name]) opts) trees
         PlusTestOptions f tree -> go pat path (f opts) tree
-        WithResource res tree -> fResource res $ \res -> go pat path opts (tree res)
+        WithResource res0 tree -> fResource res0 $ \res -> go pat path opts (tree res)
         AskOptions f -> go pat path opts (f opts)
 
 -- | Get the list of options that are relevant for a given test tree

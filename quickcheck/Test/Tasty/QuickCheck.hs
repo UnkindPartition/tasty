@@ -37,13 +37,15 @@ import Test.QuickCheck hiding -- for re-export
   )
 
 import Data.Typeable
-import Data.Proxy
 import Data.List
-import Data.Monoid
 import Text.Printf
-import Control.Applicative
-import Test.QuickCheck.Random (QCGen, mkQCGen)
+import Test.QuickCheck.Random (mkQCGen)
 import System.Random (getStdRandom, randomR)
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative
+import Data.Monoid
+import Data.Proxy
+#endif
 
 newtype QC = QC QC.Property
   deriving Typeable
@@ -154,7 +156,7 @@ instance IsTest QC where
     , Option (Proxy :: Proxy QuickCheckVerbose)
     ]
 
-  run opts (QC prop) yieldProgress = do
+  run opts (QC prop) _yieldProgress = do
     (replaySeed, args) <- optionSetToArgs opts
 
     let

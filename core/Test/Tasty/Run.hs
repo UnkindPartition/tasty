@@ -196,7 +196,7 @@ type InitFinPair = (Seq.Seq Initializer, Seq.Seq Finalizer)
 -- | Turn a test tree into a list of actions to run tests coupled with
 -- variables to watch them
 createTestActions :: OptionSet -> TestTree -> IO ([(IO (), TVar Status)], [ResourceVar])
-createTestActions opts tree = do
+createTestActions opts0 tree = do
   let
     traversal ::
       Traversal (WriterT ([(InitFinPair -> IO (), TVar Status)], [ResourceVar]) IO)
@@ -206,7 +206,7 @@ createTestActions opts tree = do
           { foldSingle = runSingleTest
           , foldResource = addInitAndRelease
           }
-        opts tree
+        opts0 tree
   (tests, rvars) <- unwrap traversal
   let tests' = map (first ($ (Seq.empty, Seq.empty))) tests
   return (tests', rvars)
@@ -261,17 +261,17 @@ launchTestTree
     -- all resource initializers and finalizers, which is why it is more
     -- accurate than what could be measured from inside the first callback.
   -> IO a
-launchTestTree opts tree k = do
+launchTestTree opts tree k0 = do
   (testActions, rvars) <- createTestActions opts tree
   let NumThreads numTheads = lookupOption opts
-  (t,k) <- timed $ do
+  (t,k1) <- timed $ do
      abortTests <- runInParallel numTheads (fst <$> testActions)
      (do let smap = IntMap.fromList $ zip [0..] (snd <$> testActions)
-         k smap)
+         k0 smap)
       `finally` do
          abortTests
          waitForResources rvars
-  k t
+  k1 t
   where
     alive :: Resource r -> Bool
     alive r = case r of
@@ -304,5 +304,10 @@ timed t = do
 getTime :: IO Time
 getTime = do
   t <- Clock.getTime Clock.Monotonic
-  let ns = realToFrac $ Clock.timeSpecAsNanoSecs t
+  let ns = realToFrac $
+#if MIN_VERSION_clock(0,7,1)
+        Clock.toNanoSecs t
+#else
+        Clock.timeSpecAsNanoSecs t
+#endif
   return $ ns / 10 ^ (9 :: Int)

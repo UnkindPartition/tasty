@@ -1,6 +1,6 @@
 {-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable,
              ExistentialQuantification, GADTs,
-             OverlappingInstances, FlexibleInstances, UndecidableInstances,
+             FlexibleInstances, UndecidableInstances,
              TypeOperators #-}
 -- | Extensible options. They are used for provider-specific settings,
 -- ingredient-specific settings and core settings (such as the test name pattern).
@@ -29,7 +29,7 @@ import Data.Proxy
 import Data.Typeable
 import Data.Monoid
 import Data.Foldable
-import Prelude  -- Silence FTP import warnings
+import Prelude hiding (mod) -- Silence FTP import warnings
 
 import Options.Applicative
 

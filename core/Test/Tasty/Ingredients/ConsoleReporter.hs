@@ -22,11 +22,11 @@ module Test.Tasty.Ingredients.ConsoleReporter
   , foldTestOutput
   ) where
 
+import Prelude hiding (fail)
 import Control.Monad.State hiding (fail)
 import Control.Monad.Reader hiding (fail,reader)
 import Control.Concurrent.STM
 import Control.Exception
-import Control.Applicative
 import Test.Tasty.Core
 import Test.Tasty.Run
 import Test.Tasty.Ingredients
@@ -39,14 +39,16 @@ import qualified Data.IntMap as IntMap
 import Data.Char
 import Data.Maybe
 import Data.Monoid
-import Data.Proxy
-import Data.Tagged
 import Data.Typeable
-import Data.Foldable hiding (concatMap,elem,sequence_)
-import Options.Applicative
-import Prelude hiding (fail)  -- Silence AMP and FTP import warnings
+import Options.Applicative hiding (str)
 import System.IO
 import System.Console.ANSI
+#if !MIN_VERSION_base(4,8,0)
+import Data.Proxy
+import Data.Tagged
+import Data.Foldable hiding (concatMap,elem,sequence_)
+import Control.Applicative
+#endif
 
 --------------------------------------------------
 -- TestOutput base definitions
@@ -177,36 +179,36 @@ foldTestOutput foldTest foldHeading outputTree smap =
 --------------------------------------------------
 -- {{{
 consoleOutput :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
-consoleOutput output smap =
-  getTraversal . fst $ foldTestOutput foldTest foldHeading output smap
+consoleOutput toutput smap =
+  getTraversal . fst $ foldTestOutput foldTest foldHeading toutput smap
   where
     foldTest _name printName getResult printResult =
       ( Traversal $ do
-          printName
+          printName :: IO ()
           r <- getResult
           printResult r
       , Any True)
     foldHeading _name printHeading (printBody, Any nonempty) =
       ( Traversal $ do
-          when nonempty $ do printHeading; getTraversal printBody
+          when nonempty $ do printHeading :: IO (); getTraversal printBody
       , Any nonempty
       )
 
 consoleOutputHidingSuccesses :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
-consoleOutputHidingSuccesses output smap =
-  void . getApp $ foldTestOutput foldTest foldHeading output smap
+consoleOutputHidingSuccesses toutput smap =
+  void . getApp $ foldTestOutput foldTest foldHeading toutput smap
   where
     foldTest _name printName getResult printResult =
       Ap $ do
-          printName
+          printName :: IO ()
           r <- getResult
           if resultSuccessful r
             then do clearThisLine; return $ Any False
-            else do printResult r; return $ Any True
+            else do printResult r :: IO (); return $ Any True
 
     foldHeading _name printHeading printBody =
       Ap $ do
-        printHeading
+        printHeading :: IO ()
         Any failed <- getApp printBody
         unless failed clearAboveLine
         return $ Any failed
@@ -215,9 +217,9 @@ consoleOutputHidingSuccesses output smap =
     clearThisLine = do clearLine; setCursorColumn 0
 
 streamOutputHidingSuccesses :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
-streamOutputHidingSuccesses output smap =
+streamOutputHidingSuccesses toutput smap =
   void . flip evalStateT [] . getApp $
-    foldTestOutput foldTest foldHeading output smap
+    foldTestOutput foldTest foldHeading toutput smap
   where
     foldTest _name printName getResult printResult =
       Ap $ do
@@ -230,8 +232,8 @@ streamOutputHidingSuccesses output smap =
 
               liftIO $ do
                 sequence_ $ reverse stack
-                printName
-                printResult r
+                printName :: IO ()
+                printResult r :: IO ()
 
               return $ Any True
 
@@ -391,14 +393,14 @@ consoleTestReporter =
             ?colors = useColor whenColor isTerm
 
           let
-            output = buildTestOutput opts tree
+            toutput = buildTestOutput opts tree
 
           case () of { _
             | hideSuccesses && isTerm ->
-                consoleOutputHidingSuccesses output smap
+                consoleOutputHidingSuccesses toutput smap
             | hideSuccesses && not isTerm ->
-                streamOutputHidingSuccesses output smap
-            | otherwise -> consoleOutput output smap
+                streamOutputHidingSuccesses toutput smap
+            | otherwise -> consoleOutput toutput smap
           }
 
           return $ \time -> do
@@ -447,8 +449,8 @@ instance IsOption UseColor where
 --
 --   @since 0.11.3
 useColor :: UseColor -> Bool -> Bool
-useColor when isTerm =
-  case when of
+useColor when_ isTerm =
+  case when_ of
     Never  -> False
     Always -> True
     Auto   -> isTerm

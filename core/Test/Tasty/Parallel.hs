@@ -125,7 +125,7 @@ runInParallel nthreads actions = do
           -- an exception strikes before we 'release'. Everything will be
           -- killed, so why bother.
           return $ do
-            pid <- forkCarefully (do a; release)
+            pid <- forkCarefully (do a :: IO (); release)
             labelThread pid "tasty_test_thread"
             cont
 

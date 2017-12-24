@@ -1,5 +1,5 @@
 -- | Core options, i.e. the options used by tasty itself
-{-# LANGUAGE DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-} -- for (^)
 module Test.Tasty.Options.Core
   ( NumThreads(..)
@@ -12,12 +12,13 @@ module Test.Tasty.Options.Core
 import Control.Monad (mfilter)
 import Data.Proxy
 import Data.Typeable
+#if !MIN_VERSION_base(4,8,0)
 import Data.Tagged
-import Data.Fixed
 import Data.Monoid
-import Options.Applicative
+#endif
+import Data.Fixed
+import Options.Applicative hiding (str)
 import GHC.Conc
-import Prelude  -- Silence FTP import warnings
 
 import Test.Tasty.Options
 import Test.Tasty.Patterns

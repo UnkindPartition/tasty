@@ -7,24 +7,24 @@ import Test.Tasty.Options
 import Test.Tasty.Runners
 import Test.Tasty.HUnit
 import Control.Concurrent
-import Control.Concurrent.STM
 import Control.Monad.Writer
 import qualified Data.IntMap as IntMap
-import Data.Monoid
-import Control.Applicative
 import Control.Exception
 
 import Utils
 
+testResources :: TestTree
 testResources = testGroup "Resources"
   [testResources1, testResources2, testResources3, testResources4]
 
+initIORef :: IORef Bool -> IO (IORef Bool)
 initIORef ref = do
   v <- readIORef ref
   if v
     then assertFailure "resource was already initialized!"
     else writeIORef ref True
   return ref
+releaseIORef :: IORef Bool -> IO ()
 releaseIORef ref = do
   v <- readIORef ref
   if not v
@@ -66,7 +66,7 @@ testResources1 = testCase "Normal; a test excluded by a pattern" $ do
 
 testTree2 :: TestTree
 testTree2 =
-  withResource (error "exInit") (error "exFin") $ \ioRef -> testCase "body" $
+  withResource (error "exInit") (error "exFin") $ \_ioRef -> testCase "body" $
     error "exBody"
 
 testResources2 :: TestTree
@@ -81,7 +81,7 @@ testResources2 = testCase "Exception during resource initialization" $
 
 testTree3 :: IORef Bool -> TestTree
 testTree3 ref =
-  withResource (initIORef ref) releaseIORef $ \ioRef -> testCase "body" $
+  withResource (initIORef ref) releaseIORef $ \_ioRef -> testCase "body" $
     error "exBody"
 
 testResources3 :: TestTree

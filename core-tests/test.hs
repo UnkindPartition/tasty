@@ -1,23 +1,25 @@
 import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.Runners
-import Test.Tasty.Providers
 import Test.Tasty.Options
-import Data.Monoid
-import Data.IORef
-
+#if !MIN_VERSION_base(4,8,0)
+import Data.Monoid (mempty)
+#endif
 import Resources
 import Timeouts
 
+main :: IO ()
 main = do
   defaultMain mainGroup
 
+mainGroup :: TestTree
 mainGroup = testGroup "Tests"
   [ patternTests
   , testResources
   , testTimeouts
   ]
 
+patternTests :: TestTree
 patternTests = testGroup "Pattern tests"
   [ testCase "Absent pattern matches anything"
       (getTestNames mempty tt @?= ["A.B.A","A.B.B","A.B.C","A.C.Z","A.C.BB"])
@@ -58,6 +60,7 @@ getTestNames =
       }
 
 -- the tree being tested
+tt :: TestTree
 tt =
   testGroup "A"
     [ testGroup "B" [t "A", t "B", t "C"]

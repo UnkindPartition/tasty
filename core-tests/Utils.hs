@@ -4,7 +4,6 @@ import Control.Concurrent.STM
 import Control.Monad.Writer
 import qualified Data.Foldable as F
 
-import Test.Tasty
 import Test.Tasty.Runners
 
 -- run tests, return successfulness

@@ -11,14 +11,15 @@ module Test.Tasty.SmallCheck
 import Test.Tasty.Providers
 import Test.Tasty.Options
 import qualified Test.SmallCheck as SC
-import qualified Test.SmallCheck.Drivers as SC
 import Test.SmallCheck hiding (smallCheck) -- for re-export
-import Test.SmallCheck.Drivers
+import Test.SmallCheck.Drivers as SC
 import Control.Exception
 import Data.Typeable
-import Data.Proxy
 import Data.IORef
 import Text.Printf
+#if !MIN_VERSION_base(4,8,0)
+import Data.Proxy
+#endif
 
 -- | Create a 'Test' for a SmallCheck 'SC.Testable' property
 testProperty :: SC.Testable IO a => TestName -> a -> TestTree

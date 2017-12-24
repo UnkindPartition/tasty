@@ -1,5 +1,5 @@
 -- | Ingredient for listing test names
-{-# LANGUAGE GeneralizedNewtypeDeriving, DeriveDataTypeable #-}
+{-# LANGUAGE CPP, GeneralizedNewtypeDeriving, DeriveDataTypeable #-}
 module Test.Tasty.Ingredients.ListTests
   ( ListTests(..)
   , testsNames
@@ -8,8 +8,10 @@ module Test.Tasty.Ingredients.ListTests
 
 import Data.Proxy
 import Data.Typeable
-import Data.Monoid
 import Options.Applicative
+#if !MIN_VERSION_base(4,8,0)
+import Data.Monoid
+#endif
 
 import Test.Tasty.Core
 import Test.Tasty.Options

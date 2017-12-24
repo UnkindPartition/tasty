@@ -15,7 +15,7 @@ import Text.Printf
 --
 -- See e.g. <https://github.com/feuerbach/tasty/issues/25>
 formatMessage :: String -> IO String
-formatMessage msg = go 3 msg
+formatMessage = go 3
   where
     -- to avoid infinite recursion, we introduce the recursion limit
     go :: Int -> String -> IO String

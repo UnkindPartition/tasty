@@ -2,10 +2,11 @@ module Timeouts where
 
 import Test.Tasty
 import Test.Tasty.Runners
-import Test.Tasty.Options
 import Test.Tasty.HUnit
-import Data.Monoid
 import Control.Concurrent
+#if !MIN_VERSION_base(4,8,0)
+import Data.Monoid (mempty)
+#endif
 import Utils
 
 -- this is a dummy tree we use for testing

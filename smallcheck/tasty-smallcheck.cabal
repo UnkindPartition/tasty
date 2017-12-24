@@ -26,3 +26,5 @@ Library
                                 base >= 4 && < 5,
                                 async,
                                 tagged
+        ghc-options: -Wall -fno-warn-orphans
+        default-extensions: CPP
