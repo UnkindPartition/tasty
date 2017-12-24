@@ -61,11 +61,11 @@ matrix:
     compiler: ": #stack 7.10.3"
     addons: {apt: {packages: [libgmp-dev]}}
 
-  - env: BUILD=stack ARGS="--resolver lts-8"
+  - env: BUILD=stack ARGS="--resolver lts-8" WARNINGS=true
     compiler: ": #stack 8.0.2"
     addons: {apt: {packages: [libgmp-dev]}}
 
-  - env: BUILD=stack ARGS="--resolver lts-10"
+  - env: BUILD=stack ARGS="--resolver lts-10" WARNINGS=true
     compiler: ": #stack 8.2.2"
     addons: {apt: {packages: [libgmp-dev]}}
 
@@ -128,7 +128,13 @@ script:
   set -ex
   case "$BUILD" in
     stack)
-      stack --no-terminal $ARGS test --bench --no-run-benchmarks --haddock --no-haddock-deps
+      if "$WARNINGS"
+      then
+        stack --no-terminal $ARGS test --bench --no-run-benchmarks --haddock --no-haddock-deps \
+          --ghc-options='-Werror -fforce-recomp -Wsemigroup'
+      else
+        stack --no-terminal $ARGS test --bench --no-run-benchmarks --haddock --no-haddock-deps
+      fi
       stack --no-terminal $ARGS exec tasty-core-tests
       stack --no-terminal $ARGS exec core-tests/exit-status-tests.sh
       ;;
