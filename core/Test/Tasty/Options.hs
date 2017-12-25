@@ -27,13 +27,11 @@ import Data.Map (Map)
 import Data.Tagged
 import Data.Proxy
 import Data.Typeable
-import Data.Monoid
+import Data.Monoid hiding ((<>))
 import Data.Foldable
 import Prelude hiding (mod) -- Silence FTP import warnings
 import Options.Applicative
-#if MIN_VERSION_base(4,9,0)
-import Data.Semigroup (Semigroup)
-#endif
+import Data.Semigroup ((<>), Semigroup)
 
 -- | An option is a data type that inhabits the `IsOption` type class.
 class Typeable v => IsOption v where
@@ -79,14 +77,13 @@ data OptionValue = forall v . IsOption v => OptionValue v
 -- If some option has not been explicitly set, the default value is used.
 newtype OptionSet = OptionSet (Map TypeRep OptionValue)
 
+instance Semigroup OptionSet where
+  OptionSet a <> OptionSet b = OptionSet $ Map.unionWith (flip const) a b
+
 -- | Later options override earlier ones
 instance Monoid OptionSet where
-  mempty = OptionSet mempty
-  OptionSet a `mappend` OptionSet b =
-    OptionSet $ Map.unionWith (flip const) a b
-#if MIN_VERSION_base(4,9,0)
-instance Semigroup OptionSet
-#endif
+  mempty  = OptionSet mempty
+  mappend = (<>)
 
 -- | Set the option value
 setOption :: IsOption v => v -> OptionSet -> OptionSet
