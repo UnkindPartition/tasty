@@ -25,6 +25,11 @@ Source-repository head
   location: git://github.com/feuerbach/tasty.git
   subdir:   core
 
+flag clock
+  description:
+    Depend on the clock package for more accurate time measurement
+  default: True
+
 library
   exposed-modules:
     Test.Tasty,
@@ -59,7 +64,7 @@ library
     async >= 2.0,
     ansi-terminal >= 0.6.2
 
-  if !impl(ghcjs)
+  if flag(clock)
     build-depends: clock >= 0.4.4.0
   else
     build-depends: time >= 1.4
