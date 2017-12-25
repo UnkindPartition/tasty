@@ -1,8 +1,13 @@
 Changes
 =======
 
+Version 0.12.0.1
+----------------
+
+Fix compatibility with GHC 8.4
+
 Version 0.12
---------------
+------------
 
 Backward compat breaking revision of `Test.Tasty.Ingredients.ConsoleReporter`
 that exposes the name of tests/groups.
