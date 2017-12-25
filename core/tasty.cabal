@@ -64,6 +64,10 @@ library
     -- for GHC.Generics
     build-depends: ghc-prim
 
+  if impl(ghc < 8.0)
+    -- provide/emulate `Data.Semigroups` API for pre-GHC-8
+    build-depends: semigroups == 0.18.*
+
   if !os(windows)
     build-depends: unix
     cpp-options: -DUNIX

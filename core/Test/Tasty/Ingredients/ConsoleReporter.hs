@@ -38,7 +38,7 @@ import Text.Printf
 import qualified Data.IntMap as IntMap
 import Data.Char
 import Data.Maybe
-import Data.Monoid
+import Data.Monoid hiding ((<>))
 import Data.Typeable
 import Options.Applicative hiding (str)
 import System.IO
@@ -49,9 +49,8 @@ import Data.Tagged
 import Data.Foldable hiding (concatMap,elem,sequence_)
 import Control.Applicative
 #endif
-#if MIN_VERSION_base(4,9,0)
-import Data.Semigroup (Semigroup)
-#endif
+
+import Data.Semigroup ((<>), Semigroup)
 
 --------------------------------------------------
 -- TestOutput base definitions
@@ -75,14 +74,14 @@ data TestOutput
   | Skip -- ^ Inactive test (e.g. not matching the current pattern)
   | Seq TestOutput TestOutput -- ^ Two sets of 'TestOuput' on the same level
 
+instance Semigroup TestOutput where
+  (<>) = Seq
+
 -- The monoid laws should hold observationally w.r.t. the semantics defined
 -- in this module
 instance Monoid TestOutput where
-  mempty = Skip
-  mappend = Seq
-#if MIN_VERSION_base(4,9,0)
-instance Semigroup TestOutput
-#endif
+  mempty  = Skip
+  mappend = (<>)
 
 type Level = Int
 
@@ -272,12 +271,12 @@ data Statistics = Statistics
   , statFailures :: !Int -- ^ Number of active tests that failed.
   }
 
+instance Semigroup Statistics where
+  Statistics t1 f1 <> Statistics t2 f2 = Statistics (t1 + t2) (f1 + f2)
+
 instance Monoid Statistics where
-  Statistics t1 f1 `mappend` Statistics t2 f2 = Statistics (t1 + t2) (f1 + f2)
-  mempty = Statistics 0 0
-#if MIN_VERSION_base(4,9,0)
-instance Semigroup Statistics
-#endif
+  mempty  = Statistics 0 0
+  mappend = (<>)
 
 computeStatistics :: StatusMap -> IO Statistics
 computeStatistics = getApp . foldMap (\var -> Ap $
@@ -526,15 +525,14 @@ data Maximum a
   = Maximum a
   | MinusInfinity
 
-instance Ord a => Monoid (Maximum a) where
-  mempty = MinusInfinity
+instance Ord a => Semigroup (Maximum a) where
+  Maximum a     <> Maximum b     = Maximum (a `max` b)
+  MinusInfinity <> a             = a
+  a             <> MinusInfinity = a
 
-  Maximum a `mappend` Maximum b = Maximum (a `max` b)
-  MinusInfinity `mappend` a = a
-  a `mappend` MinusInfinity = a
-#if MIN_VERSION_base(4,9,0)
-instance Ord a => Semigroup (Maximum a)
-#endif
+instance Ord a => Monoid (Maximum a) where
+  mempty  = MinusInfinity
+  mappend = (<>)
 
 -- | Compute the amount of space needed to align "OK"s and "FAIL"s
 computeAlignment :: OptionSet -> TestTree -> Int
