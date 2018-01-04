@@ -393,6 +393,20 @@ library. You have two options:
     setting the number of tasty threads to 1 ([example](#num_threads_example)).
     See [#48](https://github.com/feuerbach/tasty/issues/48) for the discussion.
 
+2.  When my tests write to stdout/stderr, the output is garbled. Why is that and
+    what do I do?
+
+    It is not recommended that you print anything to the console when using the
+    console test reporter (which is the default one).
+    See [#103](https://github.com/feuerbach/tasty/issues/103) for the
+    discussion.
+
+    Some ideas on how to work around this:
+
+    * Use [testCaseSteps](https://hackage.haskell.org/package/tasty-hunit/docs/Test-Tasty-HUnit.html#v:testCaseSteps) (for tasty-hunit only).
+    * Use a test reporter that does not print to the console (like tasty-ant-xml).
+    * Write your output to files instead.
+
 ## Press
 
 Blog posts and other publications related to tasty. If you wrote or just found
