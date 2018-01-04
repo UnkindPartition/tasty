@@ -1,4 +1,4 @@
-resolver: lts-8.4
+resolver: lts-10.2
 packages:
 - core/
 - hunit/
