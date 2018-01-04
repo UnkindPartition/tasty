@@ -107,7 +107,10 @@ class Typeable t => IsTest t where
   run
     :: OptionSet -- ^ options
     -> t -- ^ the test to run
-    -> (Progress -> IO ()) -- ^ a callback to report progress
+    -> (Progress -> IO ()) -- ^ a callback to report progress.
+                           -- Note: the callback is a no-op at the moment
+                           -- and there are no plans to use it;
+                           -- feel free to ignore this argument for now.
     -> IO Result
 
   -- | The list of options that affect execution of tests of this type
