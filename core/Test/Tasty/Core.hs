@@ -8,6 +8,7 @@ import Control.Exception
 import Test.Tasty.Options
 import Test.Tasty.Patterns
 import Data.Foldable
+import qualified Data.Sequence as Seq
 import Data.Monoid
 import Data.Typeable
 import qualified Data.Map as Map
@@ -228,16 +229,16 @@ foldTestTree
   -> b
 foldTestTree (TreeFold fTest fGroup fResource) opts0 tree0 =
   let pat = lookupOption opts0
-  in go pat [] opts0 tree0
+  in go pat mempty opts0 tree0
   where
     go pat path opts tree1 =
       case tree1 of
         SingleTest name test
-          | testPatternMatches pat (path ++ [name])
+          | testPatternMatches pat (path Seq.|> name)
             -> fTest opts name test
           | otherwise -> mempty
         TestGroup name trees ->
-          fGroup name $ foldMap (go pat (path ++ [name]) opts) trees
+          fGroup name $ foldMap (go pat (path Seq.|> name) opts) trees
         PlusTestOptions f tree -> go pat path (f opts) tree
         WithResource res0 tree -> fResource res0 $ \res -> go pat path opts (tree res)
         AskOptions f -> go pat path opts (f opts)

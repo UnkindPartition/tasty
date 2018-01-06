@@ -245,29 +245,299 @@ main = do
 
 ### Patterns
 
-It is possible to restrict the set of executed tests using the `--pattern`
-option. The syntax of patterns is the same as for test-framework, namely:
+It is possible to restrict the set of executed tests using the `-p/--pattern`
+option.
 
--   An optional prefixed bang `!` negates the pattern.
--   If the pattern ends with a slash, it is removed for the purpose of
-    the following description, but it would only find a match with a
-    test group. In other words, `foo/` will match a group called `foo`
-    and any tests underneath it, but will not match a regular test
-    `foo`.
--   If the pattern does not contain a slash `/`, the framework checks
-    for a match against any single component of the path.
--   Otherwise, the pattern is treated as a glob, where:
-    -   The wildcard `*` matches anything within a single path component
-        (i.e. `foo` but not `foo/bar`).
-    -   Two wildcards `**` matches anything (i.e. `foo` and `foo/bar`).
-    -   Anything else matches exactly that text in the path (i.e. `foo`
-        would only match a component of the test path called `foo` (or a
-        substring of that form).
+Tasty patterns are very powerful, but if you just want to quickly run tests containing `foo`
+somewhere in their name or in the name of an enclosing test group, you can just
+pass `-p foo`. If you need more power, or if that didn't work as expected, read
+on.
 
-For example, `group/*1` matches `group/test1` but not
-`group/subgroup/test1`, whereas both examples would be matched by
-`group/**1`. A leading slash matches the beginning of the test path; for
-example, `/test*` matches `test1` but not `group/test1`.
+A pattern is an [awk expression][awk]. When the expression is evaluated, the field `$1`
+is set to the outermost test group name, `$2` is set to the next test group
+name, and so on up to `$NF`, which is set to the test's own name. The field `$0`
+is set to all other fields concatenated using `/` as a separator.
+
+[awk]: http://pubs.opengroup.org/onlinepubs/9699919799/utilities/awk.html#tag_20_06_13_02
+
+As an example, consider a test inside two test groups:
+
+```
+  testGroup "One" [ testGroup "Two" [ testCase "Three" _ ] ]
+```
+
+When a pattern is evaluated for the above test case, the available fields and variables are:
+
+    $0 = "One/Two/Three"
+    $1 = "One"
+    $2 = "Two"
+    $3 = "Three"
+    NF = 3
+
+Here are some examples of awk expressions accepted as patterns:
+
+* `$2 == "Two"` — select the subgroup `Two`
+* `$2 == "Two" && $3 == "Three"`  — select the test or subgroup named `Three` in the subgroup named `Two`
+* `$2 == "Two" || $2 == "Twenty-two"` — select two subgroups
+* `$0 !~ /skip/` or `! /skip/` — select tests whose full names (including group names) do not contain the word `skip`
+* `$NF !~ /skip/` — select tests whose own names (but not group names) do not contain the word `skip`
+* `$(NF-1) ~ /QuickCheck/` — select tests whose immediate parent group name
+    contains `QuickCheck`
+
+As an extension to the awk expression language, if a pattern `pat` contains only
+letters, digits, and characters from the set `[_/ ]`, it is treated like `/pat/`
+(and therefore matched against `$0`). This is so that we can use `-p foo` as
+a shortcut for `-p /foo/`.
+
+The only deviation from awk that you will likely notice is that Tasty
+does not implement regular expression matching.
+Instead, `$1 ~ /foo/` means that the string `foo` occurs somewhere in `$1`,
+case-sensitively. We want to avoid a heavy dependency of `regex-tdfa` or
+similar libraries; however, if there is demand, regular expression support could
+be added under a cabal flag.
+
+The following operators are supported (in the order of decreasing precedence):
+
+<center>
+<table>
+<tr>
+<th>
+<p><b>Syntax</b></p>
+</th>
+<th>
+<p><b>Name</b></p>
+</th>
+<th>
+<p><b>Type of Result</b></p>
+</th>
+<th>
+<p><b>Associativity</b></p>
+</th>
+</tr>
+
+<tr>
+<td>
+<p><code>(expr)</code></p>
+</td>
+<td>
+<p>Grouping</p>
+</td>
+<td>
+<p>Type of <code>expr</code></p>
+</td>
+<td>
+<p>N/A</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p><code>$expr</code></p>
+</td>
+<td>
+<p>Field reference</p>
+</td>
+<td>
+<p>String</p>
+</td>
+<td>
+<p>N/A</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p><code>!expr</code></p>
+<p><code>-expr</code></p>
+</td>
+<td>
+<p>Logical not</p>
+<p>Unary minus</p>
+</td>
+<td>
+<p>Numeric</p>
+<p>Numeric</p>
+</td>
+<td>
+<p>N/A</p>
+<p>N/A</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p><code>expr + expr</code></p>
+<p><code>expr - expr</code></p>
+</td>
+<td>
+<p>Addition</p>
+<p>Subtraction</p>
+</td>
+<td>
+<p>Numeric</p>
+<p>Numeric</p>
+</td>
+<td>
+<p>Left</p>
+<p>Left</p>
+</td>
+</tr>
+
+
+<tr>
+<td>
+<p><code>expr expr</code></p>
+</td>
+<td>
+<p>String concatenation</p>
+</td>
+<td>
+<p>String</p>
+</td>
+<td>
+<p>Right</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p><code>expr &lt; expr</code></p>
+<p><code>expr &lt;= expr</code></p>
+<p><code>expr != expr</code></p>
+<p><code>expr == expr</code></p>
+<p><code>expr &gt; expr</code></p>
+<p><code>expr &gt;= expr</code></p>
+</td>
+<td>
+<p>Less than</p>
+<p>Less than or equal to</p>
+<p>Not equal to</p>
+<p>Equal to</p>
+<p>Greater than</p>
+<p>Greater than or equal to</p>
+</td>
+<td>
+<p>Numeric</p>
+<p>Numeric</p>
+<p>Numeric</p>
+<p>Numeric</p>
+<p>Numeric</p>
+<p>Numeric</p>
+</td>
+<td>
+<p>None</p>
+<p>None</p>
+<p>None</p>
+<p>None</p>
+<p>None</p>
+<p>None</p>
+</td>
+</tr>
+
+
+<tr>
+<td>
+<p><code>expr ~ pat</code></p>
+<p><code>expr !~ pat</code></p>
+<p>(<code>pat</code> must be a literal, not an expression, e.g. <code>/foo/</code>)</p>
+</td>
+<td>
+<p>Substring match</p>
+<p>No substring match</p>
+</td>
+<td>
+<p>Numeric</p>
+<p>Numeric</p>
+</td>
+<td>
+<p>None</p>
+<p>None</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p><code>expr &amp;&amp; expr</code></p>
+</td>
+<td>
+<p>Logical AND</p>
+</td>
+<td>
+<p>Numeric</p>
+</td>
+<td>
+<p>Left</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p><code>expr || expr</code></p>
+</td>
+<td>
+<p>Logical OR</p>
+</td>
+<td>
+<p>Numeric</p>
+</td>
+<td>
+<p>Left</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p><code>expr1 ? expr2 : expr3</code></p>
+</td>
+<td>
+<p>Conditional expression</p>
+</td>
+<td>
+<p>Type of selected<br><code>expr2</code> or <code>expr3</code></p>
+</td>
+<td>
+<p>Right</p>
+</td>
+</tr>
+
+</table>
+</center>
+
+The following built-in functions are supported:
+
+```
+substr(s, m[, n])
+```
+Return the at most `n`-character substring of `s` that begins at
+position `m`, numbering from 1. If `n` is omitted, or if `n` specifies
+more characters than are left in the string, the length of the substring
+will be limited by the length of the string `s`.
+
+```
+tolower(s)
+```
+
+Convert the string `s` to lower case.
+
+```
+toupper(s)
+```
+
+Convert the string `s` to upper case.
+
+```
+match(s, pat)
+```
+
+Return the position, in characters, numbering from 1, in string `s` where the
+pattern `pat` occurs, or zero if it does not occur at all.
+`pat` must be a literal, not an expression, e.g. `/foo/`.
+
+```
+length([s])
+```
+
+Return the length, in characters, of its argument taken as a string, or of the whole record, `$0`, if there is no argument.
 
 ### Running tests in parallel
 

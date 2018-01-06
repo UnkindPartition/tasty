@@ -9,6 +9,7 @@ import Test.Tasty.HUnit
 import Control.Concurrent
 import Control.Monad.Writer
 import qualified Data.IntMap as IntMap
+import Data.Maybe
 import Control.Exception
 
 import Utils
@@ -52,7 +53,7 @@ testResources1 :: TestTree
 testResources1 = testCase "Normal; a test excluded by a pattern" $ do
   ref <- newIORef False
   launchTestTree
-    (setOption (parseTestPattern "aa") mempty)
+    (setOption (fromJust $ parseTestPattern "aa") mempty)
     (testTree1 ref) $
     \smap -> do
       assertEqual "Number of tests to run" 2 (IntMap.size smap)

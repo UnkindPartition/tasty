@@ -1,32 +1,4 @@
--- This code is largely borrowed from test-framework
-{-
-Copyright (c) 2008, Maximilian Bolingbroke
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted
-provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright notice, this list of
-      conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright notice, this list of
-      conditions and the following disclaimer in the documentation and/or other materials
-      provided with the distribution.
-    * Neither the name of Maximilian Bolingbroke nor the names of other contributors may be used to
-      endorse or promote products derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
--}
-
 -- | Test patterns
---
--- (Most of the code borrowed from the test-framework)
 
 {-# LANGUAGE CPP, DeriveDataTypeable #-}
 
@@ -38,126 +10,48 @@ module Test.Tasty.Patterns
   ) where
 
 import Test.Tasty.Options
+import Test.Tasty.Patterns.Types
+import Test.Tasty.Patterns.Parser
+import Test.Tasty.Patterns.Eval
 
-import Text.Regex.TDFA
-import Text.Regex.TDFA.String()
-
-import Data.List
+import Data.Char
+import qualified Data.Sequence as Seq
 import Data.Typeable
 #if !MIN_VERSION_base(4,8,0)
 import Data.Tagged
 import Data.Monoid
 #endif
 
-import Options.Applicative
+import Options.Applicative hiding (Success)
 
-data Token = SlashToken
-           | WildcardToken
-           | DoubleWildcardToken
-           | LiteralToken Char
-           deriving (Eq, Show)
+newtype TestPattern = TestPattern (Maybe Expr)
+  deriving Typeable
 
-tokenize :: String -> [Token]
-tokenize ('/':rest)     = SlashToken : tokenize rest
-tokenize ('*':'*':rest) = DoubleWildcardToken : tokenize rest
-tokenize ('*':rest)     = WildcardToken : tokenize rest
-tokenize (c:rest)       = LiteralToken c : tokenize rest
-tokenize []             = []
-
-
-data TestPatternMatchMode = TestMatchMode
-                          | PathMatchMode
-                          deriving Show
-
--- | A pattern to filter tests. For the syntax description, see
--- the README.
-data TestPattern = TestPattern {
-        tp_categories_only :: Bool,
-        tp_negated :: Bool,
-        tp_match_mode :: TestPatternMatchMode,
-        tp_tokens :: [Token]
-    } | NoPattern
-    deriving (Typeable, Show)
-
--- | A pattern that matches anything.
 noPattern :: TestPattern
-noPattern = NoPattern
-
-instance Read TestPattern where
-    readsPrec _ string = [(parseTestPattern string, "")]
+noPattern = TestPattern Nothing
 
 instance IsOption TestPattern where
   defaultValue = noPattern
-  parseValue = Just . parseTestPattern
+  parseValue = parseTestPattern
   optionName = return "pattern"
-  optionHelp = return "Select only tests that match pattern"
+  optionHelp = return "Select only tests which satisfy a pattern or awk expression"
   optionCLParser = mkOptionCLParser (short 'p')
 
--- | Parse a pattern
-parseTestPattern :: String -> TestPattern
-parseTestPattern string = TestPattern {
-        tp_categories_only = categories_only,
-        tp_negated = negated,
-        tp_match_mode = match_mode,
-        tp_tokens = tokens''
-    }
-  where
-    tokens = tokenize string
-    (negated, tokens')
-      | (LiteralToken '!'):rest <- tokens = (True, rest)
-      | otherwise                         = (False, tokens)
-    (categories_only, tokens'')
-      | (prefix, [SlashToken]) <- splitAt (length tokens' - 1) tokens' = (True, prefix)
-      | otherwise                                                      = (False, tokens')
-    match_mode
-      | SlashToken `elem` tokens = PathMatchMode
-      | otherwise                = TestMatchMode
+parseTestPattern :: String -> Maybe TestPattern
+parseTestPattern s
+  | null s = Just noPattern
+  | all (\c -> isAlphaNum c || c `elem` "_/ ") s =
+    Just . TestPattern . Just $ ERE s
+  | otherwise =
+    case runParser expr s of
+      Success a -> Just . TestPattern . Just $ a
+      _ -> Nothing
 
-
--- | Test a path (which is the sequence of group titles, possibly followed
--- by the test title) against a pattern
-testPatternMatches :: TestPattern -> [String] -> Bool
-testPatternMatches test_pattern =
-  -- It is important that GHC assigns arity 1 to this function,
-  -- so that compilation of the regex is shared among the invocations.
-  -- See #175.
-  case test_pattern of
-    NoPattern -> const True
-    TestPattern {} -> \path ->
-      let
-        path_to_consider | tp_categories_only test_pattern = dropLast 1 path
-                         | otherwise                       = path
-        things_to_match = case tp_match_mode test_pattern of
-            -- See if the tokens match any single path component
-            TestMatchMode -> path_to_consider
-            -- See if the tokens match any prefix of the path
-            PathMatchMode -> map pathToString $ inits path_to_consider
-      in not_maybe . any (match tokens_regex) $ things_to_match
-  where
-    not_maybe | tp_negated test_pattern = not
-              | otherwise               = id
-    tokens_regex :: Regex
-    tokens_regex = makeRegex $ buildTokenRegex (tp_tokens test_pattern)
-
-
-buildTokenRegex :: [Token] -> String
-buildTokenRegex [] = []
-buildTokenRegex (token:tokens) = concat (firstTokenToRegex token : map tokenToRegex tokens)
-  where
-    firstTokenToRegex SlashToken = "^"
-    firstTokenToRegex other = tokenToRegex other
-
-    tokenToRegex SlashToken = "/"
-    tokenToRegex WildcardToken = "[^/]*"
-    tokenToRegex DoubleWildcardToken = ".*"
-    tokenToRegex (LiteralToken lit) = regexEscapeChar lit
-
-regexEscapeChar :: Char -> String
-regexEscapeChar c | c `elem` "\\*+?|{}[]()^$." = '\\' : [c]
-                  | otherwise                  = [c]
-
-pathToString :: [String] -> String
-pathToString path = concat (intersperse "/" path)
-
-dropLast :: Int -> [a] -> [a]
-dropLast n = reverse . drop n . reverse
+testPatternMatches :: TestPattern -> Seq.Seq String -> Bool
+testPatternMatches pat fields =
+  case pat of
+    TestPattern Nothing -> True
+    TestPattern (Just e) ->
+      case withFields fields $ asB =<< eval e of
+        Left msg -> error msg
+        Right b -> b

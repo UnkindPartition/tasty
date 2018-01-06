@@ -2,54 +2,47 @@ import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.Runners
 import Test.Tasty.Options
+import Data.Maybe
 #if !MIN_VERSION_base(4,8,0)
 import Data.Monoid (mempty)
 #endif
 import Resources
 import Timeouts
+import AWK
 
 main :: IO ()
 main = do
-  defaultMain mainGroup
+  defaultMain =<< mainGroup
 
-mainGroup :: TestTree
-mainGroup = testGroup "Tests"
-  [ patternTests
-  , testResources
-  , testTimeouts
-  ]
+mainGroup :: IO TestTree
+mainGroup = do
+  awkTests_ <- awkTests
+  return $ testGroup "Tests"
+    [ testResources
+    , testTimeouts
+    , patternTests
+    , awkTests_
+    ]
 
+-- | 'patternTests' are not supposed to test every awk feature; that's the
+-- job of 'awkTests'.
+--
+-- We test two things:
+--
+-- 1. awk patterns are properly integrated
+-- 2. simple strings are promoted to awk patterns
 patternTests :: TestTree
-patternTests = testGroup "Pattern tests"
-  [ testCase "Absent pattern matches anything"
-      (getTestNames mempty tt @?= ["A.B.A","A.B.B","A.B.C","A.C.Z","A.C.BB"])
-
-  , testCase "A*"
-      (o "A*" @?= ["A.B.A","A.B.B","A.B.C","A.C.Z","A.C.BB"])
-  , testCase "B*"
-      (o "B*" @?= ["A.B.A","A.B.B","A.B.C","A.C.BB"])
-  , testCase "B"
-      (o "B" @?= ["A.B.A","A.B.B","A.B.C","A.C.BB"])
-  , testCase "B/"
-      (o "B/" @?= ["A.B.A","A.B.B","A.B.C"])
-  , testCase "!B"
-      (o "!B" @?= ["A.C.Z"])
-  , testCase "A/**B"
-      (o "A/**B" @?= ["A.B.A","A.B.B","A.B.C","A.C.BB"])
-  , testCase "A**B"
-      (o "A**B" @?= []) -- only matched against individual components
-  , testCase "**B"
-      (o "**B" @?= ["A.B.A","A.B.B","A.B.C","A.C.BB"])
-  , testCase "B/A"
-      (o "B/A" @?= ["A.B.A"])
-  , testCase "/A"
-      (o "/A" @?= ["A.B.A","A.B.B","A.B.C","A.C.Z","A.C.BB"])
-  , testCase "!/*/B"
-      (o "!/*/B" @?= ["A.C.Z","A.C.BB"])
+patternTests = testGroup "Patterns"
+  [ testCase "Absent pattern"
+      (getTestNames mempty tt @?= ["Tests.Europe.London","Tests.Europe.Paris","Tests.Europe.Berlin","Tests.North America.Ottawa","Tests.North America.Washington DC"])
+  , testCase "Simple string"
+      (o "America" @?= ["Tests.North America.Ottawa","Tests.North America.Washington DC"])
+  , testCase "AWK expression"
+      (o "$3 ~ /r/ || $2 != \"Europe\"" @?= ["Tests.Europe.Paris","Tests.Europe.Berlin","Tests.North America.Ottawa","Tests.North America.Washington DC"])
   ]
   where
   -- apply a pattern to tt and get the names of tests that match
-  o s = getTestNames (setOption (parseTestPattern s) mempty) tt
+  o s = getTestNames (setOption (fromJust $ parseTestPattern s) mempty) tt
 
 getTestNames :: OptionSet -> TestTree -> [String]
 getTestNames =
@@ -62,9 +55,9 @@ getTestNames =
 -- the tree being tested
 tt :: TestTree
 tt =
-  testGroup "A"
-    [ testGroup "B" [t "A", t "B", t "C"]
-    , testGroup "C" [t "Z", t "BB"]
+  testGroup "Tests"
+    [ testGroup "Europe" [t "London", t "Paris", t "Berlin"]
+    , testGroup "North America" [t "Ottawa", t "Washington DC"]
     ]
   where
     -- trivial HUnit test

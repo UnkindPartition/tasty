@@ -1,0 +1,1 @@
+Success (EQ (Or (And (LT (IntLit 1) (IntLit 2)) (GT (IntLit 1) (IntLit 2))) (And (LE (IntLit 1) (IntLit 2)) (GE (IntLit 1) (IntLit 2)))) (NE (IntLit 1) (IntLit 2)))
