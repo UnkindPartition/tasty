@@ -1,6 +1,14 @@
 Changes
 =======
 
+Version 1.0
+-----------
+
+* New pattern language (see the README and/or the [blog post][awk])
+* Make the `clock` dependency optional
+
+[awk]: https://ro-che.info/articles/2018-01-08-tasty-new-patterns
+
 Version 0.12.0.1
 ----------------
 
