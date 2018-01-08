@@ -9,9 +9,6 @@ module Test.Tasty.Ingredients.ListTests
 import Data.Proxy
 import Data.Typeable
 import Options.Applicative
-#if !MIN_VERSION_base(4,8,0)
-import Data.Monoid
-#endif
 
 import Test.Tasty.Core
 import Test.Tasty.Options

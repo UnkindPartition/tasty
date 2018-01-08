@@ -12,10 +12,6 @@ module Test.Tasty.Options.Core
 import Control.Monad (mfilter)
 import Data.Proxy
 import Data.Typeable
-#if !MIN_VERSION_base(4,8,0)
-import Data.Tagged
-import Data.Monoid
-#endif
 import Data.Fixed
 import Options.Applicative hiding (str)
 import GHC.Conc

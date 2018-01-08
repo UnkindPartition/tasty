@@ -45,9 +45,7 @@ import System.IO
 import System.Console.ANSI
 #if !MIN_VERSION_base(4,8,0)
 import Data.Proxy
-import Data.Tagged
 import Data.Foldable hiding (concatMap,elem,sequence_)
-import Control.Applicative
 #endif
 #if MIN_VERSION_base(4,9,0)
 import Data.Semigroup (Semigroup)

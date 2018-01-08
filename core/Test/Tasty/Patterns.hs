@@ -17,11 +17,6 @@ import Test.Tasty.Patterns.Eval
 import Data.Char
 import qualified Data.Sequence as Seq
 import Data.Typeable
-#if !MIN_VERSION_base(4,8,0)
-import Data.Tagged
-import Data.Monoid
-#endif
-
 import Options.Applicative hiding (Success)
 
 newtype TestPattern = TestPattern (Maybe Expr)
