@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 1.0.0.1
+---------------
+
+Adjust lower bounds for the dependencies (mtl and optparse-applicative)
+
 Version 1.0
 -----------
 
