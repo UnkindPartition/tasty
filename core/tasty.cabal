@@ -61,7 +61,7 @@ library
     base >= 4.5 && < 5,
     stm >= 2.3,
     containers,
-    mtl,
+    mtl >= 2.2.1,
     tagged >= 0.5,
     optparse-applicative >= 0.11,
     deepseq >= 1.3,
