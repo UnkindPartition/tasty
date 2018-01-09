@@ -3,7 +3,7 @@ module Test.Tasty.Patterns.Eval (eval, withFields, asB) where
 
 import Prelude hiding (Ordering(..))
 import Control.Monad.Reader
-import Control.Monad.Except
+import Control.Monad.Error.Class
 import qualified Data.Sequence as Seq
 import Data.Foldable
 import Data.List
