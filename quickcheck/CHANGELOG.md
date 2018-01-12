@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version X.Y.Z
+-------------
+
+* Add `TestAllProperties` function.
+
 Version 0.9.1
 -------------
 
