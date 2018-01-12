@@ -1,10 +1,11 @@
 Changes
 =======
 
-Version X.Y.Z
+Version 0.9.2
 -------------
 
-* Add `TestAllProperties` function.
+* Add a `testProperties` function, which allows to test all QuickCheck
+    properties defined in a module.
 
 Version 0.9.1
 -------------
