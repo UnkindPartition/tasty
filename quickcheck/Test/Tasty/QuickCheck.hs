@@ -2,6 +2,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, DeriveDataTypeable #-}
 module Test.Tasty.QuickCheck
   ( testProperty
+  , testAllProperties
   , QuickCheckTests(..)
   , QuickCheckReplay(..)
   , QuickCheckShowReplay(..)
@@ -17,6 +18,7 @@ module Test.Tasty.QuickCheck
   , optionSetToArgs
   ) where
 
+import Test.Tasty ( testGroup )
 import Test.Tasty.Providers
 import Test.Tasty.Options
 import qualified Test.QuickCheck as QC
@@ -53,6 +55,19 @@ newtype QC = QC QC.Property
 -- | Create a 'Test' for a QuickCheck 'QC.Testable' property
 testProperty :: QC.Testable a => TestName -> a -> TestTree
 testProperty name prop = singleTest name $ QC $ QC.property prop
+
+-- | Create a test from a list of QuickCheck properties. To be used
+-- with 'QuickCheck.allProperties'. E.g.
+--
+-- @
+-- tests :: TestTree
+-- tests = testQuickCheckAllProperties \"Foo\" $allProperties
+-- @
+testAllProperties :: TestName -> [(String, Property)] -> TestTree
+testAllProperties name xs = testGroup name $ map helper xs
+  where
+  helper :: (String, Property) -> TestTree
+  helper (n, p) = testProperty n p
 
 -- | Number of test cases for QuickCheck to generate
 newtype QuickCheckTests = QuickCheckTests Int
