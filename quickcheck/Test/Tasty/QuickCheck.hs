@@ -61,7 +61,7 @@ testProperty name prop = singleTest name $ QC $ QC.property prop
 --
 -- @
 -- tests :: TestTree
--- tests = testQuickCheckAllProperties \"Foo\" $allProperties
+-- tests = testAllProperties \"Foo\" $allProperties
 -- @
 testAllProperties :: TestName -> [(String, Property)] -> TestTree
 testAllProperties name xs = testGroup name $ map helper xs
