@@ -686,13 +686,16 @@ something not mentioned here, send a pull request!
 * [First time testing, also with FP Complete](http://levischuck.com/posts/2013-11-13-first-testing-and-fpcomplete.html)
   (tasty has been added to stackage since then)
 * [24 Days of Hackage: tasty](http://ocharles.org.uk/blog/posts/2013-12-03-24-days-of-hackage-tasty.html)
-* [Resources in Tasty](http://ro-che.info/articles/2013-12-10-tasty-resources.html)
+* [Resources in Tasty](https://ro-che.info/articles/2013-12-10-tasty-resources)
 * [Custom options in Tasty][custom-options-article]
-* [Resources in Tasty (update)](http://ro-che.info/articles/2013-12-29-tasty-resources-2.html)
+* [Resources in Tasty (update)](https://ro-che.info/articles/2013-12-29-tasty-resources-2)
 * [Announcing tasty-rerun](http://ocharles.org.uk/blog/posts/2014-01-20-announcing-tasty-rerun.html)
 * [Code testing in Haskell revisited (with Tasty)](http://lambda.jstolarek.com/2014/01/code-testing-in-haskell-revisited-with-tasty/)
+* [New patterns in tasty][awk-patterns-article]
+* [Screencast: Dynamic Test Suites in Haskell using Hspec and Tasty](https://www.youtube.com/watch?v=PGsDvgmZF7A)
 
-[custom-options-article]: http://ro-che.info/articles/2013-12-20-tasty-custom-options.html
+[custom-options-article]: https://ro-che.info/articles/2013-12-20-tasty-custom-options.html
+[awk-patterns-article]: https://ro-che.info/articles/2018-01-08-tasty-new-patterns
 
 Maintainers
 -----------
