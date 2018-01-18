@@ -74,7 +74,12 @@ data TestOutput
 -- in this module
 instance Monoid TestOutput where
   mempty = Skip
+#if !MIN_VERSION_base(4,11,0)
   mappend = Seq
+#else
+instance Semigroup TestOutput where
+  (<>) = Seq
+#endif
 
 type Level = Int
 
@@ -265,8 +270,13 @@ data Statistics = Statistics
   }
 
 instance Monoid Statistics where
-  Statistics t1 f1 `mappend` Statistics t2 f2 = Statistics (t1 + t2) (f1 + f2)
   mempty = Statistics 0 0
+#if !MIN_VERSION_base(4,11,0)
+  Statistics t1 f1 `mappend` Statistics t2 f2 = Statistics (t1 + t2) (f1 + f2)
+#else
+instance Semigroup Statistics where
+  Statistics t1 f1 <> Statistics t2 f2 = Statistics (t1 + t2) (f1 + f2)
+#endif
 
 computeStatistics :: StatusMap -> IO Statistics
 computeStatistics = getApp . foldMap (\var -> Ap $
@@ -518,9 +528,16 @@ data Maximum a
 instance Ord a => Monoid (Maximum a) where
   mempty = MinusInfinity
 
+#if !MIN_VERSION_base(4,11,0)
   Maximum a `mappend` Maximum b = Maximum (a `max` b)
   MinusInfinity `mappend` a = a
   a `mappend` MinusInfinity = a
+#else
+instance Ord a => Semigroup (Maximum a) where
+  Maximum a     <> Maximum b     = Maximum (a `max` b)
+  MinusInfinity <> a             = a
+  a             <> MinusInfinity = a
+#endif
 
 -- | Compute the amount of space needed to align "OK"s and "FAIL"s
 computeAlignment :: OptionSet -> TestTree -> Int

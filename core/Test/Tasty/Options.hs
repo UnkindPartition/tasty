@@ -80,8 +80,14 @@ newtype OptionSet = OptionSet (Map TypeRep OptionValue)
 -- | Later options override earlier ones
 instance Monoid OptionSet where
   mempty = OptionSet mempty
+#if !MIN_VERSION_base(4,11,0)
   OptionSet a `mappend` OptionSet b =
     OptionSet $ Map.unionWith (flip const) a b
+#else
+instance Semigroup OptionSet where
+  OptionSet a <> OptionSet b =
+    OptionSet $ Map.unionWith (flip const) a b
+#endif
 
 -- | Set the option value
 setOption :: IsOption v => v -> OptionSet -> OptionSet
