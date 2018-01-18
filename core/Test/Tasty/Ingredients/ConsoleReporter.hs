@@ -47,9 +47,6 @@ import System.Console.ANSI
 import Data.Proxy
 import Data.Foldable hiding (concatMap,elem,sequence_)
 #endif
-#if MIN_VERSION_base(4,9,0)
-import Data.Semigroup (Semigroup)
-#endif
 
 --------------------------------------------------
 -- TestOutput base definitions
@@ -78,9 +75,6 @@ data TestOutput
 instance Monoid TestOutput where
   mempty = Skip
   mappend = Seq
-#if MIN_VERSION_base(4,9,0)
-instance Semigroup TestOutput
-#endif
 
 type Level = Int
 
@@ -273,9 +267,6 @@ data Statistics = Statistics
 instance Monoid Statistics where
   Statistics t1 f1 `mappend` Statistics t2 f2 = Statistics (t1 + t2) (f1 + f2)
   mempty = Statistics 0 0
-#if MIN_VERSION_base(4,9,0)
-instance Semigroup Statistics
-#endif
 
 computeStatistics :: StatusMap -> IO Statistics
 computeStatistics = getApp . foldMap (\var -> Ap $
@@ -530,9 +521,6 @@ instance Ord a => Monoid (Maximum a) where
   Maximum a `mappend` Maximum b = Maximum (a `max` b)
   MinusInfinity `mappend` a = a
   a `mappend` MinusInfinity = a
-#if MIN_VERSION_base(4,9,0)
-instance Ord a => Semigroup (Maximum a)
-#endif
 
 -- | Compute the amount of space needed to align "OK"s and "FAIL"s
 computeAlignment :: OptionSet -> TestTree -> Int

@@ -30,10 +30,8 @@ import Data.Typeable
 import Data.Monoid
 import Data.Foldable
 import Prelude hiding (mod) -- Silence FTP import warnings
+
 import Options.Applicative
-#if MIN_VERSION_base(4,9,0)
-import Data.Semigroup (Semigroup)
-#endif
 
 -- | An option is a data type that inhabits the `IsOption` type class.
 class Typeable v => IsOption v where
@@ -84,9 +82,6 @@ instance Monoid OptionSet where
   mempty = OptionSet mempty
   OptionSet a `mappend` OptionSet b =
     OptionSet $ Map.unionWith (flip const) a b
-#if MIN_VERSION_base(4,9,0)
-instance Semigroup OptionSet
-#endif
 
 -- | Set the option value
 setOption :: IsOption v => v -> OptionSet -> OptionSet
