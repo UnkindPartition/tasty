@@ -30,11 +30,8 @@ import Data.Typeable
 import Data.Monoid
 import Data.Foldable
 import Prelude hiding (mod) -- Silence FTP import warnings
+
 import Options.Applicative
-#if MIN_VERSION_base(4,9,0)
-import Data.Semigroup (Semigroup)
-import qualified Data.Semigroup (Semigroup((<>)))
-#endif
 
 -- | An option is a data type that inhabits the `IsOption` type class.
 class Typeable v => IsOption v where
@@ -83,11 +80,13 @@ newtype OptionSet = OptionSet (Map TypeRep OptionValue)
 -- | Later options override earlier ones
 instance Monoid OptionSet where
   mempty = OptionSet mempty
+#if !MIN_VERSION_base(4,11,0)
   OptionSet a `mappend` OptionSet b =
     OptionSet $ Map.unionWith (flip const) a b
-#if MIN_VERSION_base(4,9,0)
+#else
 instance Semigroup OptionSet where
-  (<>) = mappend
+  OptionSet a <> OptionSet b =
+    OptionSet $ Map.unionWith (flip const) a b
 #endif
 
 -- | Set the option value
