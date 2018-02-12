@@ -20,7 +20,7 @@ newtype ListTests = ListTests Bool
   deriving (Eq, Ord, Typeable)
 instance IsOption ListTests where
   defaultValue = ListTests False
-  parseValue = fmap ListTests . safeRead
+  parseValue = fmap ListTests . safeReadBool
   optionName = return "list-tests"
   optionHelp = return "Do not run the tests; just print their names"
   optionCLParser = mkFlagCLParser (short 'l') (ListTests True)

@@ -423,7 +423,7 @@ newtype Quiet = Quiet Bool
   deriving (Eq, Ord, Typeable)
 instance IsOption Quiet where
   defaultValue = Quiet False
-  parseValue = fmap Quiet . safeRead
+  parseValue = fmap Quiet . safeReadBool
   optionName = return "quiet"
   optionHelp = return "Do not produce any output; indicate success only by the exit code"
   optionCLParser = mkFlagCLParser (short 'q') (Quiet True)
@@ -433,7 +433,7 @@ newtype HideSuccesses = HideSuccesses Bool
   deriving (Eq, Ord, Typeable)
 instance IsOption HideSuccesses where
   defaultValue = HideSuccesses False
-  parseValue = fmap HideSuccesses . safeRead
+  parseValue = fmap HideSuccesses . safeReadBool
   optionName = return "hide-successes"
   optionHelp = return "Do not print tests that passed successfully"
   optionCLParser = mkFlagCLParser mempty (HideSuccesses True)

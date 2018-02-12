@@ -109,7 +109,7 @@ instance IsOption QuickCheckReplay where
 
 instance IsOption QuickCheckShowReplay where
   defaultValue = QuickCheckShowReplay False
-  parseValue = fmap QuickCheckShowReplay . safeRead
+  parseValue = fmap QuickCheckShowReplay . safeReadBool
   optionName = return "quickcheck-show-replay"
   optionHelp = return "Show a replay token for replaying tests"
 
@@ -130,7 +130,7 @@ instance IsOption QuickCheckMaxRatio where
 
 instance IsOption QuickCheckVerbose where
   defaultValue = QuickCheckVerbose False
-  parseValue = fmap QuickCheckVerbose . safeRead
+  parseValue = fmap QuickCheckVerbose . safeReadBool
   optionName = return "quickcheck-verbose"
   optionHelp = return "Show the generated test cases"
   optionCLParser = mkFlagCLParser mempty (QuickCheckVerbose True)
