@@ -1,5 +1,7 @@
 .cabal-sandbox
 cabal.sandbox.config
+cabal.project.local
+dist-newstyle
 core-tests/dist
 core/dist
 hunit/dist
