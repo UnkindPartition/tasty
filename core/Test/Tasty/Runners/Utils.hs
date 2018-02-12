@@ -2,7 +2,6 @@
 module Test.Tasty.Runners.Utils where
 
 import Control.Exception
-import Control.DeepSeq
 import Control.Applicative
 import Prelude  -- Silence AMP import warnings
 import Text.Printf
@@ -21,7 +20,11 @@ formatMessage = go 3
     go :: Int -> String -> IO String
     go 0        _ = return "exceptions keep throwing other exceptions!"
     go recLimit msg = do
-      mbStr <- try $ evaluate $ force msg
+      mbStr <- try $ evaluate $ forceElements msg
       case mbStr of
-        Right str -> return str
+        Right () -> return msg
         Left e' -> printf "message threw an exception: %s" <$> go (recLimit-1) (show (e' :: SomeException))
+
+-- https://ro-che.info/articles/2015-05-28-force-list
+forceElements :: [a] -> ()
+forceElements = foldr seq ()
