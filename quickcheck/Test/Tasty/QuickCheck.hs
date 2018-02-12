@@ -49,6 +49,7 @@ import Data.Typeable
 import Data.List
 import Text.Printf
 import Test.QuickCheck.Random (mkQCGen)
+import Options.Applicative (metavar)
 import System.Random (getStdRandom, randomR)
 #if !MIN_VERSION_base(4,8,0)
 import Control.Applicative
@@ -99,6 +100,7 @@ instance IsOption QuickCheckTests where
   parseValue = fmap QuickCheckTests . safeRead
   optionName = return "quickcheck-tests"
   optionHelp = return "Number of test cases for QuickCheck to generate"
+  optionCLParser = mkOptionCLParser $ metavar "NUMBER"
 
 instance IsOption QuickCheckReplay where
   defaultValue = QuickCheckReplay Nothing
@@ -106,6 +108,7 @@ instance IsOption QuickCheckReplay where
   parseValue v = QuickCheckReplay . Just <$> safeRead v
   optionName = return "quickcheck-replay"
   optionHelp = return "Random seed to use for replaying a previous test run (use same --quickcheck-max-size)"
+  optionCLParser = mkOptionCLParser $ metavar "SEED"
 
 instance IsOption QuickCheckShowReplay where
   defaultValue = QuickCheckShowReplay False
@@ -121,12 +124,14 @@ instance IsOption QuickCheckMaxSize where
   parseValue = fmap QuickCheckMaxSize . safeRead
   optionName = return "quickcheck-max-size"
   optionHelp = return "Size of the biggest test cases quickcheck generates"
+  optionCLParser = mkOptionCLParser $ metavar "NUMBER"
 
 instance IsOption QuickCheckMaxRatio where
   defaultValue = fromIntegral $ QC.maxDiscardRatio QC.stdArgs
   parseValue = fmap QuickCheckMaxRatio . safeRead
   optionName = return "quickcheck-max-ratio"
   optionHelp = return "Maximum number of discared tests per successful test before giving up"
+  optionCLParser = mkOptionCLParser $ metavar "NUMBER"
 
 instance IsOption QuickCheckVerbose where
   defaultValue = QuickCheckVerbose False

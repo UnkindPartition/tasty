@@ -16,6 +16,7 @@ import Test.SmallCheck.Drivers as SC
 import Control.Exception
 import Data.Typeable
 import Data.IORef
+import Options.Applicative (metavar)
 import Text.Printf
 #if !MIN_VERSION_base(4,8,0)
 import Data.Proxy
@@ -34,6 +35,7 @@ instance IsOption SmallCheckDepth where
   parseValue = fmap SmallCheckDepth . safeRead
   optionName = return "smallcheck-depth"
   optionHelp = return "Depth to use for smallcheck tests"
+  optionCLParser = mkOptionCLParser $ metavar "NUMBER"
 
 instance IsTest (SC.Property IO) where
   testOptions = return [Option (Proxy :: Proxy SmallCheckDepth)]

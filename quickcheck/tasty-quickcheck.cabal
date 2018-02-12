@@ -26,7 +26,8 @@ library
   exposed-modules:     Test.Tasty.QuickCheck
   -- other-modules:
   other-extensions:    GeneralizedNewtypeDeriving, DeriveDataTypeable
-  build-depends:       base == 4.*, tagged, tasty >= 0.10.1, random, QuickCheck >= 2.7
+  build-depends:       base == 4.*, tagged, tasty >= 0.10.1, random, QuickCheck >= 2.7,
+                       optparse-applicative
 
   -- hs-source-dirs:
   default-language:    Haskell2010
