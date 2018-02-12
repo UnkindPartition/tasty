@@ -1,0 +1,7 @@
+packages:
+  core
+  core-tests
+  hunit
+  quickcheck
+  smallcheck
+
