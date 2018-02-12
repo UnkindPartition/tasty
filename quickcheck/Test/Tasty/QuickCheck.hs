@@ -115,6 +115,7 @@ instance IsOption QuickCheckShowReplay where
   parseValue = fmap QuickCheckShowReplay . safeReadBool
   optionName = return "quickcheck-show-replay"
   optionHelp = return "Show a replay token for replaying tests"
+  optionCLParser = flagCLParser Nothing (QuickCheckShowReplay True)
 
 defaultMaxSize :: Int
 defaultMaxSize = QC.maxSize QC.stdArgs
