@@ -176,15 +176,16 @@ your test suite with the `--help` flag. The output will look something like this
 Mmm... tasty test suite
 
 Usage: test [-p|--pattern ARG] [-t|--timeout ARG] [-l|--list-tests]
-            [-j|--num-threads ARG] [-q|--quiet] [--hide-successes] [--color ARG]
-            [--quickcheck-tests ARG] [--quickcheck-replay ARG]
-            [--quickcheck-show-replay ARG] [--quickcheck-max-size ARG]
-            [--quickcheck-max-ratio ARG] [--quickcheck-verbose]
-            [--smallcheck-depth ARG]
+            [-j|--num-threads ARG] [-q|--quiet] [--hide-successes]
+            [--color never|always|auto] [--smallcheck-depth NUMBER]
+            [--quickcheck-tests NUMBER] [--quickcheck-replay SEED]
+            [--quickcheck-show-replay] [--quickcheck-max-size NUMBER]
+            [--quickcheck-max-ratio NUMBER] [--quickcheck-verbose]
 
 Available options:
   -h,--help                Show this help text
-  -p,--pattern ARG         Select only tests that match pattern
+  -p,--pattern ARG         Select only tests which satisfy a pattern or awk
+                           expression
   -t,--timeout ARG         Timeout for individual tests (suffixes: ms,s,m,h;
                            default: s)
   -l,--list-tests          Do not run the tests; just print their names
@@ -192,19 +193,21 @@ Available options:
   -q,--quiet               Do not produce any output; indicate success only by
                            the exit code
   --hide-successes         Do not print tests that passed successfully
-  --color ARG              When to use colored output. Options are 'never',
-                           'always' and 'auto' (default: 'auto')
-  --quickcheck-tests ARG   Number of test cases for QuickCheck to generate
-  --quickcheck-replay ARG  Replay token to use for replaying a previous test run
-  --quickcheck-show-replay ARG
-                           Show a replay token for replaying tests
-  --quickcheck-max-size ARG
+  --color never|always|auto
+                           When to use colored output (default: 'auto')
+  --smallcheck-depth NUMBER
+                           Depth to use for smallcheck tests
+  --quickcheck-tests NUMBER
+                           Number of test cases for QuickCheck to generate
+  --quickcheck-replay SEED Random seed to use for replaying a previous test run
+                           (use same --quickcheck-max-size)
+  --quickcheck-show-replay Show a replay token for replaying tests
+  --quickcheck-max-size NUMBER
                            Size of the biggest test cases quickcheck generates
-  --quickcheck-max-ratio ARG
+  --quickcheck-max-ratio NUMBER
                            Maximum number of discared tests per successful test
                            before giving up
   --quickcheck-verbose     Show the generated test cases
-  --smallcheck-depth ARG   Depth to use for smallcheck tests
 ```
 
 Every option can be passed via environment. To obtain the environment variable
@@ -212,6 +215,12 @@ name from the option name, replace hyphens `-` with underscores `_`, capitalize
 all letters, and prepend `TASTY_`. For example, the environment equivalent of
 `--smallcheck-depth` is `TASTY_SMALLCHECK_DEPTH`. To turn on a switch (such as
 `TASTY_HIDE_SUCCESSES`), set the variable to `True`.
+
+Note on boolean options: by convention, boolean ("on/off") options are specified
+using a switch on the command line, for example `--quickcheck-show-replay`
+instead of `--quickcheck-show-replay=true`. However, when
+passed via the environment, the option value needs to be `True` or `False`
+(case-insensitive), e.g. `TASTY_QUICKCHECK_SHOW_REPLAY=true`.
 
 If you're using a non-console runner, please refer to its documentation to find
 out how to configure options during the run time.
