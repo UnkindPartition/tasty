@@ -1,6 +1,14 @@
 Changes
 =======
 
+Version 0.10
+------------
+
+* Do not re-export irrelevant Template Haskell QuickCheck functions
+* Make boolean options case-insensitive
+* Make --quickcheck-show-replay a command-line flag rather than an option
+    requiring an argument `True`
+
 Version 0.9.2
 -------------
 
