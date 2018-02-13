@@ -1,6 +1,12 @@
 Changes
 =======
 
+Version 1.0.1
+-------------
+
+* Add a `safeReadBool` function, for case-insensitive parsing of boolean options
+* Convert all tasty's own options to case-insensitive
+
 Version 1.0.0.1
 ---------------
 
