@@ -13,6 +13,7 @@ import Control.Monad (mfilter)
 import Data.Proxy
 import Data.Typeable
 import Data.Fixed
+import Data.Monoid
 import Options.Applicative hiding (str)
 import GHC.Conc
 
@@ -33,7 +34,7 @@ instance IsOption NumThreads where
   parseValue = mfilter onlyPositive . fmap NumThreads . safeRead
   optionName = return "num-threads"
   optionHelp = return "Number of threads to use for tests execution"
-  optionCLParser = mkOptionCLParser (short 'j')
+  optionCLParser = mkOptionCLParser (short 'j' <> metavar "NUMBER")
 
 -- | Filtering function to prevent non-positive number of threads
 onlyPositive :: NumThreads -> Bool
@@ -56,7 +57,7 @@ instance IsOption Timeout where
       <*> pure str
   optionName = return "timeout"
   optionHelp = return "Timeout for individual tests (suffixes: ms,s,m,h; default: s)"
-  optionCLParser = mkOptionCLParser (short 't')
+  optionCLParser = mkOptionCLParser (short 't' <> metavar "DURATION")
 
 parseTimeout :: String -> Maybe Integer
 parseTimeout str =
