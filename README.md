@@ -213,8 +213,7 @@ Available options:
 Every option can be passed via environment. To obtain the environment variable
 name from the option name, replace hyphens `-` with underscores `_`, capitalize
 all letters, and prepend `TASTY_`. For example, the environment equivalent of
-`--smallcheck-depth` is `TASTY_SMALLCHECK_DEPTH`. To turn on a switch (such as
-`TASTY_HIDE_SUCCESSES`), set the variable to `True`.
+`--smallcheck-depth` is `TASTY_SMALLCHECK_DEPTH`.
 
 Note on boolean options: by convention, boolean ("on/off") options are specified
 using a switch on the command line, for example `--quickcheck-show-replay`
