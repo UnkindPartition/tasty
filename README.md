@@ -666,15 +666,96 @@ library. You have two options:
   will lead to double compilation (once for the program and once for the test
   suite).
 
+## Dependencies
+
+Tasty executes tests in parallel to make them finish faster.
+If this parallelism is not desirable, you can declare *dependencies* between
+tests, so that one test will not start until certain other tests finish.
+
+Dependencies are declared using the `after` combinator:
+
+* `after AllFinish "pattern" my_tests` will execute the test tree `my_tests` only after all
+    tests that match the pattern finish.
+* `after AllSucceed "pattern" my_tests` will execute the test tree `my_tests` only after all
+    tests that match the pattern finish **and** only if they all succeed. If at
+    least one dependency fails, then `my_tests` will be skipped.
+
+The relevant types are:
+
+``` haskell
+after
+  :: DependencyType -- ^ whether to run the tests even if some of the dependencies fail
+  -> String         -- ^ the pattern
+  -> TestTree       -- ^ the subtree that depends on other tests
+  -> TestTree       -- ^ the subtree annotated with dependency information
+
+data DependencyType = AllSucceed | AllFinish
+```
+
+The pattern follows the same AWK-like syntax and semantics as described in
+[Patterns](#patterns). There is also a variant named `after_` that accepts the
+AST of the pattern instead of a textual representation.
+
+Let's consider some typical examples. (A note about terminology: here
+by "resource" I mean anything stateful and external to the test: it could be a file,
+a database record, or even a value stored in an `IORef` that's shared among
+tests. The resource may or may not be managed by `withResource`.)
+
+1. Two tests, Test A and Test B, access the same shared resource and cannot be
+   run concurrently. To achieve this, make Test A a dependency of Test B:
+
+   ``` haskell
+   testGroup "Tests accessing the same resource"
+     [ testCase "Test A" $ ...
+     , after AllFinish "Test A" $
+         testCase "Test B" $ ...
+     ]
+   ```
+
+1. Test A creates a resource and Test B uses that resource. Like above, we make
+   Test A a dependency of Test B, except now we don't want to run Test B if Test
+   A failed because the resource may not have been set up properly. So we use
+   `AllSucceed` instead of `AllFinish`
+
+   ``` haskell
+   testGroup "Tests creating and using a resource"
+     [ testCase "Test A" $ ...
+     , after AllSucceed "Test A" $
+         testCase "Test B" $ ...
+     ]
+   ```
+
+Here are some caveats to keep in mind regarding dependencies in Tasty:
+
+1. If Test B depends on Test A, remember that either of the may be filtered out
+   using the `--pattern` option. Collecting the dependency info happens *after*
+   filtering. Therefore, if Test A is filtered out, Test B will run
+   unconditionally, and if Test B is filtered out, it simply won't run.
+1. Tasty does not currently check whether the pattern in a dependency matches
+   anything at all, so make sure your patterns are correct and do not contain
+   typos. Fortunately, misspecified dependencies usually lead to test failures
+   and so can be detected that way.
+1. Dependencies shouldn't form a cycle, otherwise Tasty with fail with the
+   message "Test dependencies form a loop." A common cause of this is a test
+   matching its own dependency pattern.
+1. Using dependencies may introduce quadratic complexity. Specifically,
+   resolving dependencies is *O(number_of_tests × number_of_dependencies)*,
+   since each pattern has to be matched against each test name. As a guideline,
+   if you have up to 1000 tests, the overhead will be negligible, but if you
+   have thousands of tests or more, then you probably shouldn't have more than a
+   few dependencies.
+
+   Additionally, it is recommended that the dependencies follow the
+   natural order of tests, i.e. that the later tests in the test tree depend on
+   the earlier ones and not vice versa. If the execution order mandated by the
+   dependencies is sufficiently different from the natural order of tests in the
+   test tree, searching for the next test to execute may also have an
+   overhead quadratic in the number of tests.
+
+
 ## FAQ
 
-1.  How do I make some tests execute after others?
-
-    Currently, your only option is to make all tests execute sequentially by
-    setting the number of tasty threads to 1 ([example](#num_threads_example)).
-    See [#48](https://github.com/feuerbach/tasty/issues/48) for the discussion.
-
-2.  When my tests write to stdout/stderr, the output is garbled. Why is that and
+1.  When my tests write to stdout/stderr, the output is garbled. Why is that and
     what do I do?
 
     It is not recommended that you print anything to the console when using the

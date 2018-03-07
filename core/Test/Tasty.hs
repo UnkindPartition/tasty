@@ -55,6 +55,10 @@ module Test.Tasty
   -- a file or a socket. We want to create or grab the resource before
   -- the tests are run, and destroy or release afterwards.
   , withResource
+  -- * Dependencies
+  , DependencyType(..)
+  , after
+  , after_
   )
   where
 

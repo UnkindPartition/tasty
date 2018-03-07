@@ -1,5 +1,5 @@
 {-# LANGUAGE RankNTypes, ViewPatterns #-}
-module Test.Tasty.Patterns.Eval (eval, withFields, asB) where
+module Test.Tasty.Patterns.Eval (Path, eval, withFields, asB) where
 
 import Prelude hiding (Ordering(..))
 import Control.Monad.Reader
@@ -15,6 +15,8 @@ import Control.Applicative
 import Data.Traversable
 #endif
 
+type Path = Seq.Seq String
+
 data Value
   = VN !Int
   | VS !Bool String
@@ -23,9 +25,7 @@ data Value
   | Uninitialized
   deriving Show
 
-type Env = Seq.Seq String
-
-type M = ReaderT Env (Either String)
+type M = ReaderT Path (Either String)
 
 asS :: Value -> M String
 asS v = return $

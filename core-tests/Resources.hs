@@ -163,7 +163,7 @@ testResources5 = testCase "Order of finalizers when the test suite runs" $ do
 testResources6 :: TestTree
 testResources6 = testCase "Order of finalizers when the test suite is aborted (1 thread)" $ do
   ref <- newIORef mempty
-  launchTestTree mempty (testTree5 ref) $ \_ -> do
+  launchTestTree (singleOption $ NumThreads 1) (testTree5 ref) $ \_ -> do
     -- do not wait until completion; abort before the first test finishes
     threadDelay (4*10^4)
     return $ const $ return ()

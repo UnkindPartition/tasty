@@ -7,6 +7,7 @@ module Test.Tasty.Core where
 import Control.Exception
 import Test.Tasty.Options
 import Test.Tasty.Patterns
+import Test.Tasty.Patterns.Types
 import Data.Foldable
 import qualified Data.Sequence as Seq
 import Data.Monoid
@@ -30,6 +31,8 @@ data FailureReason
     -- may simply raise an exception.
   | TestTimedOut Integer
     -- ^ test didn't complete in allotted time
+  | TestDepFailed -- See Note [Skipped tests]
+    -- ^ a dependency of this test failed, so this test was skipped.
   deriving Show
 
 -- | Outcome of a test run
@@ -63,6 +66,29 @@ data Result = Result
   , resultTime :: Time
     -- ^ How long it took to run the test, in seconds.
   }
+  deriving Show
+
+{- Note [Skipped tests]
+   ~~~~~~~~~~~~~~~~~~~~
+   There are two potential ways to represent the tests that are skipped
+   because of their failed dependencies:
+   1. With Outcome = Failure, and FailureReason giving the specifics (TestDepFailed)
+   2. With a dedicated Outcome = Skipped
+
+   It seems to me that (1) will lead to fewer bugs (esp. in the extension packages),
+   because most of the time skipped tests should be handled in the same way
+   as failed tests.
+   But sometimes it is not obvious what the right behavior should be. E.g.
+   should --hide-successes show or hide the skipped tests?
+
+   Perhaps we should hide them, because they aren't really informative.
+   Or perhaps we shouldn't hide them, because we are not sure that they
+   will pass, and hiding them will imply a false sense of security
+   ("there's at most 2 tests failing", whereas in fact there could be much more).
+
+   So I might change this in the future, but for now treating them as
+   failures seems the easiest yet reasonable approach.
+-}
 
 -- | 'True' for a passed test, 'False' for a failed one.
 resultSuccessful :: Result -> Bool
@@ -92,6 +118,7 @@ data Progress = Progress
     -- 'progressPercent' should be a value between 0 and 1. If it's impossible
     -- to compute the estimate, use 0.
   }
+  deriving Show
 
 -- | The interface to be implemented by a test provider.
 --
@@ -142,6 +169,19 @@ instance Show ResourceError where
 
 instance Exception ResourceError
 
+-- | These are the two ways in which one test may depend on the others.
+--
+-- This is the same distinction as the
+-- <http://testng.org/doc/documentation-main.html#dependent-methods hard vs soft dependencies in TestNG>.
+data DependencyType
+  = AllSucceed
+    -- ^ The current test tree will be executed after its dependencies finish, and only
+    -- if all of the dependencies succeed.
+  | AllFinish
+    -- ^ The current test tree will be executed after its dependencies finish,
+    -- regardless of whether they succeed or not.
+  deriving (Eq, Show)
+
 -- | The main data structure defining a test suite.
 --
 -- It consists of individual test cases and properties, organized in named
@@ -166,10 +206,83 @@ data TestTree
     -- tests.
   | AskOptions (OptionSet -> TestTree)
     -- ^ Ask for the options and customize the tests based on them
+  | After DependencyType Expr TestTree
+    -- ^ Only run after all tests that match a given pattern finish
+    -- (and, depending on the 'DependencyType', succeed)
 
 -- | Create a named group of test cases or other groups
 testGroup :: TestName -> [TestTree] -> TestTree
 testGroup = TestGroup
+
+-- | Like 'after', but accepts the pattern as a syntax tree instead
+-- of a string. Useful for generating a test tree programmatically.
+--
+-- ==== __Examples__
+--
+-- Only match on the test's own name, ignoring the group names:
+--
+-- @
+-- 'after_' 'AllFinish' ('Test.Tasty.Patterns.Types.EQ' ('Field' 'NF') ('StringLit' \"Bar\")) $
+--    'testCase' \"A test that depends on Foo.Bar\" $ ...
+-- @
+after_
+  :: DependencyType -- ^ whether to run the tests even if some of the dependencies fail
+  -> Expr -- ^ the pattern
+  -> TestTree -- ^ the subtree that depends on other tests
+  -> TestTree -- ^ the subtree annotated with dependency information
+after_ = After
+
+-- | The 'after' combinator declares dependencies between tests.
+--
+-- If a 'TestTree' is wrapped in 'after', the tests in this tree will not run
+-- until certain other tests («dependencies») have finished. These
+-- dependencies are specified using an AWK pattern (see the «Patterns» section
+-- in the README).
+--
+-- Moreover, if the 'DependencyType' argument is set to 'AllSucceed' and
+-- at least one dependency has failed, this test tree will not run at all.
+--
+-- Tasty does not check that the pattern matches any tests (let alone the
+-- correct set of tests), so it is on you to supply the right pattern.
+--
+-- ==== __Examples__
+--
+-- The following test will be executed only after all tests that contain
+-- @Foo@ anywhere in their path finish.
+--
+-- @
+-- 'after' 'AllFinish' \"Foo\" $
+--    'testCase' \"A test that depends on Foo.Bar\" $ ...
+-- @
+--
+-- Note, however, that our test also happens to contain @Foo@ as part of its name,
+-- so it also matches the pattern and becomes a dependency of itself. This
+-- will result in a 'DependencyLoop' exception. To avoid this, either
+-- change the test name so that it doesn't mention @Foo@ or make the
+-- pattern more specific.
+--
+-- You can use AWK patterns, for instance, to specify the full path to the dependency.
+--
+-- @
+-- 'after' 'AllFinish' \"$0 == \\\"Tests.Foo.Bar\\\"\" $
+--    'testCase' \"A test that depends on Foo.Bar\" $ ...
+-- @
+--
+-- Or only specify the dependency's own name, ignoring the group names:
+--
+-- @
+-- 'after' 'AllFinish' \"$NF == \\\"Bar\\\"\" $
+--    'testCase' \"A test that depends on Foo.Bar\" $ ...
+-- @
+after
+  :: DependencyType -- ^ whether to run the tests even if some of the dependencies fail
+  -> String -- ^ the pattern
+  -> TestTree -- ^ the subtree that depends on other tests
+  -> TestTree -- ^ the subtree annotated with dependency information
+after deptype s =
+  case parseExpr s of
+    Nothing -> error $ "Could not parse pattern " ++ show s
+    Just e -> after_ deptype e
 
 -- | An algebra for folding a `TestTree`.
 --
@@ -180,6 +293,7 @@ data TreeFold b = TreeFold
   { foldSingle :: forall t . IsTest t => OptionSet -> TestName -> t -> b
   , foldGroup :: TestName -> b -> b
   , foldResource :: forall a . ResourceSpec a -> (IO a -> b) -> b
+  , foldAfter :: DependencyType -> Expr -> b -> b
   }
 
 -- | 'trivialFold' can serve as the basis for custom folds. Just override
@@ -198,6 +312,7 @@ trivialFold = TreeFold
   { foldSingle = \_ _ _ -> mempty
   , foldGroup = const id
   , foldResource = \_ f -> f $ throwIO NotRunningTests
+  , foldAfter = \_ _ b -> b
   }
 
 -- | Fold a test tree into a single value.
@@ -227,7 +342,7 @@ foldTestTree
   -> TestTree
      -- ^ the tree to fold
   -> b
-foldTestTree (TreeFold fTest fGroup fResource) opts0 tree0 =
+foldTestTree (TreeFold fTest fGroup fResource fAfter) opts0 tree0 =
   let pat = lookupOption opts0
   in go pat mempty opts0 tree0
   where
@@ -242,6 +357,7 @@ foldTestTree (TreeFold fTest fGroup fResource) opts0 tree0 =
         PlusTestOptions f tree -> go pat path (f opts) tree
         WithResource res0 tree -> fResource res0 $ \res -> go pat path opts (tree res)
         AskOptions f -> go pat path opts (f opts)
+        After deptype dep tree -> fAfter deptype dep $ go pat path opts tree
 
 -- | Get the list of options that are relevant for a given test tree
 treeOptions :: TestTree -> [OptionDescription]

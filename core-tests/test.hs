@@ -9,6 +9,7 @@ import Data.Monoid (mempty)
 #endif
 import Resources
 import Timeouts
+import Dependencies
 import AWK
 
 main :: IO ()
@@ -21,6 +22,7 @@ mainGroup = do
   return $ testGroup "Tests"
     [ testResources
     , testTimeouts
+    , testDependencies
     , patternTests
     , awkTests_
     ]

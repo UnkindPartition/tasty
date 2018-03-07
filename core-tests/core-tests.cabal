@@ -17,14 +17,14 @@ cabal-version:       >=1.10
 
 executable tasty-core-tests
   main-is:             test.hs
-  other-modules:       Resources, Timeouts, Utils, AWK
+  other-modules:       Resources, Timeouts, Utils, AWK, Dependencies
   -- other-extensions:    
   build-depends:       base <= 5, tasty, tasty-hunit, tasty-golden, containers, stm, mtl,
                        filepath, bytestring
   -- hs-source-dirs:      
   default-language:    Haskell2010
-  default-extensions:  CPP
-  ghc-options:         -Wall -fno-warn-type-defaults
+  default-extensions:  CPP, NumDecimals
+  ghc-options:         -Wall -fno-warn-type-defaults -threaded -fno-warn-name-shadowing
 
 executable exit-status-test
   main-is:             exit-status-test.hs

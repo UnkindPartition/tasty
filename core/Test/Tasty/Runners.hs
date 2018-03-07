@@ -39,6 +39,7 @@ module Test.Tasty.Runners
   , StatusMap
   , launchTestTree
   , NumThreads(..)
+  , DependencyException(..)
     -- * Options
   , suiteOptions
   , coreOptions

@@ -1,16 +1,19 @@
 -- | Running tests
 {-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes,
-             FlexibleContexts, BangPatterns, CPP #-}
+             FlexibleContexts, BangPatterns, CPP, DeriveDataTypeable #-}
 module Test.Tasty.Run
   ( Status(..)
   , StatusMap
   , launchTestTree
+  , DependencyException(..)
   ) where
 
 import qualified Data.IntMap as IntMap
 import qualified Data.Sequence as Seq
 import qualified Data.Foldable as F
 import Data.Maybe
+import Data.Graph (SCC(..), stronglyConnComp)
+import Data.Typeable
 #ifndef VERSION_clock
 import Data.Time.Clock.POSIX (getPOSIXTime)
 #endif
@@ -32,6 +35,8 @@ import qualified System.Clock as Clock
 
 import Test.Tasty.Core
 import Test.Tasty.Parallel
+import Test.Tasty.Patterns
+import Test.Tasty.Patterns.Types
 import Test.Tasty.Options
 import Test.Tasty.Options.Core
 import Test.Tasty.Runners.Reducers
@@ -44,6 +49,7 @@ data Status
     -- ^ test is being run
   | Done Result
     -- ^ test finished with a given result
+  deriving Show
 
 -- | Mapping from test numbers (starting from 0) to their status variables.
 --
@@ -194,37 +200,73 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
 
 type InitFinPair = (Seq.Seq Initializer, Seq.Seq Finalizer)
 
+-- | Dependencies of a test
+type Deps = [(DependencyType, Expr)]
+
+-- | Traversal type used in 'createTestActions'
+type Tr = Traversal
+        (WriterT ([(InitFinPair -> IO (), (TVar Status, Path, Deps))], Seq.Seq Finalizer)
+        (ReaderT (Path, Deps)
+        IO))
+
+-- | Exceptions related to dependencies between tests.
+data DependencyException
+  = DependencyLoop
+    -- ^ Test dependencies form a loop. In other words, test A cannot start
+    -- until test B finishes, and test B cannot start until test
+    -- A finishes.
+  deriving (Typeable)
+
+instance Show DependencyException where
+  show DependencyLoop = "Test dependencies form a loop."
+
+instance Exception DependencyException
+
 -- | Turn a test tree into a list of actions to run tests coupled with
 -- variables to watch them.
---
--- Also return a list of finalizers in the order they should run when the
--- test suite completes.
-createTestActions :: OptionSet -> TestTree -> IO ([(IO (), TVar Status)], Seq.Seq Finalizer)
+createTestActions
+  :: OptionSet
+  -> TestTree
+  -> IO ([(Action, TVar Status)], Seq.Seq Finalizer)
 createTestActions opts0 tree = do
   let
-    traversal ::
-      Traversal (WriterT ([(InitFinPair -> IO (), TVar Status)], Seq.Seq Finalizer) IO)
+    traversal :: Tr
     traversal =
       foldTestTree
-        trivialFold
+        (trivialFold :: TreeFold Tr)
           { foldSingle = runSingleTest
           , foldResource = addInitAndRelease
+          , foldGroup = \name (Traversal a) ->
+              Traversal $ local (first (Seq.|> name)) a
+          , foldAfter = \deptype pat (Traversal a) ->
+              Traversal $ local (second ((deptype, pat) :)) a
           }
         opts0 tree
-  (tests, rvars) <- unwrap traversal
-  let tests' = map (first ($ (Seq.empty, Seq.empty))) tests
-  return (tests', rvars)
+  (tests, fins) <- unwrap (mempty :: Path) (mempty :: Deps) traversal
+  let
+    mb_tests :: Maybe [(Action, TVar Status)]
+    mb_tests = resolveDeps $ map
+      (\(act, testInfo) ->
+        (act (Seq.empty, Seq.empty), testInfo))
+      tests
+  case mb_tests of
+    Just tests' -> return (tests', fins)
+    Nothing -> throwIO DependencyLoop
 
   where
-    runSingleTest opts _ test = Traversal $ do
+    runSingleTest :: IsTest t => OptionSet -> TestName -> t -> Tr
+    runSingleTest opts name test = Traversal $ do
       statusVar <- liftIO $ atomically $ newTVar NotStarted
+      (parentPath, deps) <- ask
       let
+        path = parentPath Seq.|> name
         act (inits, fins) =
           executeTest (run opts test) statusVar (lookupOption opts) inits fins
-      tell ([(act, statusVar)], mempty)
-    addInitAndRelease (ResourceSpec doInit doRelease) a = wrap $ do
+      tell ([(act, (statusVar, path, deps))], mempty)
+    addInitAndRelease :: ResourceSpec a -> (IO a -> Tr) -> Tr
+    addInitAndRelease (ResourceSpec doInit doRelease) a = wrap $ \path deps -> do
       initVar <- atomically $ newTVar NotCreated
-      (tests, fins) <- unwrap $ a (getResource initVar)
+      (tests, fins) <- unwrap path deps $ a (getResource initVar)
       let ntests = length tests
       finishVar <- atomically $ newTVar ntests
       let
@@ -232,8 +274,75 @@ createTestActions opts0 tree = do
         fin = Finalizer doRelease initVar finishVar
         tests' = map (first $ local $ (Seq.|> ini) *** (fin Seq.<|)) tests
       return (tests', fins Seq.|> fin)
-    wrap = Traversal . WriterT . fmap ((,) ())
-    unwrap = execWriterT . getTraversal
+    wrap
+      :: (Path ->
+          Deps ->
+          IO ([(InitFinPair -> IO (), (TVar Status, Path, Deps))], Seq.Seq Finalizer))
+      -> Tr
+    wrap = Traversal . WriterT . fmap ((,) ()) . ReaderT . uncurry
+    unwrap
+      :: Path
+      -> Deps
+      -> Tr
+      -> IO ([(InitFinPair -> IO (), (TVar Status, Path, Deps))], Seq.Seq Finalizer)
+    unwrap path deps = flip runReaderT (path, deps) . execWriterT . getTraversal
+
+-- | Take care of the dependencies.
+--
+-- Return 'Nothing' if there is a dependency cycle.
+resolveDeps :: [(IO (), (TVar Status, Path, Deps))] -> Maybe [(Action, TVar Status)]
+resolveDeps tests = checkCycles $ do
+  (run_test, (statusVar, path0, deps)) <- tests
+  let
+    -- Note: Duplicate dependencies may arise if the same test name matches
+    -- multiple patterns. It's not clear that removing them is worth the
+    -- trouble; might consider this in the future.
+    deps' :: [(DependencyType, TVar Status, Path)]
+    deps' = do
+      (deptype, depexpr) <- deps
+      (_, (statusVar1, path, _)) <- tests
+      guard $ exprMatches depexpr path
+      return (deptype, statusVar1, path)
+
+    getStatus :: STM ActionStatus
+    getStatus = foldr
+      (\(deptype, statusvar, _) k -> do
+        status <- readTVar statusvar
+        case status of
+          Done result
+            | deptype == AllFinish || resultSuccessful result -> k
+            | otherwise -> return ActionSkip
+          _ -> return ActionWait
+      )
+      (return ActionReady)
+      deps'
+  let
+    dep_paths = map (\(_, _, path) -> path) deps'
+    action = Action
+      { actionStatus = getStatus
+      , actionRun = run_test
+      , actionSkip = writeTVar statusVar $ Done $ Result
+          -- See Note [Skipped tests]
+          { resultOutcome = Failure TestDepFailed
+          , resultDescription = ""
+          , resultShortDescription = "SKIP"
+          , resultTime = 0
+          }
+      }
+  return ((action, statusVar), (path0, dep_paths))
+
+checkCycles :: Ord b => [(a, (b, [b]))] -> Maybe [a]
+checkCycles tests = do
+  let
+    result = fst <$> tests
+    graph = [ ((), v, vs) | (v, vs) <- snd <$> tests ]
+    sccs = stronglyConnComp graph
+    not_cyclic = all (\scc -> case scc of
+        AcyclicSCC{} -> True
+        CyclicSCC{}  -> False)
+      sccs
+  guard not_cyclic
+  return result
 
 -- | Used to create the IO action which is passed in a WithResource node
 getResource :: TVar (Resource r) -> IO r

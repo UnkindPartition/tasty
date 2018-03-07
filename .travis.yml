@@ -132,7 +132,7 @@ script:
       else
         stack --no-terminal $ARGS test --bench --no-run-benchmarks --haddock --no-haddock-deps
       fi
-      (cd core-tests && stack --no-terminal $ARGS exec tasty-core-tests)
+      (cd core-tests && stack --no-terminal $ARGS exec tasty-core-tests -- +RTS -N2)
       stack --no-terminal $ARGS exec core-tests/exit-status-tests.sh
       ;;
     cabal)

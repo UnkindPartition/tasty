@@ -43,7 +43,7 @@ import Data.Char.WCWidth (wcwidth)
 import Data.Maybe
 import Data.Monoid (Any(..))
 import Data.Typeable
-import Options.Applicative hiding (str)
+import Options.Applicative hiding (str, Success, Failure)
 import System.IO
 import System.Console.ANSI
 #if !MIN_VERSION_base(4,8,0)
@@ -119,9 +119,10 @@ buildTestOutput opts tree =
           -- use an appropriate printing function
           let
             printFn =
-              if resultSuccessful result
-                then ok
-                else fail
+              case resultOutcome result of
+                Success -> ok
+                Failure TestDepFailed -> skipped
+                _ -> fail
             time = resultTime result
           printFn (resultShortDescription result)
           -- print time only if it's significant
@@ -578,9 +579,10 @@ stringWidth = length
 #endif
 
 -- (Potentially) colorful output
-ok, fail, infoOk, infoFail :: (?colors :: Bool) => String -> IO ()
+ok, fail, skipped, infoOk, infoFail :: (?colors :: Bool) => String -> IO ()
 fail     = output BoldIntensity   Vivid Red
 ok       = output NormalIntensity Dull  Green
+skipped  = output NormalIntensity Dull  Magenta
 infoOk   = output NormalIntensity Dull  White
 infoFail = output NormalIntensity Dull  Red
 

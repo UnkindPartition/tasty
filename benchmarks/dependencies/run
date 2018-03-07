@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -eu
+
+TIMEFORMAT=%3R
+
+printf "n\tmode\ttime\n"
+for n in `seq 500 50 4000`; do
+for mode in forward backward control; do
+  t="$( (time ./test --mode="$mode" --num-tests="$n" --quiet) 2>&1 )"
+  printf "%d\t%s\t%s\n" "$n" "$mode" "$t"
+done
+done
