@@ -1,4 +1,4 @@
-{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE ViewPatterns, OverloadedLists #-}
 module Resources where
 
 import Data.IORef
@@ -10,13 +10,23 @@ import Control.Concurrent
 import Control.Monad.Writer
 import qualified Data.IntMap as IntMap
 import Data.Maybe
+import Data.Foldable
 import Control.Exception
+import qualified Data.Sequence as Seq
+import qualified Data.Set as Set
 
 import Utils
 
 testResources :: TestTree
 testResources = testGroup "Resources"
-  [testResources1, testResources2, testResources3, testResources4]
+  [ testResources1
+  , testResources2
+  , testResources3
+  , testResources4
+  , testResources5
+  , testResources6
+  , testResources7
+  ]
 
 initIORef :: IORef Bool -> IO (IORef Bool)
 initIORef ref = do
@@ -113,3 +123,68 @@ testResources4 = testCase "Exception in finalizer" $ do
         return ()
       c -> assertFailure $ "Unexpected outcome: " ++ show c
     return $ const $ return ()
+
+data Step
+  = ResourceInitialized Int
+  | ResourceDestroyed Int
+  | ActionRan Int
+  deriving (Eq, Ord, Show)
+
+addStep :: IORef (Seq.Seq Step) -> Step -> IO ()
+addStep ref step = atomicModifyIORef' ref (\s -> (s Seq.|> step, ()))
+
+testTree5 :: IORef (Seq.Seq Step) -> TestTree
+testTree5 ref =
+  withResource (1 <$ addStep ref (ResourceInitialized 1)) (addStep ref . ResourceDestroyed) $ \_ ->
+    withResource (2 <$ addStep ref (ResourceInitialized 2)) (addStep ref . ResourceDestroyed) $ \_ ->
+      testGroup "group"
+        [ testCase "test" $ do
+            addStep ref (ActionRan i)
+            threadDelay (10^5)
+        | i <- [1,2]
+        ]
+
+testResources5 :: TestTree
+testResources5 = testCase "Order of finalizers when the test suite runs" $ do
+  ref <- newIORef mempty
+  launchTestTree mempty (testTree5 ref) $ \smap -> do
+    _ <- runSMap smap
+    return $ const $ return ()
+  steps <- readIORef ref
+
+  -- We don't know the order of ActionRan 1 and 2, so can't use a single @?= as above
+  Seq.take 2 steps @?=
+    [ResourceInitialized 1, ResourceInitialized 2]
+  (Set.fromList . toList . Seq.take 2 . Seq.drop 2) steps @?=
+    [ActionRan 1, ActionRan 2]
+  (Seq.take 2 . Seq.drop 4) steps @?=
+    [ResourceDestroyed 2, ResourceDestroyed 1]
+
+testResources6 :: TestTree
+testResources6 = testCase "Order of finalizers when the test suite is aborted (1 thread)" $ do
+  ref <- newIORef mempty
+  launchTestTree mempty (testTree5 ref) $ \_ -> do
+    -- do not wait until completion; abort before the first test finishes
+    threadDelay (4*10^4)
+    return $ const $ return ()
+  steps <- readIORef ref
+  toList steps @?=
+    [ ResourceInitialized 1, ResourceInitialized 2
+    , ActionRan 1 -- NB: no action 2
+    , ResourceDestroyed 2, ResourceDestroyed 1
+    ]
+
+testResources7 :: TestTree
+testResources7 = testCase "Order of finalizers when the test suite is aborted (2 threads)" $ do
+  ref <- newIORef mempty
+  launchTestTree (singleOption $ NumThreads 2) (testTree5 ref) $ \_ -> do
+    -- do not wait until completion; abort before the first test finishes
+    threadDelay (4*10^4)
+    return $ const $ return ()
+  steps <- readIORef ref
+  Seq.take 2 steps @?=
+    [ResourceInitialized 1, ResourceInitialized 2]
+  (Set.fromList . toList . Seq.take 2 . Seq.drop 2) steps @?=
+    [ActionRan 1, ActionRan 2]
+  (Seq.take 2 . Seq.drop 4) steps @?=
+    [ResourceDestroyed 2, ResourceDestroyed 1]
