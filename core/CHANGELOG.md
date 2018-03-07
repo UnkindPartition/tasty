@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 1.0.1.1
+---------------
+
+Fix a bug where a test suite that uses resources would hang if interrupted
+
 Version 1.0.1
 -------------
 
