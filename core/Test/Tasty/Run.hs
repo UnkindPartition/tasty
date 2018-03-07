@@ -17,6 +17,7 @@ import Data.Time.Clock.POSIX (getPOSIXTime)
 import Control.Monad.State
 import Control.Monad.Writer
 import Control.Monad.Reader
+import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Concurrent.Timeout (timeout)
 import Control.Concurrent.Async
@@ -55,6 +56,7 @@ data Resource r
   | BeingCreated
   | FailedToCreate SomeException
   | Created r
+  | BeingDestroyed
   | Destroyed
 
 instance Show (Resource r) where
@@ -63,9 +65,8 @@ instance Show (Resource r) where
     BeingCreated -> "BeingCreated"
     FailedToCreate exn -> "FailedToCreate " ++ show exn
     Created {} -> "Created"
+    BeingDestroyed -> "BeingDestroyed"
     Destroyed -> "Destroyed"
-
-data ResourceVar = forall r . ResourceVar (TVar (Resource r))
 
 data Initializer
   = forall res . Initializer
@@ -134,8 +135,15 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
             BeingCreated -> retry
             Created {} -> return $ return ()
             FailedToCreate exn -> return $ throwIO exn
-            _ -> return $ throwIO $
-              unexpectedState "initResources" resStatus
+            -- If the resource is destroyed or being destroyed
+            -- while we're starting a test, the test suite is probably
+            -- shutting down. We are about to be killed.
+            -- (In fact we are probably killed already, so these cases are
+            -- unlikely to occur.)
+            -- In any case, the most sensible thing to do is to go to
+            -- sleep, awaiting our fate.
+            Destroyed      -> return $ sleepIndefinitely
+            BeingDestroyed -> return $ sleepIndefinitely
 
     applyTimeout :: Timeout -> IO Result -> IO Result
     applyTimeout NoTimeout a = a
@@ -161,7 +169,7 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
     destroyResources restore = do
       -- remember the first exception that occurred
       liftM getFirst . execWriterT . getTraversal $
-        flip F.foldMap fins $ \(Finalizer doRelease initVar finishVar) ->
+        flip F.foldMap fins $ \fin@(Finalizer _ _ finishVar) ->
           Traversal $ do
             iAmLast <- liftIO $ atomically $ do
               nUsers <- readTVar finishVar
@@ -171,19 +179,7 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
 
             mbExcn <- liftIO $
               if iAmLast
-              then join $ atomically $ do
-                resStatus <- readTVar initVar
-                case resStatus of
-                  Created res -> do
-                    -- Don't worry about double destroy — only one thread
-                    -- receives iAmLast
-                    return $
-                      (either Just (const Nothing)
-                        <$> try (restore $ doRelease res))
-                        <* atomically (writeTVar initVar Destroyed)
-                  FailedToCreate {} -> return $ return Nothing
-                  _ -> return $ return $ Just $
-                    unexpectedState "destroyResources" resStatus
+              then destroyResource restore fin
               else return Nothing
 
             tell $ First mbExcn
@@ -199,12 +195,15 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
 type InitFinPair = (Seq.Seq Initializer, Seq.Seq Finalizer)
 
 -- | Turn a test tree into a list of actions to run tests coupled with
--- variables to watch them
-createTestActions :: OptionSet -> TestTree -> IO ([(IO (), TVar Status)], [ResourceVar])
+-- variables to watch them.
+--
+-- Also return a list of finalizers in the order they should run when the
+-- test suite completes.
+createTestActions :: OptionSet -> TestTree -> IO ([(IO (), TVar Status)], Seq.Seq Finalizer)
 createTestActions opts0 tree = do
   let
     traversal ::
-      Traversal (WriterT ([(InitFinPair -> IO (), TVar Status)], [ResourceVar]) IO)
+      Traversal (WriterT ([(InitFinPair -> IO (), TVar Status)], Seq.Seq Finalizer) IO)
     traversal =
       foldTestTree
         trivialFold
@@ -225,14 +224,14 @@ createTestActions opts0 tree = do
       tell ([(act, statusVar)], mempty)
     addInitAndRelease (ResourceSpec doInit doRelease) a = wrap $ do
       initVar <- atomically $ newTVar NotCreated
-      (tests, rvars) <- unwrap $ a (getResource initVar)
+      (tests, fins) <- unwrap $ a (getResource initVar)
       let ntests = length tests
       finishVar <- atomically $ newTVar ntests
       let
         ini = Initializer doInit initVar
         fin = Finalizer doRelease initVar finishVar
         tests' = map (first $ local $ (Seq.|> ini) *** (fin Seq.<|)) tests
-      return (tests', ResourceVar initVar : rvars)
+      return (tests', fins Seq.|> fin)
     wrap = Traversal . WriterT . fmap ((,) ())
     unwrap = execWriterT . getTraversal
 
@@ -246,9 +245,47 @@ getResource var =
       Destroyed -> throwSTM UseOutsideOfTest
       _ -> throwSTM $ unexpectedState "getResource" rState
 
--- | Start running all the tests in a test tree in parallel, without
--- blocking the current thread. The number of test running threads is
--- determined by the 'NumThreads' option.
+-- | Run a resource finalizer.
+--
+-- This function is called from two different places:
+--
+-- 1. A test thread, which is the last one to use the resource.
+-- 2. The main thread, if an exception (e.g. Ctrl-C) is received.
+--
+-- Therefore, it is possible that this function is called multiple
+-- times concurrently on the same finalizer.
+--
+-- This function should be run with async exceptions masked,
+-- and the restore function should be passed as an argument.
+destroyResource :: (forall a . IO a -> IO a) -> Finalizer -> IO (Maybe SomeException)
+destroyResource restore (Finalizer doRelease stateVar _) = join . atomically $ do
+  rState <- readTVar stateVar
+  case rState of
+    Created res -> do
+      writeTVar stateVar BeingDestroyed
+      return $
+        (either Just (const Nothing)
+          <$> try (restore $ doRelease res))
+          <* atomically (writeTVar stateVar Destroyed)
+    BeingCreated   -> retry
+    -- If the resource is being destroyed, wait until it is destroyed.
+    -- This is so that we don't start destroying the next resource out of
+    -- order.
+    BeingDestroyed -> retry
+    NotCreated -> do
+      -- prevent the resource from being created by a competing thread
+      writeTVar stateVar Destroyed
+      return $ return Nothing
+    FailedToCreate {} -> return $ return Nothing
+    Destroyed         -> return $ return Nothing
+
+-- | Start running the tests (in background, in parallel) and pass control
+-- to the callback.
+--
+-- Once the callback returns, stop running the tests.
+--
+-- The number of test running threads is determined by the 'NumThreads'
+-- option.
 launchTestTree
   :: OptionSet
   -> TestTree
@@ -267,15 +304,22 @@ launchTestTree
     -- accurate than what could be measured from inside the first callback.
   -> IO a
 launchTestTree opts tree k0 = do
-  (testActions, rvars) <- createTestActions opts tree
+  (testActions, fins) <- createTestActions opts tree
   let NumThreads numTheads = lookupOption opts
   (t,k1) <- timed $ do
      abortTests <- runInParallel numTheads (fst <$> testActions)
      (do let smap = IntMap.fromList $ zip [0..] (snd <$> testActions)
          k0 smap)
-      `finally` do
+      `finallyRestore` \restore -> do
+         -- Tell all running tests to wrap up.
          abortTests
-         waitForResources rvars
+         -- Destroy all allocated resources in the case they didn't get
+         -- destroyed by their tests. (See #75.)
+         F.mapM_ (destroyResource restore) fins
+         -- Wait until all resources are destroyed. (Specifically, those
+         -- that were being destroyed by their tests, not those that were
+         -- destroyed by destroyResource above.)
+         restore $ waitForResources fins
   k1 t
   where
     alive :: Resource r -> Bool
@@ -284,15 +328,34 @@ launchTestTree opts tree k0 = do
       BeingCreated -> True
       FailedToCreate {} -> False
       Created {} -> True
+      BeingDestroyed -> True
       Destroyed -> False
 
-    waitForResources rvars = atomically $
-      forM_ rvars $ \(ResourceVar rvar) -> do
+    waitForResources fins = atomically $
+      F.forM_ fins $ \(Finalizer _ rvar _) -> do
         res <- readTVar rvar
         check $ not $ alive res
 
 unexpectedState :: String -> Resource r -> SomeException
 unexpectedState where_ r = toException $ UnexpectedState where_ (show r)
+
+sleepIndefinitely :: IO ()
+sleepIndefinitely = forever $ threadDelay (10^(7::Int))
+
+-- | Like 'finally' (which also masks its finalizers), but pass the restore
+-- action to the finalizer.
+finallyRestore
+  :: IO a
+    -- ^ computation to run first
+  -> ((forall c . IO c -> IO c) -> IO b)
+    -- ^ computation to run afterward (even if an exception was raised)
+  -> IO a
+    -- ^ returns the value from the first computation
+a `finallyRestore` sequel =
+  mask $ \restore -> do
+    r <- restore a `onException` sequel restore
+    _ <- sequel restore
+    return r
 
 -- | Measure the time taken by an 'IO' action to run
 timed :: IO a -> IO (Time, a)
