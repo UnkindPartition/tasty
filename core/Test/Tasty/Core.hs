@@ -1,7 +1,8 @@
 -- | Core types and definitions
-{-# LANGUAGE GeneralizedNewtypeDeriving, FlexibleContexts,
-             ExistentialQuantification, RankNTypes, DeriveDataTypeable,
-             DeriveGeneric #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE RankNTypes #-}
 module Test.Tasty.Core where
 
 import Control.Exception

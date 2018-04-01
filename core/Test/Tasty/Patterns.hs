@@ -1,6 +1,6 @@
 -- | Test patterns
 
-{-# LANGUAGE CPP, DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 module Test.Tasty.Patterns
   ( TestPattern

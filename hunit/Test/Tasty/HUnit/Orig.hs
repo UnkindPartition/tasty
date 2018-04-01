@@ -1,7 +1,5 @@
-{-# LANGUAGE DeriveDataTypeable, FlexibleInstances, TypeSynonymInstances #-}
-
--- required for HasCallStack by different versions of GHC
-{-# LANGUAGE ConstraintKinds, FlexibleContexts #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 -- | This is the code copied from the original hunit package (v. 1.2.5.2).
 -- with minor modifications
@@ -214,4 +212,3 @@ instance Assertable String
 --
 -- 5. Assert that the conditions evaluated in step 2 are met.
 type AssertionPredicate = IO Bool
-

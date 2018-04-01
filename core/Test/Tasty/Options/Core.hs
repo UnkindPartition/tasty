@@ -1,5 +1,6 @@
 -- | Core options, i.e. the options used by tasty itself
-{-# LANGUAGE CPP, DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-} -- for (^)
 module Test.Tasty.Options.Core
   ( NumThreads(..)

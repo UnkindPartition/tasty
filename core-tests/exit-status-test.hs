@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, BangPatterns #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 import Test.Tasty
 import Test.Tasty.Options
 import Test.Tasty.HUnit

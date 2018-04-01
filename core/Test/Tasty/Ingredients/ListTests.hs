@@ -1,5 +1,5 @@
 -- | Ingredient for listing test names
-{-# LANGUAGE CPP, GeneralizedNewtypeDeriving, DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 module Test.Tasty.Ingredients.ListTests
   ( ListTests(..)
   , testsNames
