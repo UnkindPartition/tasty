@@ -1,7 +1,9 @@
 -- | This module allows to use SmallCheck properties in tasty.
-{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FlexibleContexts,
-             TypeOperators, DeriveDataTypeable, TypeFamilies,
-             GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MonoLocalBinds #-}
 module Test.Tasty.SmallCheck
   ( testProperty
   , SmallCheckDepth(..)
