@@ -701,9 +701,11 @@ something not mentioned here, send a pull request!
 * [Code testing in Haskell revisited (with Tasty)](http://lambda.jstolarek.com/2014/01/code-testing-in-haskell-revisited-with-tasty/)
 * [New patterns in tasty][awk-patterns-article]
 * [Screencast: Dynamic Test Suites in Haskell using Hspec and Tasty](https://www.youtube.com/watch?v=PGsDvgmZF7A)
+* [Automatically generated directories for tasty tests][tasty-directories]
 
 [custom-options-article]: https://ro-che.info/articles/2013-12-20-tasty-custom-options.html
 [awk-patterns-article]: https://ro-che.info/articles/2018-01-08-tasty-new-patterns
+[tasty-directories]: http://nmattia.com/posts/2018-04-30-tasty-test-names.html
 
 Maintainers
 -----------
