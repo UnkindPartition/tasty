@@ -36,7 +36,7 @@ instance IsOption TestPattern where
 parseTestPattern :: String -> Maybe TestPattern
 parseTestPattern s
   | null s = Just noPattern
-  | all (\c -> isAlphaNum c || c `elem` "_/ ") s =
+  | all (\c -> isAlphaNum c || c `elem` "_- ") s =
     Just . TestPattern . Just $ ERE s
   | otherwise =
     case runParser expr s of

@@ -293,7 +293,7 @@ Here are some examples of awk expressions accepted as patterns:
     contains `QuickCheck`
 
 As an extension to the awk expression language, if a pattern `pat` contains only
-letters, digits, and characters from the set `[_/ ]`, it is treated like `/pat/`
+letters, digits, and characters from the set `[-/ ]`, it is treated like `/pat/`
 (and therefore matched against `$0`). This is so that we can use `-p foo` as
 a shortcut for `-p /foo/`.
 
