@@ -37,6 +37,7 @@ instance Exception EnvOptionException
 getEnvOptions :: [OptionDescription] -> IO OptionSet
 getEnvOptions = getApp . foldMap lookupOpt
   where
+    lookupOpt :: OptionDescription -> Ap IO OptionSet
     lookupOpt (Option (px :: Proxy v)) = do
       let
         name = proxy optionName px
