@@ -3,7 +3,7 @@
 {-# LANGUAGE CPP, DeriveDataTypeable #-}
 
 module Test.Tasty.Patterns
-  ( TestPattern
+  ( TestPattern(..)
   , parseTestPattern
   , noPattern
   , testPatternMatches
@@ -21,7 +21,7 @@ import Data.Typeable
 import Options.Applicative hiding (Success)
 
 newtype TestPattern = TestPattern (Maybe Expr)
-  deriving (Typeable, Show)
+  deriving (Typeable, Show, Eq)
 
 noPattern :: TestPattern
 noPattern = TestPattern Nothing

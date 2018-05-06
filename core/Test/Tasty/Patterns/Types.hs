@@ -27,4 +27,4 @@ data Expr
   | LengthFn (Maybe Expr)
   | MatchFn Expr String
   | SubstrFn Expr Expr (Maybe Expr)
-  deriving Show
+  deriving (Show, Eq)
