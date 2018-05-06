@@ -6,6 +6,7 @@ module Test.Tasty.Patterns.Parser
   , runParser
   , ParseResult(..)
   , expr
+  , parseAwkExpr
   )
   where
 
@@ -180,3 +181,10 @@ expr4 = makeExprParser expr3
 -- | The awk-like expression parser
 expr :: Parser Expr
 expr = expr4
+
+-- | Parse an awk expression
+parseAwkExpr :: String -> Maybe Expr
+parseAwkExpr s =
+  case runParser expr s of
+    Success e -> Just e
+    _ -> Nothing

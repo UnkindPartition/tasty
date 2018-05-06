@@ -21,7 +21,7 @@ import Data.Typeable
 import Options.Applicative hiding (Success)
 
 newtype TestPattern = TestPattern (Maybe Expr)
-  deriving Typeable
+  deriving (Typeable, Show)
 
 noPattern :: TestPattern
 noPattern = TestPattern Nothing
@@ -38,10 +38,7 @@ parseTestPattern s
   | null s = Just noPattern
   | all (\c -> isAlphaNum c || c `elem` "_- ") s =
     Just . TestPattern . Just $ ERE s
-  | otherwise =
-    case runParser expr s of
-      Success a -> Just . TestPattern . Just $ a
-      _ -> Nothing
+  | otherwise = TestPattern . Just <$> parseAwkExpr s
 
 testPatternMatches :: TestPattern -> Seq.Seq String -> Bool
 testPatternMatches pat fields =
