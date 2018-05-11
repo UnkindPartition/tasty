@@ -44,6 +44,10 @@ patternTests = testGroup "Patterns"
       parseTestPattern "/foo/" @?= Just (TestPattern (Just (ERE "foo")))
   , testCase "Dashes are acceptable in raw patterns" $ -- #220
       parseTestPattern "type-checking" @?= Just (TestPattern (Just (ERE "type-checking")))
+  , testCase ". is a field separator (works as a raw pattern)" $
+      (o "ca.Ot" @?= ["Tests.North America.Ottawa"])
+  , testCase ". is a field separator (works inside an AWK expression)" $
+      (o "/ca.Ot/" @?= ["Tests.North America.Ottawa"])
   ]
   where
   -- apply a pattern to tt and get the names of tests that match
