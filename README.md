@@ -293,9 +293,9 @@ Here are some examples of awk expressions accepted as patterns:
     contains `QuickCheck`
 
 As an extension to the awk expression language, if a pattern `pat` contains only
-letters, digits, and characters from the set `[-/ ]`, it is treated like `/pat/`
-(and therefore matched against `$0`). This is so that we can use `-p foo` as
-a shortcut for `-p /foo/`.
+letters, digits, and characters from the set `._ -` (period, underscore, space, hyphen),
+it is treated like `/pat/` (and therefore matched against `$0`).
+This is so that we can use `-p foo` as a shortcut for `-p /foo/`.
 
 The only deviation from awk that you will likely notice is that Tasty
 does not implement regular expression matching.
