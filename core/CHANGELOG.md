@@ -1,6 +1,81 @@
 Changes
 =======
 
+Version 1.1
+-----------
+
+**NOTE**: This major release contains some breaking changes to the semantics of patterns.
+In the original pattern design I didn't notice the conflict between using `/` as
+a field separator and as the AWK syntax for pattern matching `/.../`.
+
+The new patterns have been around for a relatively short time (5 months), so
+hopefully the breakage won't be too big. I'm sorry about any problems caused by
+the change.
+
+See <https://github.com/feuerbach/tasty/issues/220> for the discussion.
+
+* The field separator in patterns is changed from slash (`/`) to period (`.`),
+  and `.` is now allowed in raw patterns.
+
+  The field separator is used to join the group names and the test
+  name when comparing to a pattern such as `-p foo` or `-p /foo/`.
+
+  If you used
+
+      -p 'foo/bar'
+
+  or
+
+      -p '/foo\/bar/'
+
+  before, now you should use
+
+      -p 'foo.bar'
+  or
+
+      -p '/foo.bar/'
+
+  if you meant "test/group `bar` inside group `foo`, or
+
+      -p '/foo\/bar/'
+
+  if you meant "test/group containing `foo/bar` in the name".
+
+  The need for escaping the slash inside the `/.../` pattern was precisely the
+  motivation for this change.
+
+* Raw patterns (ones that are not AWK expressions) may no longer contain slashes
+  (`/`).
+
+  So
+
+      -p 'foo/bar'
+
+  is no longer allowed, and
+
+      -p '/foo/'
+
+  is now parsed as an AWK expression `/foo/`, whereas before it
+  was treated as a raw pattern and converted to `/\/foo\//`.
+
+  The reason for this change is that `/foo/` is a valid AWK expression
+  and should be parsed as such.
+
+* Raw patterns may now contain hyphens, so e.g. `-p type-checking` now works.
+
+  In theory this makes some valid AWK expressions (such as `NF-2`) not to be
+  parsed as such, but they are either unlikely to be useful or could also be
+  expressed in other ways (`NF!=2`).
+
+* Several new exports, mostly for testing/debugging patterns:
+
+  * `TestPattern` now has a `Show` instance; `TestPattern` and `Expr` now have
+      `Eq` instances.
+  * The constructors of `TestPattern` are now exported.
+  * `parseAwkExpr` is introduced and can be used in ghci to see how an AWK
+      expression is parsed. (For parsing test patterns, which include raw
+      patterns in addition to AWK expression, use `parseTestPattern`.)
+
 Version 1.0.1.1
 ---------------
 
