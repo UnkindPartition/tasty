@@ -12,8 +12,8 @@ $NF $1 $2 $3
 $3 ~ /fo\/o/ || $2 !~ /ba\\r/
 /foo/ /bar/
 /one/
-/one\/two\/three/
-/e\/t/
+/one.two.three/
+/e.t/
 $1 ~ /one/
 $1 ~ /two/
 $1 !~ /two/

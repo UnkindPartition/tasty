@@ -264,7 +264,7 @@ on.
 A pattern is an [awk expression][awk]. When the expression is evaluated, the field `$1`
 is set to the outermost test group name, `$2` is set to the next test group
 name, and so on up to `$NF`, which is set to the test's own name. The field `$0`
-is set to all other fields concatenated using `/` as a separator.
+is set to all other fields concatenated using `.` as a separator.
 
 [awk]: http://pubs.opengroup.org/onlinepubs/9699919799/utilities/awk.html#tag_20_06_13_02
 
@@ -276,7 +276,7 @@ As an example, consider a test inside two test groups:
 
 When a pattern is evaluated for the above test case, the available fields and variables are:
 
-    $0 = "One/Two/Three"
+    $0 = "One.Two.Three"
     $1 = "One"
     $2 = "Two"
     $3 = "Three"

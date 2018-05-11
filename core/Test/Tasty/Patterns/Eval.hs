@@ -154,4 +154,4 @@ match pat str = pat `isInfixOf` str
 -- The field list should not include @$0@; it's calculated automatically.
 withFields :: Seq.Seq String -> M a -> Either String a
 withFields fields a = runReaderT a (whole Seq.<| fields)
-  where whole = intercalate "/" $ toList fields
+  where whole = intercalate "." $ toList fields
