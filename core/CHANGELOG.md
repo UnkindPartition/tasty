@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 1.1.0.1
+---------------
+
+Fix a bug where `-l` was still using `/` instead of `.` as a field separator
+
 Version 1.1
 -----------
 
