@@ -560,7 +560,7 @@ computeAlignment opts =
 
 stringLength :: String -> Int
 #ifdef UNIX
-stringLength = sum . map charWidth
+stringLength = Prelude.sum . map charWidth
  where charWidth c = case wcwidth c of
         -1 -> 1  -- many chars have "undefined" width; default to 1 for these.
         w  -> w
