@@ -8,6 +8,7 @@ packages:
 extra-deps:
 - optparse-applicative-0.14.0.0
 - unbounded-delays-0.1.1.0
+- wcwidth-0.0.2
 # this is needed for travis, because call-stack is absent from the old snapshots
 - call-stack-0.1.0
 flags: {}

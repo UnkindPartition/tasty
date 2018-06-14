@@ -37,6 +37,9 @@ import Test.Tasty.Runners.Utils
 import Text.Printf
 import qualified Data.IntMap as IntMap
 import Data.Char
+#ifdef UNIX
+import Data.Char.WCWidth (wcwidth)
+#endif
 import Data.Maybe
 import Data.Monoid
 import Data.Typeable
@@ -105,7 +108,7 @@ buildTestOutput opts tree =
       let
         printTestName = do
           printf "%s%s: %s" (indent level) name
-            (replicate (alignment - indentSize * level - length name) ' ')
+            (replicate (alignment - indentSize * level - stringLength name) ' ')
           hFlush stdout
 
         printTestResult result = do
@@ -545,7 +548,7 @@ computeAlignment opts =
   fromMonoid .
   foldTestTree
     trivialFold
-      { foldSingle = \_ name _ level -> Maximum (length name + level)
+      { foldSingle = \_ name _ level -> Maximum (stringLength name + level)
       , foldGroup = \_ m -> m . (+ indentSize)
       }
     opts
@@ -554,6 +557,23 @@ computeAlignment opts =
       case m 0 of
         MinusInfinity -> 0
         Maximum x -> x
+
+-- | Compute the length/width of the string as it would appear in a monospace
+--   terminal. This takes into account that even in a “mono”space font, not
+--   all characters actually have the same width, in particular, most CJK
+--   characters have twice the same as Western characters.
+--
+--   (This only works properly on Unix at the moment; on Windows, the function
+--   treats every character as width-1 like `Data.List.length` does.)
+stringLength :: String -> Int
+#ifdef UNIX
+stringLength = Prelude.sum . map charWidth
+ where charWidth c = case wcwidth c of
+        -1 -> 1  -- many chars have "undefined" width; default to 1 for these.
+        w  -> w
+#else
+stringLength = length
+#endif
 
 -- (Potentially) colorful output
 ok, fail, infoOk, infoFail :: (?colors :: Bool) => String -> IO ()
