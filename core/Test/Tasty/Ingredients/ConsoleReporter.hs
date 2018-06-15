@@ -558,6 +558,13 @@ computeAlignment opts =
         MinusInfinity -> 0
         Maximum x -> x
 
+-- | Compute the length/width of the string as it would appear in a monospace
+--   terminal. This takes into account that even in a “mono”space font, not
+--   all characters actually have the same width, in particular, most CJK
+--   characters have twice the same as Western characters.
+--
+--   (This only works properly on Unix at the moment; on Windows, the function
+--   treats every character as width-1 like `Data.List.length` does.)
 stringLength :: String -> Int
 #ifdef UNIX
 stringLength = Prelude.sum . map charWidth
