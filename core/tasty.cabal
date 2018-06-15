@@ -80,7 +80,8 @@ library
     build-depends: primitive < 0.6.4.0
 
   if !os(windows)
-    build-depends: unix
+    build-depends: unix,
+                   wcwidth
     cpp-options: -DUNIX
 
   -- hs-source-dirs:      
