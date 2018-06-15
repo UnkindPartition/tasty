@@ -118,7 +118,8 @@ install:
       # Get the list of packages from the stack.yaml file
       PACKAGES=$(stack --install-ghc query locals | grep '^ *path' | sed 's@^ *path:@@' | grep -v 'core-tests')
 
-      cabal install --only-dependencies --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS $PACKAGES
+      # don't use -O0 here; see https://github.com/haskell/primitive/issues/177
+      cabal install --only-dependencies --enable-tests --enable-benchmarks --force-reinstalls --reorder-goals --max-backjumps=-1 $CABALARGS $PACKAGES
       ;;
   esac
   set +ex
