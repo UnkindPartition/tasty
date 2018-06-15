@@ -76,6 +76,8 @@ library
   if impl(ghc < 7.6)
     -- for GHC.Generics
     build-depends: ghc-prim
+    -- https://github.com/haskell/primitive/issues/177
+    build-depends: primitive < 0.6.4.0
 
   if !os(windows)
     build-depends: unix
