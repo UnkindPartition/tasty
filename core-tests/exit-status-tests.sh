@@ -15,7 +15,7 @@ exit-status-test --result=True --quiet || exit 1
 # We try different number of fast tests in order to test different paths in the 'statusMapResult' function.
 # The number of fast tests should not affect anything.
 
-TIMEOUT=1.5 # seconds
+TIMEOUT=3 # seconds
 
 for fast in `seq 0 20`; do
   # When the number of slow tests < number of threads, should find the failing

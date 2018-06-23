@@ -26,7 +26,7 @@ main = do
       testGroup "Test" $
         -- we shuffle fast and slow tests to test various code paths in the 'statusMapResult' function
         shuffle
-          (replicate n_slow (testCase "Slow test" $ threadDelay (2*10^6)) ++
+          (replicate n_slow (testCase "Slow test" $ threadDelay (5*10^6)) ++
            replicate n_fast (testCase "Fast test" $ threadDelay (10^4)))
           (n_slow + n_fast) -- number of elements
           gen
