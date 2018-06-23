@@ -108,7 +108,7 @@ buildTestOutput opts tree =
       let
         printTestName = do
           printf "%s%s: %s" (indent level) name
-            (replicate (alignment - indentSize * level - stringLength name) ' ')
+            (replicate (alignment - indentSize * level - stringWidth name) ' ')
           hFlush stdout
 
         printTestResult result = do
@@ -542,13 +542,13 @@ instance Ord a => Semigroup (Maximum a) where
   (<>) = mappend
 #endif
 
--- | Compute the amount of space needed to align "OK"s and "FAIL"s
+-- | Compute the amount of space needed to align \"OK\"s and \"FAIL\"s
 computeAlignment :: OptionSet -> TestTree -> Int
 computeAlignment opts =
   fromMonoid .
   foldTestTree
     trivialFold
-      { foldSingle = \_ name _ level -> Maximum (stringLength name + level)
+      { foldSingle = \_ name _ level -> Maximum (stringWidth name + level)
       , foldGroup = \_ m -> m . (+ indentSize)
       }
     opts
@@ -564,15 +564,15 @@ computeAlignment opts =
 --   characters have twice the same as Western characters.
 --
 --   (This only works properly on Unix at the moment; on Windows, the function
---   treats every character as width-1 like `Data.List.length` does.)
-stringLength :: String -> Int
+--   treats every character as width-1 like 'Data.List.length' does.)
+stringWidth :: String -> Int
 #ifdef UNIX
-stringLength = Prelude.sum . map charWidth
+stringWidth = Prelude.sum . map charWidth
  where charWidth c = case wcwidth c of
         -1 -> 1  -- many chars have "undefined" width; default to 1 for these.
         w  -> w
 #else
-stringLength = length
+stringWidth = length
 #endif
 
 -- (Potentially) colorful output
