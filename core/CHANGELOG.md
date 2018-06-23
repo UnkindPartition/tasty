@@ -1,6 +1,12 @@
 Changes
 =======
 
+Version 1.1.0.2
+---------------
+
+Fix a bug where some (mostly Asian) characters would break alignment in the
+terminal output
+
 Version 1.1.0.1
 ---------------
 
