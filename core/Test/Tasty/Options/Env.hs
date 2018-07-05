@@ -35,7 +35,7 @@ instance Exception EnvOptionException
 
 -- | Search the environment for given options
 getEnvOptions :: [OptionDescription] -> IO OptionSet
-getEnvOptions = getApp . foldMap lookupOpt
+getEnvOptions = getAp . foldMap lookupOpt
   where
     lookupOpt :: OptionDescription -> Ap IO OptionSet
     lookupOpt (Option (px :: Proxy v)) = do

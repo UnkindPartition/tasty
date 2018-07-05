@@ -39,7 +39,7 @@ import Test.Tasty.Runners.Reducers
 
 -- | Generate a command line parser from a list of option descriptions
 optionParser :: [OptionDescription] -> Parser OptionSet
-optionParser = getApp . foldMap toSet where
+optionParser = getAp . foldMap toSet where
   toSet :: OptionDescription -> Ap Parser OptionSet
   toSet (Option (Proxy :: Proxy v)) = Ap $
     (singleOption <$> (optionCLParser :: Parser v)) <|> pure mempty
