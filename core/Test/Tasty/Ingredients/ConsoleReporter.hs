@@ -41,7 +41,7 @@ import Data.Char
 import Data.Char.WCWidth (wcwidth)
 #endif
 import Data.Maybe
-import Data.Monoid
+import Data.Monoid (Any(..))
 import Data.Typeable
 import Options.Applicative hiding (str)
 import System.IO
@@ -53,6 +53,8 @@ import Data.Foldable hiding (concatMap,elem,sequence_)
 #if MIN_VERSION_base(4,9,0)
 import Data.Semigroup (Semigroup)
 import qualified Data.Semigroup (Semigroup((<>)))
+#else
+import Data.Monoid
 #endif
 
 --------------------------------------------------

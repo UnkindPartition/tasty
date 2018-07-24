@@ -8,7 +8,7 @@ module Test.Tasty.CmdLine
   ) where
 
 import Options.Applicative
-import Data.Monoid
+import Data.Monoid ((<>))
 import Data.Proxy
 import Data.Foldable (foldMap)
 import Prelude  -- Silence AMP and FTP import warnings
@@ -28,6 +28,9 @@ import Control.Monad (forM_)
 import Data.Typeable (Typeable)
 import System.Posix.Signals
 import System.Mem.Weak (deRefWeak)
+#endif
+#if !MIN_VERSION_base(4,9,0)
+import Data.Monoid
 #endif
 
 import Test.Tasty.Core
