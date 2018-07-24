@@ -138,11 +138,11 @@ buildTestOutput opts tree =
       level <- ask
       let
         printHeading = printf "%s%s\n" (indent level) name
-        printBody = runReader (getAp grp) (level + 1)
+        printBody = runReader (getApp grp) (level + 1)
       return $ PrintHeading name printHeading printBody
 
   in
-    flip runReader 0 $ getAp $
+    flip runReader 0 $ getApp $
       foldTestTree
         trivialFold
           { foldSingle = runSingleTest
@@ -166,7 +166,7 @@ foldTestOutput
   -> StatusMap -- ^ The @StatusMap@ received by the 'TestReporter'
   -> b
 foldTestOutput foldTest foldHeading outputTree smap =
-  flip evalState 0 $ getAp $ go outputTree where
+  flip evalState 0 $ getApp $ go outputTree where
   go (PrintTest name printName printResult) = Ap $ do
     ix <- get
     put $! ix + 1
@@ -177,7 +177,7 @@ foldTestOutput foldTest foldHeading outputTree smap =
       readStatusVar = getResultFromTVar statusVar
     return $ foldTest name printName readStatusVar printResult
   go (PrintHeading name printName printBody) = Ap $
-    foldHeading name printName <$> getAp (go printBody)
+    foldHeading name printName <$> getApp (go printBody)
   go (Seq a b) = mappend (go a) (go b)
   go Skip = mempty
 
@@ -205,7 +205,7 @@ consoleOutput toutput smap =
 
 consoleOutputHidingSuccesses :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
 consoleOutputHidingSuccesses toutput smap =
-  void . getAp $ foldTestOutput foldTest foldHeading toutput smap
+  void . getApp $ foldTestOutput foldTest foldHeading toutput smap
   where
     foldTest _name printName getResult printResult =
       Ap $ do
@@ -218,7 +218,7 @@ consoleOutputHidingSuccesses toutput smap =
     foldHeading _name printHeading printBody =
       Ap $ do
         printHeading :: IO ()
-        Any failed <- getAp printBody
+        Any failed <- getApp printBody
         unless failed clearAboveLine
         return $ Any failed
 
@@ -227,7 +227,7 @@ consoleOutputHidingSuccesses toutput smap =
 
 streamOutputHidingSuccesses :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
 streamOutputHidingSuccesses toutput smap =
-  void . flip evalStateT [] . getAp $
+  void . flip evalStateT [] . getApp $
     foldTestOutput foldTest foldHeading toutput smap
   where
     foldTest _name printName getResult printResult =
@@ -249,7 +249,7 @@ streamOutputHidingSuccesses toutput smap =
     foldHeading _name printHeading printBody =
       Ap $ do
         modify (printHeading :)
-        Any failed <- getAp printBody
+        Any failed <- getApp printBody
         unless failed $
           modify $ \stack ->
             case stack of
@@ -284,7 +284,7 @@ instance Semigroup Statistics where
 #endif
 
 computeStatistics :: StatusMap -> IO Statistics
-computeStatistics = getAp . foldMap (\var -> Ap $
+computeStatistics = getApp . foldMap (\var -> Ap $
   (\r -> Statistics 1 (if resultSuccessful r then 0 else 1))
     <$> getResultFromTVar var)
 
