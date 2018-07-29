@@ -48,6 +48,12 @@ matrix:
   - env: BUILD=cabal GHCVER=8.0.2 CABALVER=1.24 HAPPYVER=1.19.5 ALEXVER=3.1.7
     compiler: ": #GHC 8.0.2"
     addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2], sources: [hvr-ghc]}}
+  - env: BUILD=cabal GHCVER=8.2.2 CABALVER=1.24 HAPPYVER=1.19.5 ALEXVER=3.1.7
+    compiler: ": #GHC 8.2.2"
+    addons: {apt: {packages: [cabal-install-1.24,ghc-8.2.2], sources: [hvr-ghc]}}
+  - env: BUILD=cabal GHCVER=8.4.2 CABALVER=1.24 HAPPYVER=1.19.5 ALEXVER=3.1.7
+    compiler: ": #GHC 8.4.2"
+    addons: {apt: {packages: [cabal-install-1.24,ghc-8.4.2], sources: [hvr-ghc]}}
 
   ## Build with the newest GHC and cabal-install. This is an accepted failure,
   ## see below.
@@ -55,18 +61,8 @@ matrix:
     compiler: ": #GHC HEAD"
     addons: {apt: {packages: [cabal-install-head,ghc-head], sources: [hvr-ghc]}}
 
-  # The Stack builds. We can pass in arbitrary Stack arguments via the ARGS
-  # variable, such as using --stack-yaml to point to a different file.
-  - env: BUILD=stack ARGS="--resolver lts-6"
-    compiler: ": #stack 7.10.3"
-    addons: {apt: {packages: [libgmp-dev]}}
-
-  - env: BUILD=stack ARGS="--resolver lts-8" WARNINGS=true
-    compiler: ": #stack 8.0.2"
-    addons: {apt: {packages: [libgmp-dev]}}
-
-  - env: BUILD=stack ARGS="--resolver lts-10" WARNINGS=true
-    compiler: ": #stack 8.2.2"
+  - env: BUILD=stack ARGS="--resolver lts-12" WARNINGS=true
+    compiler: ": #stack 8.4.2"
     addons: {apt: {packages: [libgmp-dev]}}
 
   allow_failures:
