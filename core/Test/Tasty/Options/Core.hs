@@ -13,9 +13,11 @@ import Control.Monad (mfilter)
 import Data.Proxy
 import Data.Typeable
 import Data.Fixed
-import Data.Monoid
 import Options.Applicative hiding (str)
 import GHC.Conc
+#if !MIN_VERSION_base(4,11,0)
+import Data.Monoid
+#endif
 
 import Test.Tasty.Options
 import Test.Tasty.Patterns
