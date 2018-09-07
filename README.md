@@ -107,6 +107,9 @@ The following providers exist:
   property-based testing (based on [Hedgehog](http://hackage.haskell.org/package/hedgehog))
 * [tasty-hspec](http://hackage.haskell.org/package/tasty-hspec) — for
   [Hspec](http://hspec.github.io/) tests
+* [tasty-leancheck](http://hackage.haskell.org/package/tasty-leancheck) — for
+  enumerative property-based testing
+  (based on [LeanCheck](http://hackage.haskell.org/package/leancheck))
 * [tasty-program](http://hackage.haskell.org/package/tasty-program) — run
   external program and test whether it terminates successfully
 
