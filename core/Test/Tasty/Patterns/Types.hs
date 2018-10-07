@@ -18,7 +18,7 @@ data Expr
   | Concat Expr Expr
   | Match Expr String
   | NoMatch Expr String
-  | Field Expr -- ^ nth field of the path, where 1 is the outermost group name and 0 is the whole test name, using @/@ as a separator
+  | Field Expr -- ^ nth field of the path, where 1 is the outermost group name and 0 is the whole test name, using @.@ (dot) as a separator
   | StringLit String
   | If Expr Expr Expr
   | ERE String -- ^ an ERE token by itself, like @/foo/@ but not like @$1 ~ /foo/@
