@@ -77,7 +77,7 @@ library
     -- for GHC.Generics
     build-depends: ghc-prim
 
-  if !os(windows)
+  if !os(windows) && !impl(ghcjs)
     build-depends: unix,
                    wcwidth
     cpp-options: -DUNIX
