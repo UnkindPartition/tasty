@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 1.1.0.4
+---------------
+
+Make tasty work with GHCJS
+
 Version 1.1.0.3
 ---------------
 
