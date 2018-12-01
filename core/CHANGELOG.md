@@ -1,6 +1,12 @@
 Changes
 =======
 
+Version 1.2
+-----------
+
+Make it possible to declare dependencies between tests (see the README for
+details)
+
 Version 1.1.0.4
 ---------------
 

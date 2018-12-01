@@ -173,6 +173,8 @@ instance Exception ResourceError
 --
 -- This is the same distinction as the
 -- <http://testng.org/doc/documentation-main.html#dependent-methods hard vs soft dependencies in TestNG>.
+--
+-- @since 1.2
 data DependencyType
   = AllSucceed
     -- ^ The current test tree will be executed after its dependencies finish, and only
@@ -225,6 +227,8 @@ testGroup = TestGroup
 -- 'after_' 'AllFinish' ('Test.Tasty.Patterns.Types.EQ' ('Field' 'NF') ('StringLit' \"Bar\")) $
 --    'testCase' \"A test that depends on Foo.Bar\" $ ...
 -- @
+--
+-- @since 1.2
 after_
   :: DependencyType -- ^ whether to run the tests even if some of the dependencies fail
   -> Expr -- ^ the pattern
@@ -274,6 +278,8 @@ after_ = After
 -- 'after' 'AllFinish' \"$NF == \\\"Bar\\\"\" $
 --    'testCase' \"A test that depends on Foo.Bar\" $ ...
 -- @
+--
+-- @since 1.2
 after
   :: DependencyType -- ^ whether to run the tests even if some of the dependencies fail
   -> String -- ^ the pattern
