@@ -71,6 +71,7 @@ data TestOutput
       {- test name         -} String
       {- print test name   -} (IO ())
       {- print test result -} (Result -> IO ())
+      {- get test options -} OptionSet
       -- ^ Name of a test, an action that prints the test name, and an action
       -- that renders the result of the action.
   | PrintHeading String (IO ()) TestOutput
@@ -104,7 +105,7 @@ buildTestOutput opts tree =
     runSingleTest
       :: (IsTest t, ?colors :: Bool)
       => OptionSet -> TestName -> t -> Ap (Reader Level) TestOutput
-    runSingleTest _opts name _test = Ap $ do
+    runSingleTest opts' name _test = Ap $ do
       level <- ask
 
       let
@@ -134,7 +135,7 @@ buildTestOutput opts tree =
             (if resultSuccessful result then infoOk else infoFail) $
               printf "%s%s\n" (indent $ level + 1) (formatDesc (level+1) rDesc)
 
-      return $ PrintTest name printTestName printTestResult
+      return $ PrintTest name printTestName printTestResult opts'
 
     runGroup :: TestName -> Ap (Reader Level) TestOutput -> Ap (Reader Level) TestOutput
     runGroup name grp = Ap $ do
@@ -158,7 +159,7 @@ buildTestOutput opts tree =
 -- @since 0.12
 foldTestOutput
   :: Monoid b
-  => (String -> IO () -> IO Result -> (Result -> IO ()) -> b)
+  => (String -> IO () -> IO Result -> (Result -> IO ()) -> OptionSet -> b)
   -- ^ Eliminator for test cases. The @IO ()@ prints the testname. The
   -- @IO Result@ blocks until the test is finished, returning it's 'Result'.
   -- The @Result -> IO ()@ function prints the formatted output.
@@ -170,7 +171,7 @@ foldTestOutput
   -> b
 foldTestOutput foldTest foldHeading outputTree smap =
   flip evalState 0 $ getApp $ go outputTree where
-  go (PrintTest name printName printResult) = Ap $ do
+  go (PrintTest name printName printResult opts) = Ap $ do
     ix <- get
     put $! ix + 1
     let
@@ -178,7 +179,7 @@ foldTestOutput foldTest foldHeading outputTree smap =
         fromMaybe (error "internal error: index out of bounds") $
         IntMap.lookup ix smap
       readStatusVar = getResultFromTVar statusVar
-    return $ foldTest name printName readStatusVar printResult
+    return $ foldTest name printName readStatusVar printResult opts
   go (PrintHeading name printName printBody) = Ap $
     foldHeading name printName <$> getApp (go printBody)
   go (Seq a b) = mappend (go a) (go b)
@@ -194,11 +195,14 @@ consoleOutput :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
 consoleOutput toutput smap =
   getTraversal . fst $ foldTestOutput foldTest foldHeading toutput smap
   where
-    foldTest _name printName getResult printResult =
+    foldTest _name printName getResult printResult opts =
       ( Traversal $ do
-          printName :: IO ()
+          let HideSuccesses hideSuccesses = lookupOption opts
           r <- getResult
-          printResult r
+          _ <- if resultSuccessful r && hideSuccesses
+               then do pure $ Any False
+               else do printName :: IO (); printResult r :: IO (); return $ Any True
+          pure ()
       , Any True)
     foldHeading _name printHeading (printBody, Any nonempty) =
       ( Traversal $ do
@@ -210,7 +214,7 @@ consoleOutputHidingSuccesses :: (?colors :: Bool) => TestOutput -> StatusMap -> 
 consoleOutputHidingSuccesses toutput smap =
   void . getApp $ foldTestOutput foldTest foldHeading toutput smap
   where
-    foldTest _name printName getResult printResult =
+    foldTest _name printName getResult printResult _opts =
       Ap $ do
           printName :: IO ()
           r <- getResult
@@ -233,7 +237,7 @@ streamOutputHidingSuccesses toutput smap =
   void . flip evalStateT [] . getApp $
     foldTestOutput foldTest foldHeading toutput smap
   where
-    foldTest _name printName getResult printResult =
+    foldTest _name printName getResult printResult _opts =
       Ap $ do
           r <- liftIO $ getResult
           if resultSuccessful r
