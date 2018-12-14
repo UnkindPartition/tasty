@@ -210,28 +210,6 @@ consoleOutput toutput smap =
       , Any nonempty
       )
 
-consoleOutputHidingSuccesses :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
-consoleOutputHidingSuccesses toutput smap =
-  void . getApp $ foldTestOutput foldTest foldHeading toutput smap
-  where
-    foldTest _name printName getResult printResult _opts =
-      Ap $ do
-          printName :: IO ()
-          r <- getResult
-          if resultSuccessful r
-            then do clearThisLine; return $ Any False
-            else do printResult r :: IO (); return $ Any True
-
-    foldHeading _name printHeading printBody =
-      Ap $ do
-        printHeading :: IO ()
-        Any failed <- getApp printBody
-        unless failed clearAboveLine
-        return $ Any failed
-
-    clearAboveLine = do cursorUpLine 1; clearThisLine
-    clearThisLine = do clearLine; setCursorColumn 0
-
 streamOutputHidingSuccesses :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
 streamOutputHidingSuccesses toutput smap =
   void . flip evalStateT [] . getApp $
@@ -415,13 +393,9 @@ consoleTestReporter =
           let
             toutput = buildTestOutput opts tree
 
-          case () of { _
-            | hideSuccesses && isTerm ->
-                consoleOutputHidingSuccesses toutput smap
-            | hideSuccesses && not isTerm ->
-                streamOutputHidingSuccesses toutput smap
-            | otherwise -> consoleOutput toutput smap
-          }
+          if hideSuccesses && not isTerm then
+            streamOutputHidingSuccesses toutput smap
+            else consoleOutput toutput smap
 
           return $ \time -> do
             stats <- computeStatistics smap
