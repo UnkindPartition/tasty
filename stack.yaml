@@ -7,6 +7,7 @@ packages:
 - core-tests/
 extra-deps:
 - wcwidth-0.0.2
+- ansi-terminal-0.9
 # this is needed for travis, because call-stack is absent from the old snapshots
 - call-stack-0.1.0
 flags: {}

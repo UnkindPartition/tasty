@@ -66,7 +66,7 @@ library
     optparse-applicative >= 0.14,
     unbounded-delays >= 0.1,
     async >= 2.0,
-    ansi-terminal >= 0.6.2
+    ansi-terminal >= 0.9
 
   if flag(clock)
     build-depends: clock >= 0.4.4.0

@@ -398,6 +398,7 @@ consoleTestReporter =
 
       do
       isTerm <- hSupportsANSI stdout
+      isTermColor <- hSupportsANSIColor stdout
 
       (\k -> if isTerm
         then (do hideCursor; k) `finally` showCursor
@@ -406,7 +407,7 @@ consoleTestReporter =
           hSetBuffering stdout LineBuffering
 
           let
-            ?colors = useColor whenColor isTerm
+            ?colors = useColor whenColor isTermColor
 
           let
             toutput = buildTestOutput opts tree
