@@ -85,7 +85,7 @@ determined by chance.)
 [tasty][] is the core package. It contains basic definitions and APIs and a
 console runner.
 
-[tasty]: http://hackage.haskell.org/package/tasty
+[tasty]: https://hackage.haskell.org/package/tasty
 
 In order to create a test suite, you also need to install one or more «providers» (see
 below).
@@ -94,26 +94,27 @@ below).
 
 The following providers exist:
 
-* [tasty-hunit](http://hackage.haskell.org/package/tasty-hunit) — for unit tests
-  (based on [HUnit](http://hackage.haskell.org/package/HUnit))
+* [tasty-hunit](https://hackage.haskell.org/package/tasty-hunit) — for unit tests
+  (based on [HUnit](https://hackage.haskell.org/package/HUnit))
 * [tasty-golden][] — for golden
   tests, which are unit tests whose results are kept in files
-* [tasty-smallcheck](http://hackage.haskell.org/package/tasty-smallcheck) —
+* [tasty-smallcheck](https://hackage.haskell.org/package/tasty-smallcheck) —
   exhaustive property-based testing
-  (based on [smallcheck](http://hackage.haskell.org/package/smallcheck))
-* [tasty-quickcheck](http://hackage.haskell.org/package/tasty-quickcheck) — for randomized
+  (based on [smallcheck](https://hackage.haskell.org/package/smallcheck))
+* [tasty-quickcheck](https://hackage.haskell.org/package/tasty-quickcheck) — for randomized
   property-based testing (based on [QuickCheck](http://hackage.haskell.org/package/QuickCheck))
 * [tasty-hedgehog](https://github.com/qfpl/tasty-hedgehog) — for randomized
-  property-based testing (based on [Hedgehog](http://hackage.haskell.org/package/hedgehog))
-* [tasty-hspec](http://hackage.haskell.org/package/tasty-hspec) — for
-  [Hspec](http://hspec.github.io/) tests
-* [tasty-leancheck](http://hackage.haskell.org/package/tasty-leancheck) — for
+  property-based testing (based on [Hedgehog](https://hackage.haskell.org/package/hedgehog))
+* [tasty-hspec](https://hackage.haskell.org/package/tasty-hspec) — for
+  [Hspec](https://hspec.github.io/) tests
+* [tasty-leancheck](https://hackage.haskell.org/package/tasty-leancheck) — for
   enumerative property-based testing
-  (based on [LeanCheck](http://hackage.haskell.org/package/leancheck))
-* [tasty-program](http://hackage.haskell.org/package/tasty-program) — run
+  (based on [LeanCheck](https://hackage.haskell.org/package/leancheck))
+* [tasty-program](https://hackage.haskell.org/package/tasty-program) — run
   external program and test whether it terminates successfully
+* [tasty-wai](https://hackage.haskell.org/package/tasty-wai) - for testing [wai](https://hackage.haskell.org/wai) endpoints.
 
-[tasty-golden]: http://hackage.haskell.org/package/tasty-golden
+[tasty-golden]: https://hackage.haskell.org/package/tasty-golden
 
 It's easy to create custom providers using the API from `Test.Tasty.Providers`.
 
@@ -129,24 +130,24 @@ It is possible to write custom ingredients using the API from `Test.Tasty.Runner
 
 Some ingredients that can enhance your test suite are:
 
-* [tasty-ant-xml](http://hackage.haskell.org/package/tasty-ant-xml) adds a
+* [tasty-ant-xml](https://hackage.haskell.org/package/tasty-ant-xml) adds a
   possibility to write the test results in a machine-readable XML format, which
   is understood by various CI systems and IDEs
-* [tasty-rerun](http://hackage.haskell.org/package/tasty-rerun) adds support for
+* [tasty-rerun](https://hackage.haskell.org/package/tasty-rerun) adds support for
   minimal test reruns by recording previous test runs and using this information
   to filter the test tree. For example, you can use this ingredient to only run
   failed tests, or only run tests that threw an exception.
-* [tasty-html](http://hackage.haskell.org/package/tasty-html) adds the
+* [tasty-html](https://hackage.haskell.org/package/tasty-html) adds the
   possibility to write the test results as a HTML file
-* [tasty-stats](http://hackage.haskell.org/package/tasty-stats) adds the
+* [tasty-stats](https://hackage.haskell.org/package/tasty-stats) adds the
   possibility to collect statistics of the test suite in a CSV file.
 
 ### Other packages
 
-* [tasty-th](http://hackage.haskell.org/package/tasty-th) automatically
+* [tasty-th](https://hackage.haskell.org/package/tasty-th) automatically
 discovers tests based on the function names and generate the boilerplate code for
 you
-* [tasty-hunit-adapter](http://hackage.haskell.org/package/tasty-hunit-adapter)
+* [tasty-hunit-adapter](https://hackage.haskell.org/package/tasty-hunit-adapter)
   converts existing HUnit test suites into tasty test suites
 * [tasty-discover](https://github.com/lwm/tasty-discover) automatically discovers
 your tests.
@@ -269,7 +270,7 @@ is set to the outermost test group name, `$2` is set to the next test group
 name, and so on up to `$NF`, which is set to the test's own name. The field `$0`
 is set to all other fields concatenated using `.` as a separator.
 
-[awk]: http://pubs.opengroup.org/onlinepubs/9699919799/utilities/awk.html#tag_20_06_13_02
+[awk]: https://pubs.opengroup.org/onlinepubs/9699919799/utilities/awk.html#tag_20_06_13_02
 
 As an example, consider a test inside two test groups:
 
@@ -774,22 +775,22 @@ Here are some caveats to keep in mind regarding dependencies in Tasty:
 Blog posts and other publications related to tasty. If you wrote or just found
 something not mentioned here, send a pull request!
 
-* [Holy Haskell Project Starter](http://yannesposito.com/Scratch/en/blog/Holy-Haskell-Starter/)
-* [First time testing, also with FP Complete](http://levischuck.com/posts/2013-11-13-first-testing-and-fpcomplete.html)
+* [Holy Haskell Project Starter](https://yannesposito.com/Scratch/en/blog/Holy-Haskell-Starter/)
+* [First time testing, also with FP Complete](https://levischuck.com/posts/2013-11-13-first-testing-and-fpcomplete.html)
   (tasty has been added to stackage since then)
-* [24 Days of Hackage: tasty](http://ocharles.org.uk/blog/posts/2013-12-03-24-days-of-hackage-tasty.html)
+* [24 Days of Hackage: tasty](https://ocharles.org.uk/blog/posts/2013-12-03-24-days-of-hackage-tasty.html)
 * [Resources in Tasty](https://ro-che.info/articles/2013-12-10-tasty-resources)
 * [Custom options in Tasty][custom-options-article]
 * [Resources in Tasty (update)](https://ro-che.info/articles/2013-12-29-tasty-resources-2)
-* [Announcing tasty-rerun](http://ocharles.org.uk/blog/posts/2014-01-20-announcing-tasty-rerun.html)
-* [Code testing in Haskell revisited (with Tasty)](http://lambda.jstolarek.com/2014/01/code-testing-in-haskell-revisited-with-tasty/)
+* [Announcing tasty-rerun](https://ocharles.org.uk/blog/posts/2014-01-20-announcing-tasty-rerun.html)
+* [Code testing in Haskell revisited (with Tasty)](https://lambda.jstolarek.com/2014/01/code-testing-in-haskell-revisited-with-tasty/)
 * [New patterns in tasty][awk-patterns-article]
 * [Screencast: Dynamic Test Suites in Haskell using Hspec and Tasty](https://www.youtube.com/watch?v=PGsDvgmZF7A)
 * [Automatically generated directories for tasty tests][tasty-directories]
 
 [custom-options-article]: https://ro-che.info/articles/2013-12-20-tasty-custom-options.html
 [awk-patterns-article]: https://ro-che.info/articles/2018-01-08-tasty-new-patterns
-[tasty-directories]: http://nmattia.com/posts/2018-04-30-tasty-test-names.html
+[tasty-directories]: https://nmattia.com/posts/2018-04-30-tasty-test-names.html
 
 Maintainers
 -----------
