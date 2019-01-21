@@ -80,7 +80,7 @@ library
   if !os(windows) && !impl(ghcjs)
     build-depends: unix,
                    wcwidth
-    cpp-options: -DUNIX
+    cpp-options: -D__UNIX__
 
   -- hs-source-dirs:      
   default-language:    Haskell2010
