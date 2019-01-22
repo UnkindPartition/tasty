@@ -3,8 +3,10 @@ module Test.Tasty.Runners.Utils where
 
 import Control.Exception
 import Control.Applicative
+import Data.Typeable (Typeable)
 import Prelude  -- Silence AMP import warnings
 import Text.Printf
+import Foreign.C (CInt)
 
 -- We install handlers only on UNIX (obviously) and on GHC >= 7.6.
 -- GHC 7.4 lacks mkWeakThreadId (see #181), and this is not important
@@ -16,7 +18,6 @@ import Text.Printf
 import Control.Concurrent (mkWeakThreadId, myThreadId)
 import Control.Exception (Exception(..), throwTo)
 import Control.Monad (forM_)
-import Data.Typeable (Typeable)
 import System.Posix.Signals
 import System.Mem.Weak (deRefWeak)
 #endif
@@ -75,6 +76,10 @@ installSignalHandlers = do
 
 -- | This exception is thrown when the program receives a signal, assuming
 -- 'installSignalHandlers' was called.
-newtype SignalException = SignalException Signal
+--
+-- The 'CInt' field contains the signal number, as in
+-- 'System.Posix.Signals.Signal'. We don't use that type synonym, however,
+-- because it's not available on non-UNIXes.
+newtype SignalException = SignalException CInt
   deriving (Show, Typeable)
 instance Exception SignalException
