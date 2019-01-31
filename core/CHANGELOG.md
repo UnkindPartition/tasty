@@ -1,6 +1,12 @@
 Changes
 =======
 
+Version 1.2.1
+-------------
+
+* Document and expose installSignalHandlers
+* Enable colors in Emacs and other almost-ANSI-capable terminals
+
 Version 1.2
 -----------
 
