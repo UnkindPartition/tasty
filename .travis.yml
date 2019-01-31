@@ -115,7 +115,7 @@ install:
       PACKAGES=$(stack --install-ghc query locals | grep '^ *path' | sed 's@^ *path:@@' | grep -v 'core-tests')
 
       # don't use -O0 here; see https://github.com/haskell/primitive/issues/177
-      cabal install --only-dependencies --enable-tests --enable-benchmarks --force-reinstalls --reorder-goals --max-backjumps=-1 $CABALARGS $PACKAGES
+      cabal install primitive
       ;;
   esac
   set +ex
