@@ -61,8 +61,8 @@ matrix:
     compiler: ": #GHC HEAD"
     addons: {apt: {packages: [cabal-install-head,ghc-head], sources: [hvr-ghc]}}
 
-  - env: BUILD=stack ARGS="--resolver lts-12" WARNINGS=true
-    compiler: ": #stack 8.4.2"
+  - env: BUILD=stack ARGS="--resolver nightly-2019-01-30" WARNINGS=true
+    compiler: ": #stack 8.6.3"
     addons: {apt: {packages: [libgmp-dev]}}
 
   allow_failures:
