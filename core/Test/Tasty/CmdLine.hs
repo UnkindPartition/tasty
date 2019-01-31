@@ -1,5 +1,4 @@
 -- | Parsing options supplied on the command line
-{-# LANGUAGE CPP, ScopedTypeVariables, DeriveDataTypeable #-}
 module Test.Tasty.CmdLine
   ( optionParser
   , suiteOptions
