@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.10.0.2
+----------------
+
+Catch all exceptions and time each step in testCaseSteps
+
 Version 0.10.0.1
 ----------------
 

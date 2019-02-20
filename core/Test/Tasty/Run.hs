@@ -14,9 +14,6 @@ import qualified Data.Foldable as F
 import Data.Maybe
 import Data.Graph (SCC(..), stronglyConnComp)
 import Data.Typeable
-#ifndef VERSION_clock
-import Data.Time.Clock.POSIX (getPOSIXTime)
-#endif
 import Control.Monad.State
 import Control.Monad.Writer
 import Control.Monad.Reader
@@ -29,9 +26,6 @@ import Control.Applicative
 import Control.Arrow
 import GHC.Conc (labelThread)
 import Prelude  -- Silence AMP and FTP import warnings
-#ifdef VERSION_clock
-import qualified System.Clock as Clock
-#endif
 
 import Test.Tasty.Core
 import Test.Tasty.Parallel
@@ -40,6 +34,7 @@ import Test.Tasty.Patterns.Types
 import Test.Tasty.Options
 import Test.Tasty.Options.Core
 import Test.Tasty.Runners.Reducers
+import Test.Tasty.Runners.Utils (timed)
 
 -- | Current status of a test
 data Status
@@ -465,32 +460,3 @@ a `finallyRestore` sequel =
     r <- restore a `onException` sequel restore
     _ <- sequel restore
     return r
-
--- | Measure the time taken by an 'IO' action to run
-timed :: IO a -> IO (Time, a)
-timed t = do
-  start <- getTime
-  !r    <- t
-  end   <- getTime
-  return (end-start, r)
-
-#ifdef VERSION_clock
--- | Get monotonic time
---
--- Warning: This is not the system time, but a monotonically increasing time
--- that facilitates reliable measurement of time differences.
-getTime :: IO Time
-getTime = do
-  t <- Clock.getTime Clock.Monotonic
-  let ns = realToFrac $
-#if MIN_VERSION_clock(0,7,1)
-        Clock.toNanoSecs t
-#else
-        Clock.timeSpecAsNanoSecs t
-#endif
-  return $ ns / 10 ^ (9 :: Int)
-#else
--- | Get system time
-getTime :: IO Time
-getTime = realToFrac <$> getPOSIXTime
-#endif

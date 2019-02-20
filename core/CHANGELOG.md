@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 1.2.2
+-------------
+
+Expose timed and getTime
+
 Version 1.2.1
 -------------
 

@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                tasty-hunit
-version:             0.10.0.1
+version:             0.10.0.2
 synopsis:            HUnit support for the Tasty test framework.
 description:         HUnit support for the Tasty test framework.
                      .
@@ -32,7 +32,7 @@ library
   other-modules:       Test.Tasty.HUnit.Orig
                        Test.Tasty.HUnit.Steps
   other-extensions:    TypeFamilies, DeriveDataTypeable
-  build-depends:       base ==4.*, tasty >= 0.8, call-stack
+  build-depends:       base ==4.*, tasty >= 1.2.2, call-stack
   -- hs-source-dirs:      
   default-language:    Haskell2010
   ghc-options: -Wall

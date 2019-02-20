@@ -1,12 +1,22 @@
+{-# LANGUAGE BangPatterns #-}
+
 -- | Note: this module is re-exported as a whole from "Test.Tasty.Runners"
 module Test.Tasty.Runners.Utils where
 
 import Control.Exception
 import Control.Applicative
+#ifndef VERSION_clock
+import Data.Time.Clock.POSIX (getPOSIXTime)
+#endif
 import Data.Typeable (Typeable)
 import Prelude  -- Silence AMP import warnings
 import Text.Printf
 import Foreign.C (CInt)
+#ifdef VERSION_clock
+import qualified System.Clock as Clock
+#endif
+
+import Test.Tasty.Core (Time)
 
 -- We install handlers only on UNIX (obviously) and on GHC >= 7.6.
 -- GHC 7.4 lacks mkWeakThreadId (see #181), and this is not important
@@ -83,3 +93,32 @@ installSignalHandlers = do
 newtype SignalException = SignalException CInt
   deriving (Show, Typeable)
 instance Exception SignalException
+
+-- | Measure the time taken by an 'IO' action to run
+timed :: IO a -> IO (Time, a)
+timed t = do
+  start <- getTime
+  !r    <- t
+  end   <- getTime
+  return (end-start, r)
+
+#ifdef VERSION_clock
+-- | Get monotonic time
+--
+-- Warning: This is not the system time, but a monotonically increasing time
+-- that facilitates reliable measurement of time differences.
+getTime :: IO Time
+getTime = do
+  t <- Clock.getTime Clock.Monotonic
+  let ns = realToFrac $
+#if MIN_VERSION_clock(0,7,1)
+        Clock.toNanoSecs t
+#else
+        Clock.timeSpecAsNanoSecs t
+#endif
+  return $ ns / 10 ^ (9 :: Int)
+#else
+-- | Get system time
+getTime :: IO Time
+getTime = realToFrac <$> getPOSIXTime
+#endif
