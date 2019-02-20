@@ -1,13 +1,16 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, BangPatterns #-}
 module Test.Tasty.HUnit.Steps (testCaseSteps) where
 
 import Control.Applicative
 import Control.Exception
 import Data.IORef
+import Data.List (foldl')
 import Data.Typeable (Typeable)
 import Prelude  -- Silence AMP import warnings
 import Test.Tasty.HUnit.Orig
 import Test.Tasty.Providers
+import Test.Tasty.Runners (getTime)
+import Text.Printf (printf)
 
 newtype TestCaseSteps = TestCaseSteps ((String -> IO ()) -> Assertion)
   deriving Typeable
@@ -18,25 +21,42 @@ instance IsTest TestCaseSteps where
 
     let
       stepFn :: String -> IO ()
-      stepFn msg = atomicModifyIORef ref (\l -> (msg:l, ()))
+      stepFn msg = do
+        tme <- getTime
+        atomicModifyIORef ref (\l -> ((tme,msg):l, ()))
 
-    hunitResult <- try (assertionFn stepFn)
+    hunitResult <- (Right <$> assertionFn stepFn) `catches`
+      [ Handler (\(HUnitFailure mbloc errMsg) -> return $ Left (prependLocation mbloc errMsg))
+      , Handler (\(SomeException ex)          -> return $ Left (show ex))
+      ]
 
-    msgs <- reverse <$> readIORef ref
+    endTime <- getTime
+
+    maxMsgLength <- foldl' max 0 . map (length . snd) <$> readIORef ref
+
+    let msgFormat = "%-" ++ show (min maxMsgLength 62) ++ "s (%.02fs)"
+
+    msgs <- snd . foldl'
+      (\(lastTime, acc) (curTime, msg) ->
+           let !duration = lastTime - curTime
+               !msg' = if duration >= 0.01 then printf msgFormat msg duration else msg
+            in (curTime, msg':acc))
+      (endTime, [])
+        <$> readIORef ref
 
     return $
       case hunitResult of
 
         Right {} -> testPassed (unlines msgs)
 
-        Left (HUnitFailure mbloc errMsg) -> testFailed $
+        Left errMsg -> testFailed $
           if null msgs
             then
               errMsg
             else
               -- Indent the error msg w.r.t. step messages
               unlines $
-                msgs ++ map ("  " ++) (lines . prependLocation mbloc $ errMsg)
+                msgs ++ map ("  " ++) (lines errMsg)
 
   testOptions = return []
 
