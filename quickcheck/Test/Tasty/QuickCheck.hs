@@ -95,6 +95,10 @@ newtype QuickCheckMaxRatio = QuickCheckMaxRatio Int
 newtype QuickCheckVerbose = QuickCheckVerbose Bool
   deriving (Typeable)
 
+-- | Number of shrinks allowed before QuickCheck will fail a test.
+newtype QuickCheckMaxShrinks = QuickCheckMaxShrinks Int
+  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+
 instance IsOption QuickCheckTests where
   defaultValue = 100
   parseValue = fmap QuickCheckTests . safeRead
@@ -141,6 +145,13 @@ instance IsOption QuickCheckVerbose where
   optionHelp = return "Show the generated test cases"
   optionCLParser = mkFlagCLParser mempty (QuickCheckVerbose True)
 
+instance IsOption QuickCheckMaxShrinks where
+  defaultValue = QuickCheckMaxShrinks (QC.maxShrinks QC.stdArgs)
+  parseValue = fmap QuickCheckMaxShrinks . safeRead
+  optionName = return "quickcheck-shrinks"
+  optionHelp = return "Number of shrinks allowed before QuickCheck will fail a test"
+  optionCLParser = mkOptionCLParser $ metavar "NUMBER"
+
 -- | Convert tasty options into QuickCheck options.
 --
 -- This is a low-level function that was originally added for tasty-hspec
@@ -159,15 +170,17 @@ optionSetToArgs opts = do
         , QC.maxSize         = maxSize
         , QC.replay          = Just (mkQCGen replaySeed, 0)
         , QC.maxDiscardRatio = maxRatio
+        , QC.maxShrinks      = maxShrinks
         }
 
   return (replaySeed, args)
 
   where
-    QuickCheckTests    nTests   = lookupOption opts
-    QuickCheckReplay   mReplay  = lookupOption opts
-    QuickCheckMaxSize  maxSize  = lookupOption opts
-    QuickCheckMaxRatio maxRatio = lookupOption opts
+    QuickCheckTests      nTests     = lookupOption opts
+    QuickCheckReplay     mReplay    = lookupOption opts
+    QuickCheckMaxSize    maxSize    = lookupOption opts
+    QuickCheckMaxRatio   maxRatio   = lookupOption opts
+    QuickCheckMaxShrinks maxShrinks = lookupOption opts
 
 instance IsTest QC where
   testOptions = return
@@ -177,6 +190,7 @@ instance IsTest QC where
     , Option (Proxy :: Proxy QuickCheckMaxSize)
     , Option (Proxy :: Proxy QuickCheckMaxRatio)
     , Option (Proxy :: Proxy QuickCheckVerbose)
+    , Option (Proxy :: Proxy QuickCheckMaxShrinks)
     ]
 
   run opts (QC prop) _yieldProgress = do
