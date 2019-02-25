@@ -110,21 +110,29 @@ buildTestOutput opts tree =
 
       let
         postNamePadding = alignment - indentSize * level - stringWidth name
-        resultPosition = (indentSize * level) + stringWidth name + 2 + postNamePadding
+
+        testNamePadded = printf "%s%s: %s"
+          (indent level)
+          name
+          (replicate postNamePadding ' ')
+
+        resultPosition = length testNamePadded
 
         printTestName = do
-          printf "%s%s: %s" (indent level) name (replicate postNamePadding ' ')
+          putStr testNamePadded
           hFlush stdout
 
         printTestProgress Progress { progressText = "", progressPercent = 0.0 } = pure ()
-        printTestProgress progress = do
-          setCursorColumn resultPosition
-          -- Needs to be smarter about what we're printing:
-          -- - non-empty string but zero pct
-          -- - empty string by non-zero pct
-          -- - both non-empty
-          infoOk $ printf "%s : %.0f%%" (progressText progress) (100 * progressPercent progress)
-          hFlush stdout
+        printTestProgress progress =
+          let
+            msg = case (progressText progress, 100 * progressPercent progress) of
+                    ("", pct)  -> printf "%.0f%" pct
+                    (txt, 0.0) -> printf "%s" txt
+                    (txt, pct) -> printf "%s : %.0f%%" txt pct
+          in do
+            setCursorColumn resultPosition
+            infoOk msg
+            hFlush stdout
 
         printTestResult result = do
           rDesc <- formatMessage $ resultDescription result
