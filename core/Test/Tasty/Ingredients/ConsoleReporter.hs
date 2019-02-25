@@ -70,6 +70,7 @@ data TestOutput
   = PrintTest
       {- test name         -} String
       {- print test name   -} (IO ())
+      {- print test progress -} (Progress -> IO ())
       {- print test result -} (Result -> IO ())
       -- ^ Name of a test, an action that prints the test name, and an action
       -- that renders the result of the action.
@@ -108,9 +109,21 @@ buildTestOutput opts tree =
       level <- ask
 
       let
+        postNamePadding = alignment - indentSize * level - stringWidth name
+        resultPosition = (indentSize * level) + stringWidth name + 2 + postNamePadding
+
         printTestName = do
-          printf "%s%s: %s" (indent level) name
-            (replicate (alignment - indentSize * level - stringWidth name) ' ')
+          printf "%s%s: %s" (indent level) name (replicate postNamePadding ' ')
+          hFlush stdout
+
+        printTestProgress Progress { progressText = "", progressPercent = 0.0 } = pure ()
+        printTestProgress progress = do
+          setCursorColumn resultPosition
+          -- Needs to be smarter about what we're printing:
+          -- - non-empty string but zero pct
+          -- - empty string by non-zero pct
+          -- - both non-empty
+          infoOk $ printf "%s : %.0f%%" (progressText progress) (100 * progressPercent progress)
           hFlush stdout
 
         printTestResult result = do
@@ -124,17 +137,21 @@ buildTestOutput opts tree =
                 Failure TestDepFailed -> skipped
                 _ -> fail
             time = resultTime result
+
+          setCursorColumn resultPosition
+          clearFromCursorToLineEnd
+
           printFn (resultShortDescription result)
           -- print time only if it's significant
           when (time >= 0.01) $
             printFn (printf " (%.2fs)" time)
           printFn "\n"
 
-          when (not $ null rDesc) $
+          unless (null rDesc) $
             (if resultSuccessful result then infoOk else infoFail) $
               printf "%s%s\n" (indent $ level + 1) (formatDesc (level+1) rDesc)
 
-      return $ PrintTest name printTestName printTestResult
+      return $ PrintTest name printTestName printTestProgress printTestResult
 
     runGroup :: TestName -> Ap (Reader Level) TestOutput -> Ap (Reader Level) TestOutput
     runGroup name grp = Ap $ do
@@ -170,15 +187,23 @@ foldTestOutput
   -> b
 foldTestOutput foldTest foldHeading outputTree smap =
   flip evalState 0 $ getApp $ go outputTree where
-  go (PrintTest name printName printResult) = Ap $ do
+
+  go (PrintTest name printName printProgress printResult) = Ap $ do
     ix <- get
     put $! ix + 1
     let
-      statusVar =
-        fromMaybe (error "internal error: index out of bounds") $
+      (statusVar, progressVar) = fromMaybe (error "internal error: index out of bounds") $
         IntMap.lookup ix smap
-      readStatusVar = getResultFromTVar statusVar
-    return $ foldTest name printName readStatusVar printResult
+
+      progressOrResult = atomically $ do
+          status <- readTVar statusVar
+          case status of
+            Executing -> Left <$> readTVar progressVar
+            Done r    -> pure $ Right r
+            _         -> retry
+
+    return $ foldTest name printName (ppProgressOrResult printProgress progressOrResult) printResult
+
   go (PrintHeading name printName printBody) = Ap $
     foldHeading name printName <$> getApp (go printBody)
   go (Seq a b) = mappend (go a) (go b)
@@ -189,6 +214,16 @@ foldTestOutput foldTest foldHeading outputTree smap =
 --------------------------------------------------
 -- TestOutput modes
 --------------------------------------------------
+
+ppProgressOrResult
+  :: (Progress -> IO ())
+  -> IO (Either Progress Result)
+  -> IO Result
+ppProgressOrResult ppProgress getProgressOrResult = do
+  getProgressOrResult >>= either
+    (\p -> ppProgress p *> ppProgressOrResult ppProgress getProgressOrResult)
+    return
+
 -- {{{
 consoleOutput :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
 consoleOutput toutput smap =
@@ -201,7 +236,7 @@ consoleOutput toutput smap =
           printResult r
       , Any True)
     foldHeading _name printHeading (printBody, Any nonempty) =
-      ( Traversal $ do
+      ( Traversal $
           when nonempty $ do printHeading :: IO (); getTraversal printBody
       , Any nonempty
       )
@@ -289,7 +324,7 @@ instance Semigroup Statistics where
 computeStatistics :: StatusMap -> IO Statistics
 computeStatistics = getApp . foldMap (\var -> Ap $
   (\r -> Statistics 1 (if resultSuccessful r then 0 else 1))
-    <$> getResultFromTVar var)
+    <$> getResultFromTVar (fst var))
 
 reportStatistics :: (?colors :: Bool) => Statistics -> IO ()
 reportStatistics st = case statFailures st of
@@ -333,24 +368,24 @@ statusMapResult lookahead0 smap
         IntMap.foldrWithKey f finish smap mempty lookahead0
   where
     f :: Int
-      -> TVar Status
+      -> (TVar Status, TVar Progress)
       -> (IntMap.IntMap () -> Int -> STM (IO Bool))
       -> (IntMap.IntMap () -> Int -> STM (IO Bool))
     -- ok_tests is a set of tests that completed successfully
     -- lookahead is the number of unfinished tests that we are allowed to
     -- look at
-    f key tvar k ok_tests lookahead
+    f key (statusVar, _) k ok_tests lookahead
       | lookahead <= 0 =
           -- We looked at too many unfinished tests.
           next_iter ok_tests
       | otherwise = do
-          this_status <- readTVar tvar
+          this_status <- readTVar statusVar
           case this_status of
-            Done r ->
-              if resultSuccessful r
-                then k (IntMap.insert key () ok_tests) lookahead
-                else return $ return False
-            _ -> k ok_tests (lookahead-1)
+            Done r -> if resultSuccessful r
+              then k (IntMap.insert key () ok_tests) lookahead
+              else return $ return False
+            _ ->
+              k ok_tests (lookahead-1)
 
     -- next_iter is called when we end the current iteration,
     -- either because we reached the end of the test tree
@@ -494,7 +529,6 @@ getResultFromTVar var =
     case status of
       Done r -> return r
       _ -> retry
-
 -- }}}
 
 --------------------------------------------------
