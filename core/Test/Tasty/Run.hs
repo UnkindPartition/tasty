@@ -41,7 +41,7 @@ import Test.Tasty.Runners.Utils (timed)
 data Status
   = NotStarted
     -- ^ test has not started running yet
-  | Executing
+  | Executing Progress
     -- ^ test is being run
   | Done Result
     -- ^ test finished with a given result
@@ -51,7 +51,7 @@ data Status
 --
 -- This is what an ingredient uses to analyse and display progress, and to
 -- detect when tests finish.
-type StatusMap = IntMap.IntMap (TVar Status, TVar Progress)
+type StatusMap = IntMap.IntMap (TVar Status)
 
 data Resource r
   = NotCreated
@@ -86,12 +86,11 @@ executeTest
     -- ^ the action to execute the test, which takes a progress callback as
     -- a parameter
   -> TVar Status -- ^ variable to write status to
-  -> TVar Progress -- ^ variable to write the progress report to
   -> Timeout -- ^ optional timeout to apply
   -> Seq.Seq Initializer -- ^ initializers (to be executed in this order)
   -> Seq.Seq Finalizer -- ^ finalizers (to be executed in this order)
   -> IO ()
-executeTest action statusVar progressVar timeoutOpt inits fins = mask $ \restore -> do
+executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
   resultOrExn <- try . restore $ do
     -- N.B. this can (re-)throw an exception. It's okay. By design, the
     -- actual test will not be run, then. We still run all the
@@ -105,7 +104,7 @@ executeTest action statusVar progressVar timeoutOpt inits fins = mask $ \restore
     let
       cursorMischiefManaged = do
         -- Could this be better managed? I feel like it could ... 
-        atomically $ writeTVar statusVar Executing
+        atomically $ writeTVar statusVar (Executing emptyProgress)
         action yieldProgress
 
     -- If all initializers ran successfully, actually run the test.
@@ -221,8 +220,10 @@ executeTest action statusVar progressVar timeoutOpt inits fins = mask $ \restore
       -- This could be changed to `Maybe Progress` to lets more easily indicate
       -- when progress should try to be printed ?
       pure ()
-    yieldProgress newP =
-      liftIO . atomically $ writeTVar progressVar newP
+    yieldProgress newP = liftIO
+      . atomically
+      . writeTVar statusVar
+      $ Executing newP
 
 type InitFinPair = (Seq.Seq Initializer, Seq.Seq Finalizer)
 
@@ -250,17 +251,15 @@ instance Exception DependencyException
 
 -- Formerly: (Action, TVar Status, TVar Progress)
 data TestAction = TestAction
-  { _testActionAction :: Action
-  , _testActionStatusVar :: TVar Status
-  , _testActionProgressVar :: TVar Progress
+  { _testActionAction      :: Action
+  , _testActionStatusVar   :: TVar Status
   }
 
 -- Formerly: (TVar Status, Path, Deps)
 data CreateTestAction = CreateTestAction
-  { _createTestActionStatusVar :: TVar Status
-  , _createTestActionProgressVar :: TVar Progress
-  , _createTestActionPath  :: Path
-  , _createTestActionDeps      :: Deps
+  { _createTestActionStatusVar   :: TVar Status
+  , _createTestActionPath        :: Path
+  , _createTestActionDeps        :: Deps
   }
 
 -- | Turn a test tree into a list of actions to run tests coupled with
@@ -299,16 +298,14 @@ createTestActions opts0 tree = do
     runSingleTest opts name test = Traversal $ do
 
       -- Define the TVars that will hold the status and progress updates
-      (statusVar, progressVar) <- liftIO . atomically $ (,) 
-        <$> newTVar NotStarted 
-        <*> newTVar (Progress "" 0.0)
+      statusVar <- liftIO . atomically $ newTVar NotStarted 
 
       (parentPath, deps) <- ask
       let
         path = parentPath Seq.|> name
-        act (inits, fins) = executeTest (run opts test) statusVar progressVar (lookupOption opts) inits fins
+        act (inits, fins) = executeTest (run opts test) statusVar (lookupOption opts) inits fins
 
-      tell ([(act, CreateTestAction statusVar progressVar path deps)], mempty)
+      tell ([(act, CreateTestAction statusVar path deps)], mempty)
 
     addInitAndRelease :: ResourceSpec a -> (IO a -> Tr) -> Tr
     addInitAndRelease (ResourceSpec doInit doRelease) a = wrap $ \path deps -> do
@@ -379,9 +376,7 @@ resolveDeps tests = checkCycles $ do
           , resultTime = 0
           }
       }
-  return ( TestAction action (_createTestActionStatusVar createTA) (_createTestActionProgressVar createTA)
-         , (_createTestActionPath createTA, dep_paths)
-         )
+  return (TestAction action (_createTestActionStatusVar createTA), (_createTestActionPath createTA, dep_paths))
 
 checkCycles :: Ord b => [(a, (b, [b]))] -> Maybe [a]
 checkCycles tests = do
@@ -469,7 +464,7 @@ launchTestTree opts tree k0 = do
   let NumThreads numTheads = lookupOption opts
   (t,k1) <- timed $ do
      abortTests <- runInParallel numTheads (_testActionAction <$> testActions)
-     (do let smap = IntMap.fromList $ zip [0..] ((\ta -> (_testActionStatusVar ta, _testActionProgressVar ta)) <$> testActions)
+     (do let smap = IntMap.fromList $ zip [0..] (_testActionStatusVar <$> testActions)
          k0 smap)
       `finallyRestore` \restore -> do
          -- Tell all running tests to wrap up.

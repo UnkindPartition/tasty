@@ -60,7 +60,7 @@ generalDependencyTests = do
       let all_tests@[one, two, three] = IntMap.elems smap
       -- at first, no tests have finished yet
       threadDelay 2e5
-      forM_ all_tests $ \(tv, _) -> do
+      forM_ all_tests $ \tv -> do
         st <- atomically $ readTVar tv
         assertBool (show st) $
           case st of
@@ -71,17 +71,17 @@ generalDependencyTests = do
       -- the first will have not unless it is skipped because the first one
       -- failed
       threadDelay 11e5
-      st <- atomically $ readTVar (fst three)
+      st <- atomically $ readTVar three
       assertBool (show st) $
         case st of
           Done r -> resultSuccessful r == succeed
           _ -> False
-      st <- atomically $ readTVar (fst two)
+      st <- atomically $ readTVar two
       assertBool (show st) $
         case st of
           Done r -> resultSuccessful r == True
           _ -> False
-      st <- atomically $ readTVar (fst one)
+      st <- atomically $ readTVar one
       assertBool (show st) $
         case st of
           Done _ | succeed || deptype == AllFinish -> False
@@ -89,7 +89,7 @@ generalDependencyTests = do
 
       -- after ≈ 2 seconds, the third test will have finished as well
       threadDelay 1e6
-      st <- atomically $ readTVar (fst one)
+      st <- atomically $ readTVar one
       assertBool (show st) $
         case st of
           Done r
@@ -109,7 +109,7 @@ resourceDependenciesTest = testCase "Resource+dependencies interaction" $ do
     let all_tests@[one, two] = IntMap.elems smap
     -- at first, no tests have finished yet
     threadDelay 2e5
-    forM_ all_tests $ \(tv, _) -> do
+    forM_ all_tests $ \tv -> do
       st <- atomically $ readTVar tv
       assertBool (show st) $
         case st of
@@ -120,12 +120,12 @@ resourceDependenciesTest = testCase "Resource+dependencies interaction" $ do
     -- we're running in 2 threads, as the second should have waited for the
     -- first one.
     threadDelay 1e6
-    st <- atomically $ readTVar (fst one)
+    st <- atomically $ readTVar one
     assertBool (show st) $
       case st of
         Done r -> resultSuccessful r == True
         _ -> False
-    st <- atomically $ readTVar (fst two)
+    st <- atomically $ readTVar two
     assertBool (show st) $
       case st of
         Done _ -> False

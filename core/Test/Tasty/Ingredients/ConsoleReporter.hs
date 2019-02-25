@@ -200,13 +200,13 @@ foldTestOutput foldTest foldHeading outputTree smap =
     ix <- get
     put $! ix + 1
     let
-      (statusVar, progressVar) = fromMaybe (error "internal error: index out of bounds") $
+      statusVar = fromMaybe (error "internal error: index out of bounds") $
         IntMap.lookup ix smap
 
       progressOrResult = atomically $ do
           status <- readTVar statusVar
           case status of
-            Executing -> Left <$> readTVar progressVar
+            Executing p -> pure $ Left p
             Done r    -> pure $ Right r
             _         -> retry
 
@@ -332,7 +332,7 @@ instance Semigroup Statistics where
 computeStatistics :: StatusMap -> IO Statistics
 computeStatistics = getApp . foldMap (\var -> Ap $
   (\r -> Statistics 1 (if resultSuccessful r then 0 else 1))
-    <$> getResultFromTVar (fst var))
+    <$> getResultFromTVar var)
 
 reportStatistics :: (?colors :: Bool) => Statistics -> IO ()
 reportStatistics st = case statFailures st of
@@ -376,13 +376,13 @@ statusMapResult lookahead0 smap
         IntMap.foldrWithKey f finish smap mempty lookahead0
   where
     f :: Int
-      -> (TVar Status, TVar Progress)
+      -> TVar Status
       -> (IntMap.IntMap () -> Int -> STM (IO Bool))
       -> (IntMap.IntMap () -> Int -> STM (IO Bool))
     -- ok_tests is a set of tests that completed successfully
     -- lookahead is the number of unfinished tests that we are allowed to
     -- look at
-    f key (statusVar, _) k ok_tests lookahead
+    f key statusVar k ok_tests lookahead
       | lookahead <= 0 =
           -- We looked at too many unfinished tests.
           next_iter ok_tests
