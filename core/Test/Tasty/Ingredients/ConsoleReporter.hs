@@ -151,6 +151,8 @@ buildTestOutput opts tree =
 
           printFn (resultShortDescription result)
           -- print time only if it's significant
+          -- maybe bump to 0.02 as trivial tests are taking an extra 0.01 after the
+          -- change to include progress reporting. :<
           when (time >= 0.01) $
             printFn (printf " (%.2fs)" time)
           printFn "\n"
@@ -207,8 +209,8 @@ foldTestOutput foldTest foldHeading outputTree smap =
           status <- readTVar statusVar
           case status of
             Executing p -> pure $ Left p
-            Done r    -> pure $ Right r
-            _         -> retry
+            Done r      -> pure $ Right r
+            _           -> retry
 
     return $ foldTest name printName (ppProgressOrResult printProgress progressOrResult) printResult
 
@@ -227,10 +229,9 @@ ppProgressOrResult
   :: (Progress -> IO ())
   -> IO (Either Progress Result)
   -> IO Result
-ppProgressOrResult ppProgress getProgressOrResult = do
-  getProgressOrResult >>= either
-    (\p -> ppProgress p *> ppProgressOrResult ppProgress getProgressOrResult)
-    return
+ppProgressOrResult ppProgress getProgressOrResult = getProgressOrResult >>= either
+  (\p -> ppProgress p *> ppProgressOrResult ppProgress getProgressOrResult)
+  return
 
 -- {{{
 consoleOutput :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()

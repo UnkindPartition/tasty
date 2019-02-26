@@ -1,5 +1,5 @@
 -- | Running tests
-{-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes, ImplicitParams,
+{-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes,
              FlexibleContexts, BangPatterns, CPP, DeriveDataTypeable #-}
 module Test.Tasty.Run
   ( Status(..)
@@ -45,7 +45,7 @@ data Status
     -- ^ test is being run
   | Done Result
     -- ^ test finished with a given result
-  deriving (Show)
+  deriving Show
 
 -- | Mapping from test numbers (starting from 0) to their status variables.
 --
@@ -192,30 +192,6 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
 
             tell $ First mbExcn
 
-    -- As per the issue referenced for the 'yieldProgress' callback, we don't
-    -- want to be spamming updates every time the progress values twitch. My
-    -- thinking is that we put the progress in a TVar as suggested and try to
-    -- guard it against spurious updates?
-    -- progressUnchanged oldP newP =
-    --   let
-    --     -- TODO: find a better way of truncating/comparing changes? just
-    --     -- comparing the raw floating point values doesn't seem that sensible to
-    --     -- me as the flucuations could not be worth representing?
-    --     -- XX.XX% accurate enough?
-    --     truncatePct :: Progress -> Float
-    --     truncatePct = (/ 100) . fromIntegral
-    --       . (round :: Float -> Integer) . (* 100) -- avoid a defaulting warning
-    --       . progressPercent
-
-    --   in
-    --     progressText oldP == progressText newP && truncatePct oldP == truncatePct newP
-
-    -- The callback
-    -- Since this is not used yet anyway, disable for now.
-    -- I'm not sure whether we should get rid of this altogether. For most
-    -- providers this is either difficult to implement or doesn't make
-    -- sense at all.
-    -- See also https://github.com/feuerbach/tasty/issues/33
     yieldProgress (Progress { progressText = "", progressPercent = 0.0 }) =
       -- This could be changed to `Maybe Progress` to lets more easily indicate
       -- when progress should try to be printed ?
@@ -296,10 +272,7 @@ createTestActions opts0 tree = do
   where
     runSingleTest :: IsTest t => OptionSet -> TestName -> t -> Tr
     runSingleTest opts name test = Traversal $ do
-
-      -- Define the TVars that will hold the status and progress updates
-      statusVar <- liftIO . atomically $ newTVar NotStarted 
-
+      statusVar <- liftIO . atomically $ newTVar NotStarted
       (parentPath, deps) <- ask
       let
         path = parentPath Seq.|> name
