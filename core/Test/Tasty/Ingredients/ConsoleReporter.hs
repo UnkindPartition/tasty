@@ -151,9 +151,7 @@ buildTestOutput opts tree =
 
           printFn (resultShortDescription result)
           -- print time only if it's significant
-          -- maybe bump to 0.02 as trivial tests are taking an extra 0.01 after the
-          -- change to include progress reporting. :<
-          when (time >= 0.01) $
+          when (time >= 0.02) $
             printFn (printf " (%.2fs)" time)
           printFn "\n"
 
@@ -205,14 +203,7 @@ foldTestOutput foldTest foldHeading outputTree smap =
       statusVar = fromMaybe (error "internal error: index out of bounds") $
         IntMap.lookup ix smap
 
-      progressOrResult = atomically $ do
-          status <- readTVar statusVar
-          case status of
-            Executing p -> pure $ Left p
-            Done r      -> pure $ Right r
-            _           -> retry
-
-    return $ foldTest name printName (ppProgressOrResult printProgress progressOrResult) printResult
+    return $ foldTest name printName (ppProgressOrResult statusVar printProgress) printResult
 
   go (PrintHeading name printName printBody) = Ap $
     foldHeading name printName <$> getApp (go printBody)
@@ -225,13 +216,15 @@ foldTestOutput foldTest foldHeading outputTree smap =
 -- TestOutput modes
 --------------------------------------------------
 
-ppProgressOrResult
-  :: (Progress -> IO ())
-  -> IO (Either Progress Result)
-  -> IO Result
-ppProgressOrResult ppProgress getProgressOrResult = getProgressOrResult >>= either
-  (\p -> ppProgress p *> ppProgressOrResult ppProgress getProgressOrResult)
-  return
+ppProgressOrResult :: TVar Status -> (Progress -> IO ()) -> IO Result
+ppProgressOrResult statusVar ppProgress = go where
+  go = either (\p -> ppProgress p *> go) return =<< (atomically $ do
+    status <- readTVar statusVar 
+    case status of
+      Executing p -> pure $ Left p
+      Done r      -> pure $ Right r
+      _           -> retry
+    )
 
 -- {{{
 consoleOutput :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
