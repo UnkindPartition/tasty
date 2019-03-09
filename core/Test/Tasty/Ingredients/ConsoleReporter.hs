@@ -126,7 +126,7 @@ buildTestOutput opts tree =
         printTestProgress progress =
           let
             msg = case (progressText progress, 100 * progressPercent progress) of
-                    ("", pct)  -> printf "%.0f%" pct
+                    ("", pct)  -> printf "%.0f%%" pct
                     (txt, 0.0) -> printf "%s" txt
                     (txt, pct) -> printf "%s : %.0f%%" txt pct
           in do
