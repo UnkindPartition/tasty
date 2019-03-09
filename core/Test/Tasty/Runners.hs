@@ -36,6 +36,7 @@ module Test.Tasty.Runners
   , FailureReason(..)
   , resultSuccessful
   , Progress(..)
+  , emptyProgress
   , StatusMap
   , launchTestTree
   , NumThreads(..)
