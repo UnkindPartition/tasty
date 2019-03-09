@@ -22,7 +22,7 @@ import Test.Tasty ( testGroup )
 import Test.Tasty.Providers
 import Test.Tasty.Options
 import qualified Test.QuickCheck as QC
-import Test.Tasty.Runners (formatMessage)
+import Test.Tasty.Runners (formatMessage, emptyProgress)
 import Test.QuickCheck hiding -- for re-export
   ( quickCheck
   , Args(..)
@@ -47,8 +47,10 @@ import Test.QuickCheck hiding -- for re-export
 
 import Data.Typeable
 import Data.List
+import Data.IORef
 import Text.Printf
 import Test.QuickCheck.Random (mkQCGen)
+import qualified Test.QuickCheck.Monadic as QC
 import Options.Applicative (metavar)
 import System.Random (getStdRandom, randomR)
 #if !MIN_VERSION_base(4,8,0)
@@ -193,20 +195,37 @@ instance IsTest QC where
     , Option (Proxy :: Proxy QuickCheckMaxShrinks)
     ]
 
-  run opts (QC prop) _yieldProgress = do
+  run opts (QC prop0) yieldProgress = do
     (replaySeed, args) <- optionSetToArgs opts
+    -- This IORef contains the number of examples tested so far,
+    -- for displaying progress.
+    countRef <- newIORef (0 :: Int)
 
     let
       QuickCheckShowReplay showReplay = lookupOption opts
       QuickCheckVerbose    verbose    = lookupOption opts
+      QuickCheckTests      ntests     = lookupOption opts
       maxSize = QC.maxSize args
+      -- inject the progress callback into the property;
+      -- there doesn't seem to be any other way to call it
+      prop1 = QC.monadicIO $ do
+        QC.run $ do
+          -- Since this code executes in a single thread, we don't use
+          -- atomicModifyIORef' in the hope that the simple
+          -- readIORef/writeIORef will be a bit faster.
+          count <- readIORef countRef
+          yieldProgress emptyProgress
+            { progressPercent = fromIntegral count / fromIntegral ntests
+            }
+          writeIORef countRef $! count + 1
+        return prop0
       testRunner = if verbose
                      then QC.verboseCheckWithResult
                      else QC.quickCheckWithResult
       replayMsg = makeReplayMsg replaySeed maxSize
 
     -- Quickcheck already catches exceptions, no need to do it here.
-    r <- testRunner args prop
+    r <- testRunner args prop1
 
     qcOutput <- formatMessage $ QC.output r
     let qcOutputNl =
