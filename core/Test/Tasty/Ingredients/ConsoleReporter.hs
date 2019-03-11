@@ -200,9 +200,9 @@ foldTestOutput foldTest foldHeading outputTree smap =
     ix <- get
     put $! ix + 1
     let
-      statusVar = fromMaybe (error "internal error: index out of bounds") $
+      statusVar =
+        fromMaybe (error "internal error: index out of bounds") $
         IntMap.lookup ix smap
-
     return $ foldTest name printName (ppProgressOrResult statusVar printProgress) printResult
 
   go (PrintHeading name printName printBody) = Ap $
@@ -218,13 +218,12 @@ foldTestOutput foldTest foldHeading outputTree smap =
 
 ppProgressOrResult :: TVar Status -> (Progress -> IO ()) -> IO Result
 ppProgressOrResult statusVar ppProgress = go where
-  go = either (\p -> ppProgress p *> go) return =<< (atomically $ do
+  go = join . atomically $ do
     status <- readTVar statusVar 
     case status of
-      Executing p -> pure $ Left p
-      Done r      -> pure $ Right r
+      Executing p -> pure $ ppProgress p *> go
+      Done r      -> pure $ pure r
       _           -> retry
-    )
 
 -- {{{
 consoleOutput :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
@@ -238,7 +237,7 @@ consoleOutput toutput smap =
           printResult r
       , Any True)
     foldHeading _name printHeading (printBody, Any nonempty) =
-      ( Traversal $
+      ( Traversal $ do
           when nonempty $ do printHeading :: IO (); getTraversal printBody
       , Any nonempty
       )
@@ -376,18 +375,18 @@ statusMapResult lookahead0 smap
     -- ok_tests is a set of tests that completed successfully
     -- lookahead is the number of unfinished tests that we are allowed to
     -- look at
-    f key statusVar k ok_tests lookahead
+    f key tvar k ok_tests lookahead
       | lookahead <= 0 =
           -- We looked at too many unfinished tests.
           next_iter ok_tests
       | otherwise = do
-          this_status <- readTVar statusVar
+          this_status <- readTVar tvar
           case this_status of
-            Done r -> if resultSuccessful r
-              then k (IntMap.insert key () ok_tests) lookahead
-              else return $ return False
-            _ ->
-              k ok_tests (lookahead-1)
+            Done r ->
+              if resultSuccessful r
+                then k (IntMap.insert key () ok_tests) lookahead
+                else return $ return False
+            _ -> k ok_tests (lookahead-1)
 
     -- next_iter is called when we end the current iteration,
     -- either because we reached the end of the test tree

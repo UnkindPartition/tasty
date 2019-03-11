@@ -1,5 +1,5 @@
 -- | Running tests
-{-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes,
+{-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes, ImplicitParams,
              FlexibleContexts, BangPatterns, CPP, DeriveDataTypeable #-}
 module Test.Tasty.Run
   ( Status(..)
@@ -25,7 +25,6 @@ import Control.Exception as E
 import Control.Applicative
 import Control.Arrow
 import GHC.Conc (labelThread)
-
 import Prelude  -- Silence AMP and FTP import warnings
 
 import Test.Tasty.Core
@@ -45,7 +44,7 @@ data Status
     -- ^ test is being run
   | Done Result
     -- ^ test finished with a given result
-  deriving Show
+  deriving (Show)
 
 -- | Mapping from test numbers (starting from 0) to their status variables.
 --
@@ -91,7 +90,7 @@ executeTest
   -> Seq.Seq Finalizer -- ^ finalizers (to be executed in this order)
   -> IO ()
 executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
-  resultOrExn <- try . restore $ do
+  resultOrExn <- try $ restore $ do
     -- N.B. this can (re-)throw an exception. It's okay. By design, the
     -- actual test will not be run, then. We still run all the
     -- finalizers.
@@ -117,7 +116,7 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
   -- no matter what, try to run each finalizer
   mbExn <- destroyResources restore
 
-  atomically . writeTVar statusVar . Done $
+  atomically . writeTVar statusVar $ Done $
     case resultOrExn <* maybe (Right ()) Left mbExn of
       Left ex -> exceptionResult ex
       Right (t,r) -> r { resultTime = t }
@@ -276,8 +275,8 @@ createTestActions opts0 tree = do
       (parentPath, deps) <- ask
       let
         path = parentPath Seq.|> name
-        act (inits, fins) = executeTest (run opts test) statusVar (lookupOption opts) inits fins
-
+        act (inits, fins) =
+          executeTest (run opts test) statusVar (lookupOption opts) inits fins
       tell ([(act, CreateTestAction statusVar path deps)], mempty)
 
     addInitAndRelease :: ResourceSpec a -> (IO a -> Tr) -> Tr
@@ -291,14 +290,12 @@ createTestActions opts0 tree = do
         fin = Finalizer doRelease initVar finishVar
         tests' = map (first $ local $ (Seq.|> ini) *** (fin Seq.<|)) tests
       return (tests', fins Seq.|> fin)
-
     wrap
       :: (Path ->
           Deps ->
           IO ([(InitFinPair -> IO (), CreateTestAction)], Seq.Seq Finalizer))
       -> Tr
     wrap = Traversal . WriterT . fmap ((,) ()) . ReaderT . uncurry
-
     unwrap
       :: Path
       -> Deps
