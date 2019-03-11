@@ -1,5 +1,5 @@
 -- | Running tests
-{-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes, ImplicitParams,
+{-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes,
              FlexibleContexts, BangPatterns, CPP, DeriveDataTypeable #-}
 module Test.Tasty.Run
   ( Status(..)
@@ -44,7 +44,7 @@ data Status
     -- ^ test is being run
   | Done Result
     -- ^ test finished with a given result
-  deriving (Show)
+  deriving Show
 
 -- | Mapping from test numbers (starting from 0) to their status variables.
 --
@@ -271,14 +271,13 @@ createTestActions opts0 tree = do
   where
     runSingleTest :: IsTest t => OptionSet -> TestName -> t -> Tr
     runSingleTest opts name test = Traversal $ do
-      statusVar <- liftIO . atomically $ newTVar NotStarted
+      statusVar <- liftIO $ atomically $ newTVar NotStarted
       (parentPath, deps) <- ask
       let
         path = parentPath Seq.|> name
         act (inits, fins) =
           executeTest (run opts test) statusVar (lookupOption opts) inits fins
       tell ([(act, CreateTestAction statusVar path deps)], mempty)
-
     addInitAndRelease :: ResourceSpec a -> (IO a -> Tr) -> Tr
     addInitAndRelease (ResourceSpec doInit doRelease) a = wrap $ \path deps -> do
       initVar <- atomically $ newTVar NotCreated
