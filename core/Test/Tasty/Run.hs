@@ -34,13 +34,13 @@ import Test.Tasty.Patterns.Types
 import Test.Tasty.Options
 import Test.Tasty.Options.Core
 import Test.Tasty.Runners.Reducers
-import Test.Tasty.Runners.Utils (timed)
+import Test.Tasty.Runners.Utils (timed,getTime)
 
 -- | Current status of a test
 data Status
   = NotStarted
     -- ^ test has not started running yet
-  | Executing Progress
+  | Executing (Progress,Time)
     -- ^ test is being run
   | Done Result
     -- ^ test finished with a given result
@@ -103,7 +103,8 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
     let
       cursorMischiefManaged = do
         -- Could this be better managed? I feel like it could ... 
-        atomically $ writeTVar statusVar (Executing emptyProgress)
+        started <- getTime
+        atomically $ writeTVar statusVar (Executing (emptyProgress,started))
         action yieldProgress
 
     -- If all initializers ran successfully, actually run the test.
@@ -191,14 +192,21 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
 
             tell $ First mbExcn
 
+    -- Could be passed in as an option?
+    progUpdateLim = 100 * 10e-6
+
     yieldProgress (Progress { progressText = "", progressPercent = 0.0 }) =
       -- This could be changed to `Maybe Progress` to lets more easily indicate
       -- when progress should try to be printed ?
       pure ()
-    yieldProgress newP = liftIO
-      . atomically
-      . writeTVar statusVar
-      $ Executing newP
+    yieldProgress newP = do
+      updated <- getTime
+      liftIO . atomically $ do
+        status <- readTVar statusVar
+        case status of
+          Executing (_,progressSetAt) | (updated - progressSetAt >= progUpdateLim) ->
+            writeTVar statusVar $ Executing (newP, updated)
+          _ -> pure ()
 
 type InitFinPair = (Seq.Seq Initializer, Seq.Seq Finalizer)
 

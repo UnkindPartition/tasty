@@ -5,6 +5,7 @@ module Test.Tasty.Ingredients.ConsoleReporter
   ( consoleTestReporter
   , Quiet(..)
   , HideSuccesses(..)
+  , HideProgress(..)
   -- * Internals
   -- | The following functions and datatypes are internals that are exposed to
   -- simplify the task of rolling your own custom console reporter UI.
@@ -109,6 +110,14 @@ buildTestOutput opts tree =
       level <- ask
 
       let
+        Quiet quiet = lookupOption _opts
+        HideProgress hideProgress = lookupOption _opts
+
+        -- Only display progress if we're in a terminal and:
+        -- * we haven't been told to be 'quiet' AND
+        -- * we haven't been told to not print progress updates
+        showProgress isTerm = isTerm && not (quiet || hideProgress)
+
         postNamePadding = alignment - indentSize * level - stringWidth name
 
         testNamePadded = printf "%s%s: %s"
@@ -131,8 +140,10 @@ buildTestOutput opts tree =
                     (txt, pct) -> printf "%s : %.0f%%" txt pct
           in do
             setCursorColumn resultPosition
-            infoOk msg
-            hFlush stdout
+            isTerm <- hSupportsANSI stdout
+            when (showProgress isTerm) $ do
+              infoOk msg
+              hFlush stdout
 
         printTestResult result = do
           rDesc <- formatMessage $ resultDescription result
@@ -195,7 +206,6 @@ foldTestOutput
   -> b
 foldTestOutput foldTest foldHeading outputTree smap =
   flip evalState 0 $ getApp $ go outputTree where
-
   go (PrintTest name printName printProgress printResult) = Ap $ do
     ix <- get
     put $! ix + 1
@@ -221,9 +231,9 @@ ppProgressOrResult statusVar ppProgress = go where
   go = join . atomically $ do
     status <- readTVar statusVar 
     case status of
-      Executing p -> pure $ ppProgress p *> go
-      Done r      -> pure $ pure r
-      _           -> retry
+      Executing (p, _) -> pure $ ppProgress p *> go
+      Done r           -> pure $ pure r
+      _                -> retry
 
 -- {{{
 consoleOutput :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
@@ -416,6 +426,7 @@ consoleTestReporter =
   TestReporter
     [ Option (Proxy :: Proxy Quiet)
     , Option (Proxy :: Proxy HideSuccesses)
+    , Option (Proxy :: Proxy HideProgress)
     , Option (Proxy :: Proxy UseColor)
     ] $
   \opts tree -> Just $ \smap -> do
@@ -480,6 +491,16 @@ instance IsOption HideSuccesses where
   optionName = return "hide-successes"
   optionHelp = return "Do not print tests that passed successfully"
   optionCLParser = mkFlagCLParser mempty (HideSuccesses True)
+
+-- | Do not display progress feedback
+newtype HideProgress = HideProgress Bool
+  deriving (Eq, Ord, Typeable)
+instance IsOption HideProgress where
+  defaultValue = HideProgress False
+  parseValue = fmap HideProgress . safeReadBool
+  optionName = return "hide-progress"
+  optionHelp = return "Do not print test progress updates"
+  optionCLParser = mkFlagCLParser mempty (HideProgress True)
 
 -- | When to use color on the output
 --
