@@ -26,6 +26,7 @@ module Test.Tasty.Runners
   , ListTests(..)
   , testsNames
     -- * Command line handling
+  , parseOptions
   , optionParser
   , suiteOptionParser
   , defaultMainWithIngredients

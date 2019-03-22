@@ -3,6 +3,7 @@ module Test.Tasty.CmdLine
   ( optionParser
   , suiteOptions
   , suiteOptionParser
+  , parseOptions
   , defaultMainWithIngredients
   ) where
 
@@ -25,7 +26,6 @@ import Test.Tasty.Options
 import Test.Tasty.Options.Env
 import Test.Tasty.Runners.Reducers
 
-
 -- | Generate a command line parser from a list of option descriptions
 optionParser :: [OptionDescription] -> Parser OptionSet
 optionParser = getApp . foldMap toSet where
@@ -37,6 +37,25 @@ optionParser = getApp . foldMap toSet where
 suiteOptionParser :: [Ingredient] -> TestTree -> Parser OptionSet
 suiteOptionParser ins tree = optionParser $ suiteOptions ins tree
 
+-- | Parse the command-line and environment options passed to tasty.
+--
+-- Useful if you need to get the options before 'defaultMain' is called.
+--
+-- Once within the test tree, 'askOption' should be used instead.
+--
+-- The arguments to this function should be the same as for
+-- 'defaultMainWithIngredients'. If you don't use any custom ingredients,
+-- pass 'defaultIngredients'.
+parseOptions :: [Ingredient] -> TestTree -> IO OptionSet
+parseOptions ins tree = do
+  cmdlineOpts <- execParser $
+    info (helper <*> suiteOptionParser ins tree)
+    ( fullDesc <>
+      header "Mmm... tasty test suite"
+    )
+  envOpts <- suiteEnvOptions ins tree
+  return $ envOpts <> cmdlineOpts
+
 -- | Parse the command line arguments and run the tests using the provided
 -- ingredient list.
 --
@@ -46,15 +65,7 @@ suiteOptionParser ins tree = optionParser $ suiteOptions ins tree
 defaultMainWithIngredients :: [Ingredient] -> TestTree -> IO ()
 defaultMainWithIngredients ins testTree = do
   installSignalHandlers
-  cmdlineOpts <- execParser $
-    info (helper <*> suiteOptionParser ins testTree)
-    ( fullDesc <>
-      header "Mmm... tasty test suite"
-    )
-
-  envOpts <- suiteEnvOptions ins testTree
-
-  let opts = envOpts <> cmdlineOpts
+  opts <- parseOptions ins testTree
 
   case tryIngredients ins opts testTree of
     Nothing -> do
