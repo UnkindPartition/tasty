@@ -5,6 +5,7 @@ module Test.Tasty.Ingredients.ConsoleReporter
   ( consoleTestReporter
   , Quiet(..)
   , HideSuccesses(..)
+  , HideProgress(..)
   -- * Internals
   -- | The following functions and datatypes are internals that are exposed to
   -- simplify the task of rolling your own custom console reporter UI.
@@ -70,6 +71,7 @@ data TestOutput
   = PrintTest
       {- test name         -} String
       {- print test name   -} (IO ())
+      {- print test progress -} (Progress -> IO ())
       {- print test result -} (Result -> IO ())
       -- ^ Name of a test, an action that prints the test name, and an action
       -- that renders the result of the action.
@@ -95,8 +97,8 @@ type Level = Int
 -- ImplicitParam controls whether the output is colored.
 --
 -- @since 0.11.3
-buildTestOutput :: (?colors :: Bool) => OptionSet -> TestTree -> TestOutput
-buildTestOutput opts tree =
+buildTestOutput :: (?colors :: Bool) => Bool -> OptionSet -> TestTree -> TestOutput
+buildTestOutput isTerm opts tree =
   let
     -- Do not retain the reference to the tree more than necessary
     !alignment = computeAlignment opts tree
@@ -108,10 +110,39 @@ buildTestOutput opts tree =
       level <- ask
 
       let
+        Quiet quiet = lookupOption _opts
+        HideProgress hideProgress = lookupOption _opts
+
+        -- Only display progress if we're in a terminal and:
+        -- * we haven't been told to be 'quiet' AND
+        -- * we haven't been told to not print progress updates
+        showProgress = isTerm && not (quiet || hideProgress)
+
+        postNamePadding = alignment - indentSize * level - stringWidth name
+
+        testNamePadded = printf "%s%s: %s"
+          (indent level)
+          name
+          (replicate postNamePadding ' ')
+
+        resultPosition = length testNamePadded
+
         printTestName = do
-          printf "%s%s: %s" (indent level) name
-            (replicate (alignment - indentSize * level - stringWidth name) ' ')
+          putStr testNamePadded
           hFlush stdout
+
+        printTestProgress Progress { progressText = "", progressPercent = 0.0 } = pure ()
+        printTestProgress progress =
+          let
+            msg = case (progressText progress, 100 * progressPercent progress) of
+                    ("", pct)  -> printf "%.0f%%" pct
+                    (txt, 0.0) -> printf "%s" txt
+                    (txt, pct) -> printf "%s : %.0f%%" txt pct
+          in
+            when showProgress $ do
+              setCursorColumn resultPosition
+              infoOk msg
+              hFlush stdout
 
         printTestResult result = do
           rDesc <- formatMessage $ resultDescription result
@@ -124,17 +155,21 @@ buildTestOutput opts tree =
                 Failure TestDepFailed -> skipped
                 _ -> fail
             time = resultTime result
+
+          setCursorColumn resultPosition
+          clearFromCursorToLineEnd
+
           printFn (resultShortDescription result)
           -- print time only if it's significant
-          when (time >= 0.01) $
+          when (time >= 0.02) $
             printFn (printf " (%.2fs)" time)
           printFn "\n"
 
-          when (not $ null rDesc) $
+          unless (null rDesc) $
             (if resultSuccessful result then infoOk else infoFail) $
               printf "%s%s\n" (indent $ level + 1) (formatDesc (level+1) rDesc)
 
-      return $ PrintTest name printTestName printTestResult
+      return $ PrintTest name printTestName printTestProgress printTestResult
 
     runGroup :: TestName -> Ap (Reader Level) TestOutput -> Ap (Reader Level) TestOutput
     runGroup name grp = Ap $ do
@@ -170,15 +205,15 @@ foldTestOutput
   -> b
 foldTestOutput foldTest foldHeading outputTree smap =
   flip evalState 0 $ getApp $ go outputTree where
-  go (PrintTest name printName printResult) = Ap $ do
+  go (PrintTest name printName printProgress printResult) = Ap $ do
     ix <- get
     put $! ix + 1
     let
       statusVar =
         fromMaybe (error "internal error: index out of bounds") $
         IntMap.lookup ix smap
-      readStatusVar = getResultFromTVar statusVar
-    return $ foldTest name printName readStatusVar printResult
+    return $ foldTest name printName (ppProgressOrResult statusVar printProgress) printResult
+
   go (PrintHeading name printName printBody) = Ap $
     foldHeading name printName <$> getApp (go printBody)
   go (Seq a b) = mappend (go a) (go b)
@@ -189,6 +224,16 @@ foldTestOutput foldTest foldHeading outputTree smap =
 --------------------------------------------------
 -- TestOutput modes
 --------------------------------------------------
+
+ppProgressOrResult :: TVar Status -> (Progress -> IO ()) -> IO Result
+ppProgressOrResult statusVar ppProgress = go where
+  go = join . atomically $ do
+    status <- readTVar statusVar
+    case status of
+      Executing p -> pure $ ppProgress p *> go
+      Done r      -> pure $ pure r
+      _           -> retry
+
 -- {{{
 consoleOutput :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
 consoleOutput toutput smap =
@@ -380,6 +425,7 @@ consoleTestReporter =
   TestReporter
     [ Option (Proxy :: Proxy Quiet)
     , Option (Proxy :: Proxy HideSuccesses)
+    , Option (Proxy :: Proxy HideProgress)
     , Option (Proxy :: Proxy UseColor)
     ] $
   \opts tree -> Just $ \smap -> do
@@ -410,7 +456,7 @@ consoleTestReporter =
             ?colors = useColor whenColor isTermColor
 
           let
-            toutput = buildTestOutput opts tree
+            toutput = buildTestOutput isTerm opts tree
 
           case () of { _
             | hideSuccesses && isTerm ->
@@ -444,6 +490,16 @@ instance IsOption HideSuccesses where
   optionName = return "hide-successes"
   optionHelp = return "Do not print tests that passed successfully"
   optionCLParser = mkFlagCLParser mempty (HideSuccesses True)
+
+-- | Do not display progress feedback
+newtype HideProgress = HideProgress Bool
+  deriving (Eq, Ord, Typeable)
+instance IsOption HideProgress where
+  defaultValue = HideProgress False
+  parseValue = fmap HideProgress . safeReadBool
+  optionName = return "hide-progress"
+  optionHelp = return "Do not print test progress updates"
+  optionCLParser = mkFlagCLParser mempty (HideProgress True)
 
 -- | When to use color on the output
 --
@@ -494,7 +550,6 @@ getResultFromTVar var =
     case status of
       Done r -> return r
       _ -> retry
-
 -- }}}
 
 --------------------------------------------------
