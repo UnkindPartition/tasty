@@ -40,7 +40,7 @@ import Test.Tasty.Runners.Utils (timed,getTime)
 data Status
   = NotStarted
     -- ^ test has not started running yet
-  | Executing (Progress,Time)
+  | Executing Progress
     -- ^ test is being run
   | Done Result
     -- ^ test finished with a given result
@@ -84,12 +84,13 @@ executeTest
   :: ((Progress -> IO ()) -> IO Result)
     -- ^ the action to execute the test, which takes a progress callback as
     -- a parameter
+  -> TVar Time -- ^ variable to store test update intervals
   -> TVar Status -- ^ variable to write status to
   -> Timeout -- ^ optional timeout to apply
   -> Seq.Seq Initializer -- ^ initializers (to be executed in this order)
   -> Seq.Seq Finalizer -- ^ finalizers (to be executed in this order)
   -> IO ()
-executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
+executeTest action timeVar statusVar timeoutOpt inits fins = mask $ \restore -> do
   resultOrExn <- try $ restore $ do
     -- N.B. this can (re-)throw an exception. It's okay. By design, the
     -- actual test will not be run, then. We still run all the
@@ -101,16 +102,14 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
     initResources
 
     let
-      cursorMischiefManaged = do
-        -- Could this be better managed? I feel like it could ... 
-        started <- getTime
-        atomically $ writeTVar statusVar (Executing (emptyProgress,started))
+      setStatusToExecutingStartTest = do
+        atomically $ writeTVar statusVar (Executing emptyProgress)
         action yieldProgress
 
     -- If all initializers ran successfully, actually run the test.
     -- We run it in a separate thread, so that the test's exception
     -- handler doesn't interfere with our timeout.
-    withAsync cursorMischiefManaged $ \asy -> do
+    withAsync setStatusToExecutingStartTest $ \asy -> do
       labelThread (asyncThreadId asy) "tasty_test_execution_thread"
       timed $ applyTimeout timeoutOpt $ wait asy
 
@@ -192,10 +191,7 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
 
             tell $ First mbExcn
 
-    -- Could be passed in as an option?
-    progUpdateLim = 100 * 10e-6
-
-    yieldProgress (Progress { progressText = "", progressPercent = 0.0 }) =
+    yieldProgress Progress { progressText = "", progressPercent = 0.0 } =
       -- This could be changed to `Maybe Progress` to lets more easily indicate
       -- when progress should try to be printed ?
       pure ()
@@ -203,9 +199,10 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
       updated <- getTime
       liftIO . atomically $ do
         status <- readTVar statusVar
+        lastProgressUpdate <- readTVar timeVar
         case status of
-          Executing (_,progressSetAt) | (updated - progressSetAt >= progUpdateLim) ->
-            writeTVar statusVar $ Executing (newP, updated)
+          Executing _ | updated - lastProgressUpdate >= 1e-4 ->
+            writeTVar statusVar $ Executing newP
           _ -> pure ()
 
 type InitFinPair = (Seq.Seq Initializer, Seq.Seq Finalizer)
@@ -280,11 +277,13 @@ createTestActions opts0 tree = do
     runSingleTest :: IsTest t => OptionSet -> TestName -> t -> Tr
     runSingleTest opts name test = Traversal $ do
       statusVar <- liftIO $ atomically $ newTVar NotStarted
+      time <- liftIO getTime
+      timeVar <- liftIO $ atomically $ newTVar time
       (parentPath, deps) <- ask
       let
         path = parentPath Seq.|> name
         act (inits, fins) =
-          executeTest (run opts test) statusVar (lookupOption opts) inits fins
+          executeTest (run opts test) timeVar statusVar (lookupOption opts) inits fins
       tell ([(act, CreateTestAction statusVar path deps)], mempty)
     addInitAndRelease :: ResourceSpec a -> (IO a -> Tr) -> Tr
     addInitAndRelease (ResourceSpec doInit doRelease) a = wrap $ \path deps -> do

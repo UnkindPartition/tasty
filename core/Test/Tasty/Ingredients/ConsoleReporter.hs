@@ -97,8 +97,8 @@ type Level = Int
 -- ImplicitParam controls whether the output is colored.
 --
 -- @since 0.11.3
-buildTestOutput :: (?colors :: Bool) => OptionSet -> TestTree -> TestOutput
-buildTestOutput opts tree =
+buildTestOutput :: (?colors :: Bool) => Bool -> OptionSet -> TestTree -> TestOutput
+buildTestOutput isTerm opts tree =
   let
     -- Do not retain the reference to the tree more than necessary
     !alignment = computeAlignment opts tree
@@ -116,7 +116,7 @@ buildTestOutput opts tree =
         -- Only display progress if we're in a terminal and:
         -- * we haven't been told to be 'quiet' AND
         -- * we haven't been told to not print progress updates
-        showProgress isTerm = isTerm && not (quiet || hideProgress)
+        showProgress = isTerm && not (quiet || hideProgress)
 
         postNamePadding = alignment - indentSize * level - stringWidth name
 
@@ -138,10 +138,9 @@ buildTestOutput opts tree =
                     ("", pct)  -> printf "%.0f%%" pct
                     (txt, 0.0) -> printf "%s" txt
                     (txt, pct) -> printf "%s : %.0f%%" txt pct
-          in do
-            setCursorColumn resultPosition
-            isTerm <- hSupportsANSI stdout
-            when (showProgress isTerm) $ do
+          in
+            when showProgress $ do
+              setCursorColumn resultPosition
               infoOk msg
               hFlush stdout
 
@@ -229,11 +228,11 @@ foldTestOutput foldTest foldHeading outputTree smap =
 ppProgressOrResult :: TVar Status -> (Progress -> IO ()) -> IO Result
 ppProgressOrResult statusVar ppProgress = go where
   go = join . atomically $ do
-    status <- readTVar statusVar 
+    status <- readTVar statusVar
     case status of
-      Executing (p, _) -> pure $ ppProgress p *> go
-      Done r           -> pure $ pure r
-      _                -> retry
+      Executing p -> pure $ ppProgress p *> go
+      Done r      -> pure $ pure r
+      _           -> retry
 
 -- {{{
 consoleOutput :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
@@ -457,7 +456,7 @@ consoleTestReporter =
             ?colors = useColor whenColor isTermColor
 
           let
-            toutput = buildTestOutput opts tree
+            toutput = buildTestOutput isTerm opts tree
 
           case () of { _
             | hideSuccesses && isTerm ->
