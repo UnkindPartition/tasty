@@ -4,6 +4,7 @@ module Test.Tasty.Parallel (ActionStatus(..), Action(..), runInParallel) where
 
 import Control.Monad
 import Control.Concurrent
+import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Foreign.StablePtr
 
@@ -52,9 +53,19 @@ runInParallel nthreads actions = do
 
   actionsVar <- atomically $ newTMVar actions
 
-  pids <- replicateM nthreads (forkIO $ work actionsVar)
+  pids <- replicateM nthreads (async $ work actionsVar)
 
-  return $ mapM_ killThread pids
+  return $ do
+    -- Tell worker threads there is no more work after their current task.
+    -- 'cancel' below by itself is not sufficient because if an exception
+    -- is thrown in the middle of a test, the worker thread simply marks
+    -- the test as failed and moves on to their next task. We also need to
+    -- make it clear that there are no further tasks.
+    _ <- atomically $ swapTMVar actionsVar []
+    -- Cancel all the current tasks, waiting for workers to clean up.
+    -- The waiting part is important (see #249), that's why we use cancel
+    -- instead of killThread.
+    mapM_ cancel pids
 
 work :: TMVar [Action] -> IO ()
 work actionsVar = go
@@ -63,8 +74,10 @@ work actionsVar = go
       join . atomically $ do
         mb_ready <- findBool =<< takeTMVar actionsVar
         case mb_ready of
-          Nothing ->
-            -- nothing left to do; return
+          Nothing -> do
+            -- Nothing left to do. Put back the TMVar so that other threads
+            -- do not block on an empty TMVar (see #249) and return.
+            putTMVar actionsVar []
             return $ return ()
           Just (this, rest) -> do
             putTMVar actionsVar rest
