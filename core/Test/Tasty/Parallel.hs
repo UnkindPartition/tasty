@@ -4,6 +4,7 @@ module Test.Tasty.Parallel (ActionStatus(..), Action(..), runInParallel) where
 
 import Control.Monad
 import Control.Concurrent
+import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Foreign.StablePtr
 
@@ -52,9 +53,9 @@ runInParallel nthreads actions = do
 
   actionsVar <- atomically $ newTMVar actions
 
-  pids <- replicateM nthreads (forkIO $ work actionsVar)
+  pids <- replicateM nthreads (async $ work actionsVar)
 
-  return $ mapM_ killThread pids
+  return $ mapM_ cancel pids
 
 work :: TMVar [Action] -> IO ()
 work actionsVar = go
