@@ -55,7 +55,11 @@ runInParallel nthreads actions = do
 
   pids <- replicateM nthreads (async $ work actionsVar)
 
-  return $ mapM_ cancel pids
+  return $ do
+    -- tell worker threads there is no more work after their current task
+    _ <- atomically $ swapTMVar actionsVar []
+    -- cancel all the current tasks, waiting for workers to clean up
+    mapM_ cancel pids
 
 work :: TMVar [Action] -> IO ()
 work actionsVar = go
@@ -64,8 +68,9 @@ work actionsVar = go
       join . atomically $ do
         mb_ready <- findBool =<< takeTMVar actionsVar
         case mb_ready of
-          Nothing ->
+          Nothing -> do
             -- nothing left to do; return
+            putTMVar actionsVar []
             return $ return ()
           Just (this, rest) -> do
             putTMVar actionsVar rest
