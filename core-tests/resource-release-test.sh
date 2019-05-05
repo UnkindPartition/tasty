@@ -20,8 +20,6 @@ PID="$!"
 while [ ! -f "$DIR/test-has-started" ]; do sleep 1; done
 
 # kill resource-release-test and wait for it to release its resources.
-# setsid runs 'kill' in a new process group, otherwise the signal doesn't get
-# delivered.
 kill -s INT "$PID"
 wait "$PID"
 
