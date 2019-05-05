@@ -6,10 +6,10 @@ set -ux
 # is in the PATH
 
 # create a folder for the duration of the test, and make sure it starts empty
-DIR=`dirname $0`/resource-release-test-files
+DIR="$(dirname "$0")/resource-release-test-files"
 rm -rf "$DIR"
 mkdir "$DIR"
-function finish {
+finish() {
   rm -rf "$DIR"
 }
 trap finish EXIT
