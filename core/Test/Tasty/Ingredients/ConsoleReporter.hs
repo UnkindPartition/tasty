@@ -5,6 +5,7 @@ module Test.Tasty.Ingredients.ConsoleReporter
   ( consoleTestReporter
   , Quiet(..)
   , HideSuccesses(..)
+  , AnsiTricks(..)
   -- * Internals
   -- | The following functions and datatypes are internals that are exposed to
   -- simplify the task of rolling your own custom console reporter UI.
@@ -381,6 +382,7 @@ consoleTestReporter =
     [ Option (Proxy :: Proxy Quiet)
     , Option (Proxy :: Proxy HideSuccesses)
     , Option (Proxy :: Proxy UseColor)
+    , Option (Proxy :: Proxy AnsiTricks)
     ] $
   \opts tree -> Just $ \smap -> do
 
@@ -389,6 +391,7 @@ consoleTestReporter =
     Quiet quiet = lookupOption opts
     HideSuccesses hideSuccesses = lookupOption opts
     NumThreads numThreads = lookupOption opts
+    AnsiTricks ansiTricks = lookupOption opts
 
   if quiet
     then do
@@ -413,9 +416,9 @@ consoleTestReporter =
             toutput = buildTestOutput opts tree
 
           case () of { _
-            | hideSuccesses && isTerm ->
+            | hideSuccesses && isTerm && ansiTricks ->
                 consoleOutputHidingSuccesses toutput smap
-            | hideSuccesses && not isTerm ->
+            | hideSuccesses ->
                 streamOutputHidingSuccesses toutput smap
             | otherwise -> consoleOutput toutput smap
           }
@@ -461,6 +464,32 @@ instance IsOption UseColor where
   optionName = return "color"
   optionHelp = return "When to use colored output (default: 'auto')"
   optionCLParser = mkOptionCLParser $ metavar "never|always|auto"
+
+-- | By default, when the option @--hide-successes@ is given and the output
+-- goes to an ANSI-capable terminal, we employ some ANSI terminal tricks to
+-- display the name of the currently running test and then erase it if it
+-- succeeds.
+--
+-- These tricks sometimes fail, however—in particular, when the test names
+-- happen to be longer than the width of the terminal window. See
+--
+-- * <https://github.com/feuerbach/tasty/issues/152>
+--
+-- * <https://github.com/feuerbach/tasty/issues/250>
+--
+-- When that happens, this option can be used to disable the tricks. In
+-- that case, the test name will be printed only once the test fails.
+newtype AnsiTricks = AnsiTricks Bool
+  deriving Typeable
+
+instance IsOption AnsiTricks where
+  defaultValue = AnsiTricks True
+  parseValue = fmap AnsiTricks . safeReadBool
+  optionName = return "ansi-tricks"
+  optionHelp = return $
+    -- Multiline literals don't work because of -XCPP.
+    "Enable various ANSI terminal tricks. " ++
+    "Can be set to 'true' (default) or 'false'."
 
 -- | @useColor when isTerm@ decides if colors should be used,
 --   where @isTerm@ indicates whether @stdout@ is a terminal device.

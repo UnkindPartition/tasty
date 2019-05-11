@@ -756,10 +756,10 @@ Here are some caveats to keep in mind regarding dependencies in Tasty:
 
 ## FAQ
 
-1.  When my tests write to stdout/stderr, the output is garbled. Why is that and
+1.  **Q**: When my tests write to stdout/stderr, the output is garbled. Why is that and
     what do I do?
 
-    It is not recommended that you print anything to the console when using the
+    **A**: It is not recommended that you print anything to the console when using the
     console test reporter (which is the default one).
     See [#103](https://github.com/feuerbach/tasty/issues/103) for the
     discussion.
@@ -769,6 +769,15 @@ Here are some caveats to keep in mind regarding dependencies in Tasty:
     * Use [testCaseSteps](https://hackage.haskell.org/package/tasty-hunit/docs/Test-Tasty-HUnit.html#v:testCaseSteps) (for tasty-hunit only).
     * Use a test reporter that does not print to the console (like tasty-ant-xml).
     * Write your output to files instead.
+
+2.  **Q**: Why doesn't the `--hide-successes` option work properly? The test headings
+    show up and/or the output appears garbled.
+
+    **A**: This can happen sometimes when the terminal is narrower than the
+    output. A workaround is to disable ANSI tricks: pass `--ansi-tricks=false`
+    on the command line or set `TASTY_ANSI_TRICKS=false` in the environment.
+
+    See [issue #152](https://github.com/feuerbach/tasty/issues/152).
 
 ## Press
 
