@@ -4,7 +4,9 @@ Changes
 Version 1.2.2
 -------------
 
-Expose timed and getTime
+* Expose timed and getTime
+* Add parseOptions
+* Allow to disable ANSI tricks with --ansi-tricks=false
 
 Version 1.2.1
 -------------
