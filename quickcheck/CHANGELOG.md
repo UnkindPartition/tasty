@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.10.1
+--------------
+
+* Add a --quickcheck-shrinks flag
+
 Version 0.10
 ------------
 
