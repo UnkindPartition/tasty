@@ -7,3 +7,4 @@ core/dist
 hunit/dist
 quickcheck/dist
 smallcheck/dist
+.stack-work
