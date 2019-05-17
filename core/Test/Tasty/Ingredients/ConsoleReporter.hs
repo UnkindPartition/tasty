@@ -15,6 +15,7 @@ module Test.Tasty.Ingredients.ConsoleReporter
   , useColor
   -- ** Test failure statistics
   , Statistics(..)
+  , computeStatistics
   , printStatistics
   , printStatisticsNoTime
   -- ** Outputting results
@@ -287,6 +288,9 @@ instance Semigroup Statistics where
   (<>) = mappend
 #endif
 
+-- | @computeStatistics@ computes a summary 'Statistics' for
+-- a given state of the 'StatusMap'.
+-- Useful in combination with @printStatistics@
 computeStatistics :: StatusMap -> IO Statistics
 computeStatistics = getApp . foldMap (\var -> Ap $
   (\r -> Statistics 1 (if resultSuccessful r then 0 else 1))
