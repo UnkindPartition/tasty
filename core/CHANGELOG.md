@@ -1,6 +1,13 @@
 Changes
 =======
 
+Version 1.2.3
+-------------
+
+* Expose `computeStatistics` from `Test.Tasty.Ingredients.ConsoleReporter`.
+* Ensure that `finally` and `bracket` work as expected inside tests
+  when the test suite is interrupted by Ctrl-C.
+
 Version 1.2.2
 -------------
 
