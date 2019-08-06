@@ -181,10 +181,11 @@ Mmm... tasty test suite
 
 Usage: test [-p|--pattern PATTERN] [-t|--timeout DURATION] [-l|--list-tests]
             [-j|--num-threads NUMBER] [-q|--quiet] [--hide-successes]
-            [--color never|always|auto] [--quickcheck-tests NUMBER]
+            [--color never|always|auto] [--ansi-tricks ARG]
+            [--smallcheck-depth NUMBER] [--quickcheck-tests NUMBER]
             [--quickcheck-replay SEED] [--quickcheck-show-replay]
             [--quickcheck-max-size NUMBER] [--quickcheck-max-ratio NUMBER]
-            [--quickcheck-verbose] [--smallcheck-depth NUMBER]
+            [--quickcheck-verbose] [--quickcheck-shrinks NUMBER]
 
 Available options:
   -h,--help                Show this help text
@@ -194,11 +195,16 @@ Available options:
                            default: s)
   -l,--list-tests          Do not run the tests; just print their names
   -j,--num-threads NUMBER  Number of threads to use for tests execution
+                           (default: # of cores/capabilities)
   -q,--quiet               Do not produce any output; indicate success only by
                            the exit code
   --hide-successes         Do not print tests that passed successfully
   --color never|always|auto
                            When to use colored output (default: 'auto')
+  --ansi-tricks ARG        Enable various ANSI terminal tricks. Can be set to
+                           'true' (default) or 'false'.
+  --smallcheck-depth NUMBER
+                           Depth to use for smallcheck tests
   --quickcheck-tests NUMBER
                            Number of test cases for QuickCheck to generate
   --quickcheck-replay SEED Random seed to use for replaying a previous test run
@@ -210,8 +216,9 @@ Available options:
                            Maximum number of discared tests per successful test
                            before giving up
   --quickcheck-verbose     Show the generated test cases
-  --smallcheck-depth NUMBER
-                           Depth to use for smallcheck tests
+  --quickcheck-shrinks NUMBER
+                           Number of shrinks allowed before QuickCheck will fail
+                           a test
 ```
 
 Every option can be passed via environment. To obtain the environment variable
