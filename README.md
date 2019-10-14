@@ -735,7 +735,7 @@ tests. The resource may or may not be managed by `withResource`.)
 
 Here are some caveats to keep in mind regarding dependencies in Tasty:
 
-1. If Test B depends on Test A, remember that either of the may be filtered out
+1. If Test B depends on Test A, remember that either of them may be filtered out
    using the `--pattern` option. Collecting the dependency info happens *after*
    filtering. Therefore, if Test A is filtered out, Test B will run
    unconditionally, and if Test B is filtered out, it simply won't run.
