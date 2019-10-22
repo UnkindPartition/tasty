@@ -33,6 +33,7 @@ flag clock
 library
   exposed-modules:
     Test.Tasty,
+    Test.Tasty.ConsoleFormat,
     Test.Tasty.Options,
     Test.Tasty.Providers,
     Test.Tasty.Runners

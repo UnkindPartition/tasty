@@ -157,6 +157,7 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
                 "Timed out after " ++ tstr
             , resultShortDescription = "TIMEOUT"
             , resultTime = fromIntegral t
+            , resultDetailsPrinter = noResultDetails
             }
       fromMaybe timeoutResult <$> timeout t a
 
@@ -322,6 +323,7 @@ resolveDeps tests = checkCycles $ do
           , resultDescription = ""
           , resultShortDescription = "SKIP"
           , resultTime = 0
+          , resultDetailsPrinter = noResultDetails
           }
       }
   return ((action, statusVar), (path0, dep_paths))

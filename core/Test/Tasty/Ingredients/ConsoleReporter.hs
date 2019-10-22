@@ -22,6 +22,7 @@ module Test.Tasty.Ingredients.ConsoleReporter
   , TestOutput(..)
   , buildTestOutput
   , foldTestOutput
+  , withConsoleFormat
   ) where
 
 import Prelude hiding (fail)
@@ -30,6 +31,7 @@ import Control.Monad.Reader hiding (fail,reader)
 import Control.Concurrent.STM
 import Control.Exception
 import Test.Tasty.Core
+import Test.Tasty.ConsoleFormat
 import Test.Tasty.Run
 import Test.Tasty.Ingredients
 import Test.Tasty.Options
@@ -45,7 +47,7 @@ import Data.Char.WCWidth (wcwidth)
 import Data.Maybe
 import Data.Monoid (Any(..))
 import Data.Typeable
-import Options.Applicative hiding (str, Success, Failure)
+import Options.Applicative hiding (action, str, Success, Failure)
 import System.IO
 import System.Console.ANSI
 #if !MIN_VERSION_base(4,11,0)
@@ -129,6 +131,8 @@ buildTestOutput opts tree =
           when (not $ null rDesc) $
             (if resultSuccessful result then infoOk else infoFail) $
               printf "%s%s\n" (indent $ level + 1) (formatDesc (level+1) rDesc)
+          case resultDetailsPrinter result of
+            ResultDetailsPrinter action -> action withConsoleFormat
 
       return $ PrintTest name printTestName printTestResult
 
@@ -619,28 +623,33 @@ stringWidth = length
 
 -- (Potentially) colorful output
 ok, fail, skipped, infoOk, infoFail :: (?colors :: Bool) => String -> IO ()
-fail     = output BoldIntensity   Vivid Red
-ok       = output NormalIntensity Dull  Green
-skipped  = output NormalIntensity Dull  Magenta
-infoOk   = output NormalIntensity Dull  White
-infoFail = output NormalIntensity Dull  Red
+fail     = output failFormat
+ok       = output okFormat
+skipped  = output skippedFormat
+infoOk   = output infoOkFormat
+infoFail = output infoFailFormat
 
 output
   :: (?colors :: Bool)
-  => ConsoleIntensity
-  -> ColorIntensity
-  -> Color
+  => ConsoleFormat
   -> String
   -> IO ()
-output bold intensity color str
+output format = withConsoleFormat format . putStr
+
+withConsoleFormat
+  :: (?colors :: Bool)
+  => ConsoleFormat
+  -> IO ()
+  -> IO ()
+withConsoleFormat format action
   | ?colors =
     (do
       setSGR
-        [ SetColor Foreground intensity color
-        , SetConsoleIntensity bold
+        [ SetColor Foreground (colorIntensity format) (color format)
+        , SetConsoleIntensity (consoleIntensity format)
         ]
-      putStr str
+      action
     ) `finally` setSGR []
-  | otherwise = putStr str
+  | otherwise = action
 
 -- }}}

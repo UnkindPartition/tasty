@@ -1,8 +1,10 @@
 -- | API for test providers
 module Test.Tasty.Providers
   ( IsTest(..)
+  , ResultDetailsPrinter(..)
   , testPassed
   , testFailed
+  , testFailedDetails
   , Result
   , Progress(..)
   , TestName
@@ -26,6 +28,7 @@ testPassed desc = Result
   , resultDescription = desc
   , resultShortDescription = "OK"
   , resultTime = 0
+  , resultDetailsPrinter = noResultDetails
   }
 
 -- | 'Result' of a failed test
@@ -37,4 +40,13 @@ testFailed desc = Result
   , resultDescription = desc
   , resultShortDescription = "FAIL"
   , resultTime = 0
+  , resultDetailsPrinter = noResultDetails
   }
+
+-- | 'Result' of a failed test with custom details printer
+testFailedDetails
+  :: String               -- ^ description
+  -> ResultDetailsPrinter -- ^ details printer
+  -> Result
+testFailedDetails desc printer = (testFailed desc)
+  { resultDetailsPrinter = printer }
