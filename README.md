@@ -808,6 +808,10 @@ something not mentioned here, send a pull request!
 [awk-patterns-article]: https://ro-che.info/articles/2018-01-08-tasty-new-patterns
 [tasty-directories]: https://nmattia.com/posts/2018-04-30-tasty-test-names.html
 
+## GHC version support policy
+
+We only support the GHC/base versions [from the last 3 years](https://wiki.haskell.org/Base_package#Versions).
+
 Maintainers
 -----------
 

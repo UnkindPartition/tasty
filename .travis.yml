@@ -33,36 +33,26 @@ cache:
 #     addons: {apt: {packages: [libfcgi-dev,libgmp-dev]}}
 matrix:
   include:
-  - env: BUILD=cabal GHCVER=7.4.2 CABALVER=1.16 HAPPYVER=1.19.5 ALEXVER=3.1.7
-    compiler: ": #GHC 7.4.2"
-    addons: {apt: {packages: [cabal-install-1.16,ghc-7.4.2], sources: [hvr-ghc]}}
-  - env: BUILD=cabal GHCVER=7.6.3 CABALVER=1.16 HAPPYVER=1.19.5 ALEXVER=3.1.7
-    compiler: ": #GHC 7.6.3"
-    addons: {apt: {packages: [cabal-install-1.16,ghc-7.6.3], sources: [hvr-ghc]}}
-  - env: BUILD=cabal GHCVER=7.8.4 CABALVER=1.18 HAPPYVER=1.19.5 ALEXVER=3.1.7
-    compiler: ": #GHC 7.8.4"
-    addons: {apt: {packages: [cabal-install-1.18,ghc-7.8.4], sources: [hvr-ghc]}}
-  - env: BUILD=cabal GHCVER=7.10.3 CABALVER=1.22 HAPPYVER=1.19.5 ALEXVER=3.1.7
-    compiler: ": #GHC 7.10.3"
-    addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.3], sources: [hvr-ghc]}}
-  - env: BUILD=cabal GHCVER=8.0.2 CABALVER=1.24 HAPPYVER=1.19.5 ALEXVER=3.1.7
+  - env: BUILD=cabal GHCVER=8.0.2 CABALVER=1.24
     compiler: ": #GHC 8.0.2"
     addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2], sources: [hvr-ghc]}}
-  - env: BUILD=cabal GHCVER=8.2.2 CABALVER=1.24 HAPPYVER=1.19.5 ALEXVER=3.1.7
+  - env: BUILD=cabal GHCVER=8.2.2 CABALVER=1.24
     compiler: ": #GHC 8.2.2"
     addons: {apt: {packages: [cabal-install-1.24,ghc-8.2.2], sources: [hvr-ghc]}}
-  - env: BUILD=cabal GHCVER=8.4.2 CABALVER=1.24 HAPPYVER=1.19.5 ALEXVER=3.1.7
+  - env: BUILD=cabal GHCVER=8.4.2 CABALVER=1.24
     compiler: ": #GHC 8.4.2"
     addons: {apt: {packages: [cabal-install-1.24,ghc-8.4.2], sources: [hvr-ghc]}}
+  - env: BUILD=cabal GHCVER=8.6.1 CABALVER=1.24
+    compiler: ": #GHC 8.6.1"
+    addons: {apt: {packages: [cabal-install-1.24,ghc-8.6.1], sources: [hvr-ghc]}}
+  - env: BUILD=cabal GHCVER=8.8.1 CABALVER=1.24
+    compiler: ": #GHC 8.8.1"
+    addons: {apt: {packages: [cabal-install-1.24,ghc-8.8.1], sources: [hvr-ghc]}}
 
   ## Build with the newest GHC and cabal-install. This is an accepted failure,
   ## see below.
-  - env: BUILD=cabal GHCVER=head  CABALVER=head HAPPYVER=1.19.5 ALEXVER=3.1.7
-    compiler: ": #GHC HEAD"
-    addons: {apt: {packages: [cabal-install-head,ghc-head], sources: [hvr-ghc]}}
-
-  - env: BUILD=stack ARGS="--resolver nightly-2019-01-30" WARNINGS=true
-    compiler: ": #stack 8.6.3"
+  - env: BUILD=stack ARGS="--resolver nightly-2020-01-30" WARNINGS=true
+    compiler: ": #stack 8.8.2"
     addons: {apt: {packages: [libgmp-dev]}}
 
   allow_failures:

@@ -1,11 +1,9 @@
-resolver: nightly-2019-01-30
+resolver: nightly-2020-01-30
 packages:
 - core/
 - hunit/
 - quickcheck/
 - smallcheck/
 - core-tests/
-extra-deps:
-- wcwidth-0.0.2
-- ansi-terminal-0.9
+extra-deps: []
 flags: {}
