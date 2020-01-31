@@ -10,9 +10,6 @@ import Text.Printf
 import qualified Data.IntMap as IntMap
 import Control.Monad
 import Control.Exception
-#if !MIN_VERSION_base(4,8,0)
-import Data.Monoid (mempty)
-#endif
 
 testDependencies :: TestTree
 testDependencies = testGroup "Dependencies" $

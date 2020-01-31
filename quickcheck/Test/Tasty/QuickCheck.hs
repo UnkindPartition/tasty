@@ -51,11 +51,6 @@ import Text.Printf
 import Test.QuickCheck.Random (mkQCGen)
 import Options.Applicative (metavar)
 import System.Random (getStdRandom, randomR)
-#if !MIN_VERSION_base(4,8,0)
-import Control.Applicative
-import Data.Monoid
-import Data.Proxy
-#endif
 
 newtype QC = QC QC.Property
   deriving Typeable

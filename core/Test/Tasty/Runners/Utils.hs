@@ -5,6 +5,8 @@ module Test.Tasty.Runners.Utils where
 
 import Control.Exception
 import Control.Applicative
+import Control.Concurrent (mkWeakThreadId, myThreadId)
+import Control.Monad (forM_)
 #ifndef VERSION_clock
 import Data.Time.Clock.POSIX (getPOSIXTime)
 #endif
@@ -15,22 +17,10 @@ import Foreign.C (CInt)
 #ifdef VERSION_clock
 import qualified System.Clock as Clock
 #endif
-
-import Test.Tasty.Core (Time)
-
--- We install handlers only on UNIX (obviously) and on GHC >= 7.6.
--- GHC 7.4 lacks mkWeakThreadId (see #181), and this is not important
--- enough to look for an alternative implementation, so we just disable it
--- there.
-#define INSTALL_HANDLERS defined __UNIX__ && MIN_VERSION_base(4,6,0)
-
-#if INSTALL_HANDLERS
-import Control.Concurrent (mkWeakThreadId, myThreadId)
-import Control.Exception (Exception(..), throwTo)
-import Control.Monad (forM_)
 import System.Posix.Signals
 import System.Mem.Weak (deRefWeak)
-#endif
+
+import Test.Tasty.Core (Time)
 
 -- | Catch possible exceptions that may arise when evaluating a string.
 -- For normal (total) strings, this is a no-op.
@@ -68,7 +58,6 @@ forceElements = foldr seq ()
 -- older than 7.6.
 installSignalHandlers :: IO ()
 installSignalHandlers = do
-#if INSTALL_HANDLERS
   main_thread_id <- myThreadId
   weak_tid <- mkWeakThreadId main_thread_id
   forM_ [ sigABRT, sigBUS, sigFPE, sigHUP, sigILL, sigQUIT, sigSEGV,
@@ -80,9 +69,6 @@ installSignalHandlers = do
       case m of
         Nothing  -> return ()
         Just tid -> throwTo tid (toException $ SignalException sig)
-#else
-  return ()
-#endif
 
 -- | This exception is thrown when the program receives a signal, assuming
 -- 'installSignalHandlers' was called.

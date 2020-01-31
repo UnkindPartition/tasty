@@ -8,14 +8,11 @@ module Test.Tasty.CmdLine
   ) where
 
 import Options.Applicative
-import Data.Monoid ((<>))
 import Data.Proxy
-import Data.Foldable (foldMap)
 import Prelude  -- Silence AMP and FTP import warnings
 import System.Exit
 import System.IO
-
-#if !MIN_VERSION_base(4,9,0)
+#if !MIN_VERSION_base(4,11,0)
 import Data.Monoid
 #endif
 

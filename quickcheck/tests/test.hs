@@ -8,9 +8,6 @@ import Test.Tasty.HUnit
 import Data.Maybe
 import Text.Regex.PCRE.Light.Char8
 import Text.Printf
-#if !MIN_VERSION_base(4,8,0)
-import Data.Monoid (mempty)
-#endif
 
 (=~), (!~)
   :: String -- ^ text

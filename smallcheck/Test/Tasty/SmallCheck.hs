@@ -18,9 +18,6 @@ import Data.Typeable
 import Data.IORef
 import Options.Applicative (metavar)
 import Text.Printf
-#if !MIN_VERSION_base(4,8,0)
-import Data.Proxy
-#endif
 
 -- | Create a 'Test' for a SmallCheck 'SC.Testable' property
 testProperty :: SC.Testable IO a => TestName -> a -> TestTree

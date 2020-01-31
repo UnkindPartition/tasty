@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version ?
+---------
+
+* Drop support for GHC versions older than 8.0
+
 Version 1.2.3
 -------------
 

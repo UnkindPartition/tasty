@@ -48,15 +48,9 @@ import Data.Typeable
 import Options.Applicative hiding (str, Success, Failure)
 import System.IO
 import System.Console.ANSI
-#if !MIN_VERSION_base(4,8,0)
-import Data.Proxy
-import Data.Foldable hiding (concatMap,elem,sequence_)
-#endif
-#if MIN_VERSION_base(4,9,0)
+#if !MIN_VERSION_base(4,11,0)
 import Data.Semigroup (Semigroup)
 import qualified Data.Semigroup (Semigroup((<>)))
-#else
-import Data.Monoid
 #endif
 
 --------------------------------------------------
@@ -86,10 +80,8 @@ data TestOutput
 instance Monoid TestOutput where
   mempty = Skip
   mappend = Seq
-#if MIN_VERSION_base(4,9,0)
 instance Semigroup TestOutput where
   (<>) = mappend
-#endif
 
 type Level = Int
 
@@ -283,10 +275,8 @@ data Statistics = Statistics
 instance Monoid Statistics where
   Statistics t1 f1 `mappend` Statistics t2 f2 = Statistics (t1 + t2) (f1 + f2)
   mempty = Statistics 0 0
-#if MIN_VERSION_base(4,9,0)
 instance Semigroup Statistics where
   (<>) = mappend
-#endif
 
 -- | @computeStatistics@ computes a summary 'Statistics' for
 -- a given state of the 'StatusMap'.
@@ -574,10 +564,8 @@ instance Ord a => Monoid (Maximum a) where
   Maximum a `mappend` Maximum b = Maximum (a `max` b)
   MinusInfinity `mappend` a = a
   a `mappend` MinusInfinity = a
-#if MIN_VERSION_base(4,9,0)
 instance Ord a => Semigroup (Maximum a) where
   (<>) = mappend
-#endif
 
 -- | Compute the amount of space needed to align \"OK\"s and \"FAIL\"s
 computeAlignment :: OptionSet -> TestTree -> Int

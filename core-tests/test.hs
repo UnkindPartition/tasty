@@ -4,9 +4,6 @@ import Test.Tasty.Runners
 import Test.Tasty.Options
 import Test.Tasty.Patterns.Types
 import Data.Maybe
-#if !MIN_VERSION_base(4,8,0)
-import Data.Monoid (mempty)
-#endif
 import Resources
 import Timeouts
 import Dependencies
