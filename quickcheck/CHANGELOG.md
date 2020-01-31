@@ -1,6 +1,12 @@
 Changes
 =======
 
+Version 0.10.1.1
+----------------
+
+* Accept underscores in `--quickcheck-tests` for readability,
+    e.g. `--quickcheck-tests 10_000_000`.
+
 Version 0.10.1
 --------------
 
