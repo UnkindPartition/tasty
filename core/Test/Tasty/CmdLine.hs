@@ -14,6 +14,7 @@ import System.Exit
 import System.IO
 #if !MIN_VERSION_base(4,11,0)
 import Data.Monoid
+import Data.Foldable (foldMap)
 #endif
 
 import Test.Tasty.Core

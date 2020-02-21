@@ -33,6 +33,12 @@ cache:
 #     addons: {apt: {packages: [libfcgi-dev,libgmp-dev]}}
 matrix:
   include:
+  - env: BUILD=cabal GHCVER=7.8.4 CABALVER=1.24
+    compiler: ": #GHC 7.8.4"
+    addons: {apt: {packages: [cabal-install-1.24,ghc-7.8.4], sources: [hvr-ghc]}}
+  - env: BUILD=cabal GHCVER=7.10.3 CABALVER=1.24
+    compiler: ": #GHC 7.10.3"
+    addons: {apt: {packages: [cabal-install-1.24,ghc-7.10.3], sources: [hvr-ghc]}}
   - env: BUILD=cabal GHCVER=8.0.2 CABALVER=1.24
     compiler: ": #GHC 8.0.2"
     addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2], sources: [hvr-ghc]}}
@@ -49,15 +55,9 @@ matrix:
     compiler: ": #GHC 8.8.1"
     addons: {apt: {packages: [cabal-install-1.24,ghc-8.8.1], sources: [hvr-ghc]}}
 
-  ## Build with the newest GHC and cabal-install. This is an accepted failure,
-  ## see below.
   - env: BUILD=stack ARGS="--resolver nightly-2020-01-30" WARNINGS=true
     compiler: ": #stack 8.8.2"
     addons: {apt: {packages: [libgmp-dev]}}
-
-  allow_failures:
-  - env: BUILD=cabal GHCVER=head  CABALVER=head HAPPYVER=1.19.5 ALEXVER=3.1.7
-  - env: BUILD=stack ARGS="--resolver nightly"
 
 before_install:
 # Using compiler above sets CC to an invalid value, so unset it
@@ -135,7 +135,7 @@ script:
         # do not build/run the tests on cabal;
         # stack should be enough
         # one of the reasons is that I don't want to bother to make core-tests
-        # compatible with older versions of ghc (7.6 and earlier)
+        # compatible with older versions of ghc
         if [ "$dir" != core-tests ]; then
           cd $dir
           cabal sdist
@@ -144,7 +144,12 @@ script:
           cd dist
           tar zxfv "$SRC_TGZ"
           cd "$PKGVER"
-          cabal configure --enable-tests
+          if [ "$GHCVER" = 7.8.4 ] # protects about pcre-light breakage
+          then
+            cabal configure
+          else
+            cabal configure --enable-tests
+          fi
           cabal build
           cd $ORIGDIR
         fi

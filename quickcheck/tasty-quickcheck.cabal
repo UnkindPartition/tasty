@@ -26,7 +26,7 @@ library
   exposed-modules:     Test.Tasty.QuickCheck
   -- other-modules:
   other-extensions:    GeneralizedNewtypeDeriving, DeriveDataTypeable
-  build-depends:       base == 4.*, tagged, tasty >= 1.0.1, random, QuickCheck >= 2.10,
+  build-depends:       base >= 4.7 && < 5, tagged, tasty >= 1.0.1, random, QuickCheck >= 2.10,
                        optparse-applicative
 
   -- hs-source-dirs:
@@ -45,9 +45,11 @@ test-suite test
   main-is:
     test.hs
   build-depends:
-      base >= 4 && < 5
+      base >= 4.7 && < 5
     , tasty
     , tasty-quickcheck
     , tasty-hunit
     , pcre-light
   ghc-options: -Wall
+  if (!impl(ghc >= 8.0))
+    buildable: false

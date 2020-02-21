@@ -58,7 +58,7 @@ library
     Test.Tasty.Ingredients.ListTests
     Test.Tasty.Ingredients.IncludingOptions
   build-depends:
-    base >= 4.9 && < 5,
+    base >= 4.7 && < 5,
     stm >= 2.3,
     containers,
     mtl >= 2.1.3.1,
@@ -67,6 +67,8 @@ library
     unbounded-delays >= 0.1,
     async >= 2.0,
     ansi-terminal >= 0.9
+  if(!impl(ghc >= 8.0))
+    build-depends: semigroups
 
   if flag(clock)
     build-depends: clock >= 0.4.4.0

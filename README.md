@@ -810,7 +810,7 @@ something not mentioned here, send a pull request!
 
 ## GHC version support policy
 
-We only support the GHC/base versions [from the last 3 years](https://wiki.haskell.org/Base_package#Versions).
+We only support the GHC/base versions [from the last 5 years](https://wiki.haskell.org/Base_package#Versions).
 
 Maintainers
 -----------

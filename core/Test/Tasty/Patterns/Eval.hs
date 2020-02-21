@@ -10,6 +10,10 @@ import Data.List
 import Data.Maybe
 import Data.Char
 import Test.Tasty.Patterns.Types
+#if !MIN_VERSION_base(4,9,0)
+import Control.Applicative
+import Data.Traversable
+#endif
 
 type Path = Seq.Seq String
 

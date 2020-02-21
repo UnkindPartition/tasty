@@ -51,6 +51,8 @@ import System.Console.ANSI
 #if !MIN_VERSION_base(4,11,0)
 import Data.Semigroup (Semigroup)
 import qualified Data.Semigroup (Semigroup((<>)))
+import Data.Monoid
+import Data.Foldable (foldMap)
 #endif
 
 --------------------------------------------------

@@ -23,7 +23,7 @@ Library
 
         Build-Depends:          tasty >= 0.8,
                                 smallcheck >= 1.0,
-                                base >= 4 && < 5,
+                                base >= 4.7 && < 5,
                                 async,
                                 tagged,
                                 optparse-applicative
