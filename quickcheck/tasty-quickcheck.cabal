@@ -51,5 +51,5 @@ test-suite test
     , tasty-hunit
     , pcre-light
   ghc-options: -Wall
-  if (!impl(ghc >= 8.0))
+  if (!impl(ghc >= 8.0) || os(windows))
     buildable: false

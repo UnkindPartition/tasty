@@ -17,8 +17,14 @@ import Foreign.C (CInt)
 #ifdef VERSION_clock
 import qualified System.Clock as Clock
 #endif
+
+-- Install handlers only on UNIX
+#define INSTALL_HANDLERS defined __UNIX__
+
+#if INSTALL_HANDLERS
 import System.Posix.Signals
 import System.Mem.Weak (deRefWeak)
+#endif
 
 import Test.Tasty.Core (Time)
 
@@ -58,6 +64,7 @@ forceElements = foldr seq ()
 -- older than 7.6.
 installSignalHandlers :: IO ()
 installSignalHandlers = do
+#if INSTALL_HANDLERS
   main_thread_id <- myThreadId
   weak_tid <- mkWeakThreadId main_thread_id
   forM_ [ sigABRT, sigBUS, sigFPE, sigHUP, sigILL, sigQUIT, sigSEGV,
@@ -69,6 +76,9 @@ installSignalHandlers = do
       case m of
         Nothing  -> return ()
         Just tid -> throwTo tid (toException $ SignalException sig)
+#else
+  return ()
+#endif
 
 -- | This exception is thrown when the program receives a signal, assuming
 -- 'installSignalHandlers' was called.
