@@ -35,8 +35,12 @@ instance IsOption NumThreads where
   defaultValue = NumThreads numCapabilities
   parseValue = mfilter onlyPositive . fmap NumThreads . safeRead
   optionName = return "num-threads"
-  optionHelp = return "Number of threads to use for tests execution (default: # of cores/capabilities)"
-  optionCLParser = mkOptionCLParser (short 'j' <> metavar "NUMBER")
+  optionHelp = return "Number of threads to use for tests execution"
+  optionCLParser = mkOptionCLParser $
+    short 'j' <>
+    metavar "NUMBER" <>
+    value defaultValue <>
+    showDefaultWith (\_ -> "# of cores/capabilities")
 
 -- | Filtering function to prevent non-positive number of threads
 onlyPositive :: NumThreads -> Bool
