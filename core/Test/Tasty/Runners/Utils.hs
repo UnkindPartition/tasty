@@ -67,8 +67,7 @@ installSignalHandlers = do
 #if INSTALL_HANDLERS
   main_thread_id <- myThreadId
   weak_tid <- mkWeakThreadId main_thread_id
-  forM_ [ sigABRT, sigBUS, sigFPE, sigHUP, sigILL, sigQUIT, sigSEGV,
-          sigSYS, sigTERM, sigUSR1, sigUSR2, sigXCPU, sigXFSZ ] $ \sig ->
+  forM_ [ sigHUP, sigTERM, sigUSR1, sigUSR2, sigXCPU, sigXFSZ ] $ \sig ->
     installHandler sig (Catch $ send_exception weak_tid sig) Nothing
   where
     send_exception weak_tid sig = do
