@@ -25,6 +25,7 @@ module Test.Tasty.Options
 
 import qualified Data.Map as Map
 import Data.Map (Map)
+import Data.Maybe
 import Data.Char (toLower)
 import Data.Tagged
 import Data.Proxy
@@ -52,6 +53,12 @@ class Typeable v => IsOption v where
   -- | The option description or help string. This can be an arbitrary
   -- string.
   optionHelp :: Tagged v String
+  -- | How a 'defaultValue' should be displayed in the help string. 'Nothing'
+  -- (the default implementation) will result in nothing being displayed, while
+  -- @'Just' def@ will result in @def@ being advertised as the default in the
+  -- help string.
+  showDefaultValue :: v -> Maybe String
+  showDefaultValue _ = Nothing
   -- | A command-line option parser.
   --
   -- It has a default implementation in terms of the other methods.
@@ -62,11 +69,14 @@ class Typeable v => IsOption v where
   -- Even if you override this, you still should implement all the methods
   -- above, to allow alternative interfaces.
   --
-  -- Do not supply a default value here for this parser!
-  -- This is because if no value was provided on the command line we may
-  -- lookup the option e.g. in the environment. But if the parser always
-  -- succeeds, we have no way to tell whether the user really provided the
-  -- option on the command line.
+  -- Do not supply a default value (e.g., with the 'value' function) here
+  -- for this parser! This is because if no value was provided on the command
+  -- line we may lookup the option e.g. in the environment. But if the parser
+  -- always succeeds, we have no way to tell whether the user really provided
+  -- the option on the command line.
+  --
+  -- Similarly, do not use 'showDefaultWith' here, as it will be ignored. Use
+  -- the 'showDefaultValue' method of 'IsOption' instead.
 
   -- (If we don't specify a default, the option becomes mandatory.
   -- So, when we build the complete parser for OptionSet, we turn a

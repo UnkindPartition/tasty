@@ -458,8 +458,9 @@ instance IsOption UseColor where
   defaultValue = Auto
   parseValue = parseUseColor
   optionName = return "color"
-  optionHelp = return "When to use colored output (default: 'auto')"
+  optionHelp = return "When to use colored output"
   optionCLParser = mkOptionCLParser $ metavar "never|always|auto"
+  showDefaultValue = Just . displayUseColor
 
 -- | By default, when the option @--hide-successes@ is given and the output
 -- goes to an ANSI-capable terminal, we employ some ANSI terminal tricks to
@@ -475,7 +476,7 @@ instance IsOption UseColor where
 --
 -- When that happens, this option can be used to disable the tricks. In
 -- that case, the test name will be printed only once the test fails.
-newtype AnsiTricks = AnsiTricks Bool
+newtype AnsiTricks = AnsiTricks { getAnsiTricks :: Bool }
   deriving Typeable
 
 instance IsOption AnsiTricks where
@@ -485,7 +486,14 @@ instance IsOption AnsiTricks where
   optionHelp = return $
     -- Multiline literals don't work because of -XCPP.
     "Enable various ANSI terminal tricks. " ++
-    "Can be set to 'true' (default) or 'false'."
+    "Can be set to 'true' or 'false'."
+  showDefaultValue = Just . displayBool . getAnsiTricks
+
+displayBool :: Bool -> String
+displayBool b =
+  case b of
+    False -> "false"
+    True  -> "true"
 
 -- | @useColor when isTerm@ decides if colors should be used,
 --   where @isTerm@ indicates whether @stdout@ is a terminal device.
@@ -505,6 +513,13 @@ parseUseColor s =
     "always" -> return Always
     "auto"   -> return Auto
     _        -> Nothing
+
+displayUseColor :: UseColor -> String
+displayUseColor uc =
+  case uc of
+    Never  -> "never"
+    Always -> "always"
+    Auto   -> "auto"
 
 -- }}}
 
