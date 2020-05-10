@@ -1,9 +1,14 @@
 Changes
 =======
 
-Version ?
----------
+Version 1.3
+-----------
 
+* `IsOption` has a new method `showDefaultValue` for customizing how
+  `defaultValue`s are rendered in the `--help` output.
+* Drop support for GHCs older than 5 years
+* Do not install handlers for the signals that dump core
+* Export the `AnsiTricks` type/option
 * In addition to a `Parser`, `optionParser` and `suiteOptionParser` now return
   a `[String]` representing warning messages:
   * A warning is emitted if an `IsOption` instance defines multiple options in
@@ -12,9 +17,6 @@ Version ?
     implementation assigns a default value (e.g., with
     `Options.Applicative.value`), as this interferes with `tasty`'s ability to
     read environment variable arguments.
-* `IsOption` has a new method `showDefaultValue` for customizing how
-  `defaultValue`s are rendered in the `--help` output.
-* Drop support for GHC versions older than 8.0
 
 Version 1.2.3
 -------------
