@@ -79,8 +79,9 @@ tt =
 -- command-line argument parsers. See #270.
 optionMessagesTests :: TestTree
 optionMessagesTests = testGroup "OptionMessages"
-  [ testCase "JankyOption generates warning messages" $
+  [ testCaseInfo "JankyOption generates warning messages" $ do
       length warnings @?= 2
+      return (unlines warnings)
   ]
   where
     (warnings, _) = optionParser [Option (Proxy :: Proxy JankyOption)]
