@@ -132,7 +132,7 @@ buildTestOutput opts tree =
             (if resultSuccessful result then infoOk else infoFail) $
               printf "%s%s\n" (indent $ level + 1) (formatDesc (level+1) rDesc)
           case resultDetailsPrinter result of
-            ResultDetailsPrinter action -> action withConsoleFormat
+            ResultDetailsPrinter action -> action level withConsoleFormat
 
       return $ PrintTest name printTestName printTestResult
 

@@ -48,10 +48,10 @@ data Outcome
 -- | Time in seconds. Used to measure how long the tests took to run.
 type Time = Double
 
-newtype ResultDetailsPrinter = ResultDetailsPrinter ((ConsoleFormat -> IO () -> IO ()) -> IO ())
+newtype ResultDetailsPrinter = ResultDetailsPrinter (Int -> (ConsoleFormat -> IO () -> IO ()) -> IO ())
 
 noResultDetails :: ResultDetailsPrinter
-noResultDetails = ResultDetailsPrinter . const $ return ()
+noResultDetails = ResultDetailsPrinter . const . const $ return ()
 
 instance Show ResultDetailsPrinter where
   show _printer = "IO ResultDetailsPrinter"
