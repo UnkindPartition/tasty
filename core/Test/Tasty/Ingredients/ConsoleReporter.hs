@@ -636,11 +636,14 @@ output
   -> IO ()
 output format = withConsoleFormat format . putStr
 
-withConsoleFormat
-  :: (?colors :: Bool)
-  => ConsoleFormat
-  -> IO ()
-  -> IO ()
+-- | Run action with console configured for a specific output format
+--
+-- This function does not apply any output formats if colors are disabled at command
+-- line or console detection.
+--
+-- Can be used by providers that wish to provider specific result details printing,
+-- while re-using the tasty formats and coloring logic.
+withConsoleFormat :: (?colors :: Bool) => ConsoleFormatPrinter
 withConsoleFormat format action
   | ?colors =
     (do

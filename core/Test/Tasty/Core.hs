@@ -48,8 +48,22 @@ data Outcome
 -- | Time in seconds. Used to measure how long the tests took to run.
 type Time = Double
 
-newtype ResultDetailsPrinter = ResultDetailsPrinter (Int -> (ConsoleFormat -> IO () -> IO ()) -> IO ())
+-- | Detailed result printer
+--
+-- Executed per 'Result' by the tasty reporter. Allow to customize result
+-- printing.
+type ResultDetailsPrinterFunction
+  =  Int                  -- ^ Current indentation level
+  -> ConsoleFormatPrinter -- ^ Format ware printer to be used by providers.
+  -> IO ()
 
+-- | Detailed result printer
+--
+-- Newtype wrapper around 'ResultDetailsPrinterFunction' to allow a
+-- custom Show instance.
+newtype ResultDetailsPrinter = ResultDetailsPrinter ResultDetailsPrinterFunction
+
+-- | Noop result details printer. The default for most providers.
 noResultDetails :: ResultDetailsPrinter
 noResultDetails = ResultDetailsPrinter . const . const $ return ()
 
@@ -69,16 +83,24 @@ data Result = Result
     --
     -- For a failed test, 'resultDescription' should typically provide more
     -- information about the failure.
+    --
+    -- The result description is printed with failure format in case of a test
+    -- failure and success format in case of test success.
+    --
+    -- If the provider author needs more fine grained control about the output
+    -- format feel free to provide an alternative 'resultDetailsPrinter'.
   , resultShortDescription :: String
     -- ^ The short description printed in the test run summary, usually @OK@ or
     -- @FAIL@.
   , resultTime :: Time
     -- ^ How long it took to run the test, in seconds.
   , resultDetailsPrinter :: ResultDetailsPrinter
-    -- ^ Optional detailed result printing action.
+    -- ^ Detailed result printer.
     --
-    -- 'resultDetailsPrinter' is used by providers that need to have fine grained
-    -- control about the printed results. Especially when it comes to colorization.
+    -- By default does nothing. See 'noResultDetails'.
+    --
+    -- Used by providers that need to have fine grained control about the printed
+    -- results via 'ResultDetailsPrinterFunction'.
   }
   deriving Show
 
