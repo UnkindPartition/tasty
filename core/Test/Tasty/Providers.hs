@@ -1,7 +1,6 @@
 -- | API for test providers
 module Test.Tasty.Providers
   ( IsTest(..)
-  , ResultDetailsPrinter(..)
   , testPassed
   , testFailed
   , testFailedDetails
@@ -14,6 +13,7 @@ module Test.Tasty.Providers
   where
 
 import Test.Tasty.Core
+import Test.Tasty.Providers.ConsoleFormat (ResultDetailsPrinter, noResultDetails)
 
 -- | Convert a test to a leaf of the 'TestTree'
 singleTest :: IsTest t => TestName -> t -> TestTree

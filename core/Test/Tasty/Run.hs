@@ -35,6 +35,7 @@ import Test.Tasty.Options
 import Test.Tasty.Options.Core
 import Test.Tasty.Runners.Reducers
 import Test.Tasty.Runners.Utils (timed)
+import Test.Tasty.Providers.ConsoleFormat (noResultDetails)
 
 -- | Current status of a test
 data Status

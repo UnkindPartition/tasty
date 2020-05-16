@@ -1,11 +1,10 @@
--- | Console output format
---
--- These console formats tasty uses when reporing.
--- They are exported so custom providers with custom report printing
--- can re-use the tasty output formats
+-- | This module can be used by providers to perform colorful/formatted
+-- output and possibly re-use tasty's own output formats.
 module Test.Tasty.Providers.ConsoleFormat
-  ( ConsoleFormat(..)
+  ( ResultDetailsPrinter(..)
+  , ConsoleFormat(..)
   , ConsoleFormatPrinter
+  , noResultDetails
   , failFormat
   , infoFailFormat
   , infoOkFormat
@@ -28,6 +27,24 @@ type ConsoleFormatPrinter
   =  ConsoleFormat -- ^ selected console format
   -> IO ()         -- ^ action to be executed with active console format
   -> IO ()
+
+-- | Noop result details printer. The default for most providers.
+noResultDetails :: ResultDetailsPrinter
+noResultDetails = ResultDetailsPrinter . const . const $ return ()
+
+-- | An action that prints additional information about a test using
+-- colors/formatting; see 'Test.Tasty.Providers.testFailedDetails' and
+-- 'Test.Tasty.Runners.resultDetailsPrinter'.
+--
+-- As input, this action is provided with the current indentation level and
+-- a 'ConsoleFormatPrinter', which tells it how perform output.
+--
+-- This is a newtype to allow a 'Show' instance.
+newtype ResultDetailsPrinter = ResultDetailsPrinter
+  (Int -> ConsoleFormatPrinter -> IO ())
+
+instance Show ResultDetailsPrinter where
+  show _printer = "ResultDetailsPrinter"
 
 -- | Format used to display failures
 failFormat :: ConsoleFormat
