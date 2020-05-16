@@ -3,7 +3,7 @@
 -- These console formats tasty uses when reporing.
 -- They are exported so custom providers with custom report printing
 -- can re-use the tasty output formats
-module Test.Tasty.ConsoleFormat
+module Test.Tasty.Providers.ConsoleFormat
   ( ConsoleFormat(..)
   , ConsoleFormatPrinter
   , failFormat

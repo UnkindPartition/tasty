@@ -31,7 +31,7 @@ import Control.Monad.Reader hiding (fail,reader)
 import Control.Concurrent.STM
 import Control.Exception
 import Test.Tasty.Core
-import Test.Tasty.ConsoleFormat
+import Test.Tasty.Providers.ConsoleFormat
 import Test.Tasty.Run
 import Test.Tasty.Ingredients
 import Test.Tasty.Options

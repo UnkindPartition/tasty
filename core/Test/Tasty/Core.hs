@@ -5,7 +5,7 @@
 module Test.Tasty.Core where
 
 import Control.Exception
-import Test.Tasty.ConsoleFormat
+import Test.Tasty.Providers.ConsoleFormat
 import Test.Tasty.Options
 import Test.Tasty.Patterns
 import Test.Tasty.Patterns.Types
