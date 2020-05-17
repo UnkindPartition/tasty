@@ -44,6 +44,8 @@ testFailed desc = Result
   }
 
 -- | 'Result' of a failed test with custom details printer
+--
+-- @since 1.3.1
 testFailedDetails
   :: String               -- ^ description
   -> ResultDetailsPrinter -- ^ details printer

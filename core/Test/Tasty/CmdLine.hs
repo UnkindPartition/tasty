@@ -33,6 +33,8 @@ import Test.Tasty.Runners.Reducers
 
 -- | Generate a command line parser from a list of option descriptions,
 -- alongside any related warning messages.
+--
+-- @since 1.3
 optionParser :: [OptionDescription] -> ([String], Parser OptionSet)
 optionParser = second getApp . foldMap toSet where
   toSet :: OptionDescription -> ([String], Ap Parser OptionSet)
@@ -132,6 +134,8 @@ numOptPs (BindP p1 _p2) = numOptPs p1
 
 -- | The command line parser for the test suite, alongside any related
 -- warnings.
+--
+-- @since 1.3
 suiteOptionParser :: [Ingredient] -> TestTree -> ([String], Parser OptionSet)
 suiteOptionParser ins tree = optionParser $ suiteOptions ins tree
 

@@ -82,6 +82,8 @@ class Typeable v => IsOption v where
   -- So, when we build the complete parser for OptionSet, we turn a
   -- failing parser into an always-succeeding one that may return an empty
   -- OptionSet.)
+  --
+  -- @since 1.3
   optionCLParser :: Parser v
   optionCLParser = mkOptionCLParser mempty
 

@@ -75,6 +75,8 @@ data Result = Result
     -- This can be used instead of or in addition to 'resultDescription'.
     --
     -- Usually this is set to 'noResultDetails', which does nothing.
+    --
+    -- @since 1.3.1
   }
   deriving Show
 

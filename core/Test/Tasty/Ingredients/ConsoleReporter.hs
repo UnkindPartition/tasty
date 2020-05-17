@@ -643,6 +643,8 @@ output format = withConsoleFormat format . putStr
 --
 -- Can be used by providers that wish to provider specific result details printing,
 -- while re-using the tasty formats and coloring logic.
+--
+-- @since 1.3.1
 withConsoleFormat :: (?colors :: Bool) => ConsoleFormatPrinter
 withConsoleFormat format action
   | ?colors =
