@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 1.3.1
+-------------
+
+* Add an ability for a test provider to print colorful/formatted output
+
 Version 1.3
 -----------
 
