@@ -233,9 +233,9 @@ createTestActions opts0 tree = do
         (trivialFold :: TreeFold Tr)
           { foldSingle = runSingleTest
           , foldResource = addInitAndRelease
-          , foldGroup = \name (Traversal a) ->
+          , foldGroup = \_opts name (Traversal a) ->
               Traversal $ local (first (Seq.|> name)) a
-          , foldAfter = \deptype pat (Traversal a) ->
+          , foldAfter = \_opts deptype pat (Traversal a) ->
               Traversal $ local (second ((deptype, pat) :)) a
           }
         opts0 tree
@@ -260,8 +260,8 @@ createTestActions opts0 tree = do
         act (inits, fins) =
           executeTest (run opts test) statusVar (lookupOption opts) inits fins
       tell ([(act, (statusVar, path, deps))], mempty)
-    addInitAndRelease :: ResourceSpec a -> (IO a -> Tr) -> Tr
-    addInitAndRelease (ResourceSpec doInit doRelease) a = wrap $ \path deps -> do
+    addInitAndRelease :: OptionSet -> ResourceSpec a -> (IO a -> Tr) -> Tr
+    addInitAndRelease _opts (ResourceSpec doInit doRelease) a = wrap $ \path deps -> do
       initVar <- atomically $ newTVar NotCreated
       (tests, fins) <- unwrap path deps $ a (getResource initVar)
       let ntests = length tests

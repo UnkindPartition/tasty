@@ -1,6 +1,6 @@
 -- | Core types and definitions
 {-# LANGUAGE GeneralizedNewtypeDeriving, FlexibleContexts,
-             ExistentialQuantification, RankNTypes, DeriveDataTypeable,
+             ExistentialQuantification, RankNTypes, DeriveDataTypeable, NoMonomorphismRestriction,
              DeriveGeneric #-}
 module Test.Tasty.Core where
 
@@ -310,9 +310,9 @@ after deptype s =
 -- indroduced.
 data TreeFold b = TreeFold
   { foldSingle :: forall t . IsTest t => OptionSet -> TestName -> t -> b
-  , foldGroup :: TestName -> b -> b
-  , foldResource :: forall a . ResourceSpec a -> (IO a -> b) -> b
-  , foldAfter :: DependencyType -> Expr -> b -> b
+  , foldGroup :: OptionSet -> TestName -> b -> b
+  , foldResource :: forall a . OptionSet -> ResourceSpec a -> (IO a -> b) -> b
+  , foldAfter :: OptionSet -> DependencyType -> Expr -> b -> b
   }
 
 -- | 'trivialFold' can serve as the basis for custom folds. Just override
@@ -329,9 +329,9 @@ data TreeFold b = TreeFold
 trivialFold :: Monoid b => TreeFold b
 trivialFold = TreeFold
   { foldSingle = \_ _ _ -> mempty
-  , foldGroup = const id
-  , foldResource = \_ f -> f $ throwIO NotRunningTests
-  , foldAfter = \_ _ b -> b
+  , foldGroup = \_ _ b -> b
+  , foldResource = \_ _ f -> f $ throwIO NotRunningTests
+  , foldAfter = \_ _ _ b -> b
   }
 
 -- | Fold a test tree into a single value.
@@ -353,7 +353,7 @@ trivialFold = TreeFold
 -- affected by the subsequent option changes. This shouldn't be a problem
 -- in practice; OTOH, this behaviour may be changed later.
 foldTestTree
-  :: Monoid b
+  :: forall b . Monoid b
   => TreeFold b
      -- ^ the algebra (i.e. how to fold a tree)
   -> OptionSet
@@ -365,6 +365,8 @@ foldTestTree (TreeFold fTest fGroup fResource fAfter) opts0 tree0 =
   let pat = lookupOption opts0
   in go pat mempty opts0 tree0
   where
+    go :: (TestPattern
+                  -> Seq.Seq TestName -> OptionSet -> TestTree -> b)
     go pat path opts tree1 =
       case tree1 of
         SingleTest name test
@@ -372,11 +374,11 @@ foldTestTree (TreeFold fTest fGroup fResource fAfter) opts0 tree0 =
             -> fTest opts name test
           | otherwise -> mempty
         TestGroup name trees ->
-          fGroup name $ foldMap (go pat (path Seq.|> name) opts) trees
+          fGroup opts name $ foldMap (go pat (path Seq.|> name) opts) trees
         PlusTestOptions f tree -> go pat path (f opts) tree
-        WithResource res0 tree -> fResource res0 $ \res -> go pat path opts (tree res)
+        WithResource res0 tree -> fResource opts res0 $ \res -> go pat path opts (tree res)
         AskOptions f -> go pat path opts (f opts)
-        After deptype dep tree -> fAfter deptype dep $ go pat path opts tree
+        After deptype dep tree -> fAfter opts deptype dep $ go pat path opts tree
 
 -- | Get the list of options that are relevant for a given test tree
 treeOptions :: TestTree -> [OptionDescription]
