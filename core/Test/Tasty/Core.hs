@@ -362,23 +362,23 @@ foldTestTree
      -- ^ the tree to fold
   -> b
 foldTestTree (TreeFold fTest fGroup fResource fAfter) opts0 tree0 =
-  let pat = lookupOption opts0
-  in go pat mempty opts0 tree0
+  go mempty opts0 tree0
   where
-    go :: (TestPattern
-                  -> Seq.Seq TestName -> OptionSet -> TestTree -> b)
-    go pat path opts tree1 =
+    go :: (Seq.Seq TestName -> OptionSet -> TestTree -> b)
+    go path opts tree1 =
       case tree1 of
         SingleTest name test
           | testPatternMatches pat (path Seq.|> name)
             -> fTest opts name test
           | otherwise -> mempty
         TestGroup name trees ->
-          fGroup opts name $ foldMap (go pat (path Seq.|> name) opts) trees
-        PlusTestOptions f tree -> go pat path (f opts) tree
-        WithResource res0 tree -> fResource opts res0 $ \res -> go pat path opts (tree res)
-        AskOptions f -> go pat path opts (f opts)
-        After deptype dep tree -> fAfter opts deptype dep $ go pat path opts tree
+          fGroup opts name $ foldMap (go (path Seq.|> name) opts) trees
+        PlusTestOptions f tree -> go path (f opts) tree
+        WithResource res0 tree -> fResource opts res0 $ \res -> go path opts (tree res)
+        AskOptions f -> go path opts (f opts)
+        After deptype dep tree -> fAfter opts deptype dep $ go path opts tree
+      where
+        pat = lookupOption opts :: TestPattern
 
 -- | Get the list of options that are relevant for a given test tree
 treeOptions :: TestTree -> [OptionDescription]
