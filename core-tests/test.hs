@@ -51,6 +51,12 @@ patternTests = testGroup "Patterns"
       (o "ca.Ot" @?= ["Tests.North America.Ottawa"])
   , testCase ". is a field separator (works inside an AWK expression)" $
       (o "/ca.Ot/" @?= ["Tests.North America.Ottawa"])
+  , testCase "Trees can adjust pattern" $
+      let tt' =
+            adjustOption (\(TestPattern _) -> fromJust $ parseTestPattern "Paris")
+              tt
+      in
+        (getTestNames mempty tt' @?= ["Tests.Europe.Paris"])
   ]
   where
   -- apply a pattern to tt and get the names of tests that match
