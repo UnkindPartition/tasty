@@ -11,6 +11,7 @@ import qualified Control.Exception as E
 import Control.Monad
 import Data.Typeable (Typeable)
 import Data.CallStack
+import qualified Control.DeepSeq as D
 
 -- Interfaces
 -- ----------
@@ -38,7 +39,7 @@ assertFailure
   :: HasCallStack
   => String -- ^ A message that is displayed with the assertion failure
   -> IO a
-assertFailure msg = E.throwIO (HUnitFailure location msg)
+assertFailure msg = msg `D.deepseq` E.throwIO (HUnitFailure location msg)
   where
     location :: Maybe SrcLoc
     location = case reverse callStack of
