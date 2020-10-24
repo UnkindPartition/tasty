@@ -13,6 +13,9 @@ testTree =
   testGroup "timeout test"
     [ testCase "fast" $ threadDelay ds
     , testCase "slow" $ threadDelay (3 * ds)
+    , testCase "infinite loop" $ do -- see #280
+        let x :: Int; x = x
+        [1, 2, 3, x] @?= [3, 2, 1]
     ]
   where
     ds :: Integral a => a
@@ -21,12 +24,20 @@ testTree =
 testTimeouts :: TestTree
 testTimeouts = testCase "Timeouts" $ do
   launchTestTree mempty testTree $ \smap -> do
-    [fast, slow] <- runSMap smap
+    [fast, slow, inf_loop] <- runSMap smap
     case fast of
       Result { resultOutcome = Success } -> return ()
       _ -> assertFailure $ "Fast test failed: " ++ resultDescription fast
-    case slow of
-      Result { resultOutcome = Success } -> assertFailure "Slow test passed"
-      Result { resultOutcome = Failure (TestTimedOut 200000) } -> return ()
-      _ -> assertFailure $ "Slow test failed for wrong reason: " ++ resultDescription fast
+
+    assertTimeoutFailure "slow" slow
+    assertTimeoutFailure "infinite loop" inf_loop
+
     return $ const $ return ()
+
+assertTimeoutFailure :: TestName -> Result -> Assertion
+assertTimeoutFailure name r =
+  case r of
+    Result { resultOutcome = Success } -> assertFailure $ "Test " ++ name ++ " passed"
+    Result { resultOutcome = Failure (TestTimedOut _) } -> return ()
+    _ -> assertFailure $ "Test " ++ name ++
+      " failed for the wrong reason: " ++ resultDescription r
