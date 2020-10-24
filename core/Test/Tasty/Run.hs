@@ -34,7 +34,7 @@ import Test.Tasty.Patterns.Types
 import Test.Tasty.Options
 import Test.Tasty.Options.Core
 import Test.Tasty.Runners.Reducers
-import Test.Tasty.Runners.Utils (timed)
+import Test.Tasty.Runners.Utils (timed, forceElements)
 import Test.Tasty.Providers.ConsoleFormat (noResultDetails)
 
 -- | Current status of a test
@@ -106,7 +106,15 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
     -- handler doesn't interfere with our timeout.
     withAsync (action yieldProgress) $ \asy -> do
       labelThread (asyncThreadId asy) "tasty_test_execution_thread"
-      timed $ applyTimeout timeoutOpt $ wait asy
+      timed $ applyTimeout timeoutOpt $ do
+        r <- wait asy
+        -- Not only wait for the result to be returned, but make sure to
+        -- evalute it inside applyTimeout; see #280.
+        evaluate $
+          resultOutcome r `seq`
+          forceElements (resultDescription r) `seq`
+          forceElements (resultShortDescription r)
+        return r
 
   -- no matter what, try to run each finalizer
   mbExn <- destroyResources restore

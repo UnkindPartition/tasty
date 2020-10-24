@@ -47,7 +47,8 @@ formatMessage = go 3
         Right () -> return msg
         Left e' -> printf "message threw an exception: %s" <$> go (recLimit-1) (show (e' :: SomeException))
 
--- https://ro-che.info/articles/2015-05-28-force-list
+-- | Force elements of a list
+-- (<https://ro-che.info/articles/2015-05-28-force-list>)
 forceElements :: [a] -> ()
 forceElements = foldr seq ()
 
