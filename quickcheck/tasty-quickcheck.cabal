@@ -52,4 +52,4 @@ test-suite test
     , pcre-light
   ghc-options: -Wall
   if (!impl(ghc >= 8.0) || os(windows))
-    buildable: false
+    buildable: False
