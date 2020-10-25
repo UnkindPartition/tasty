@@ -1,6 +1,14 @@
 Changes
 =======
 
+Version 1.4
+-----------
+
+* Change the `TreeFold` data type to give all functions access to `OptionSet`
+* Fix a bug where a looping failure message escaped the time out set for the
+    test
+* Fix a bug where pattern changes inside the `TestTree` weren't respected
+
 Version 1.3.1
 -------------
 
