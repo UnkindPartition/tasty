@@ -33,30 +33,30 @@ cache:
 #     addons: {apt: {packages: [libfcgi-dev,libgmp-dev]}}
 matrix:
   include:
-  - env: BUILD=cabal GHCVER=7.8.4 CABALVER=1.24
-    compiler: ": #GHC 7.8.4"
-    addons: {apt: {packages: [cabal-install-1.24,ghc-7.8.4], sources: [hvr-ghc]}}
-  - env: BUILD=cabal GHCVER=7.10.3 CABALVER=1.24
+  - env: BUILD=cabal GHCVER=7.10.3 CABALVER=2.4
     compiler: ": #GHC 7.10.3"
-    addons: {apt: {packages: [cabal-install-1.24,ghc-7.10.3], sources: [hvr-ghc]}}
-  - env: BUILD=cabal GHCVER=8.0.2 CABALVER=1.24
+    addons: {apt: {packages: [cabal-install-2.4,ghc-7.10.3], sources: [hvr-ghc]}}
+  - env: BUILD=cabal GHCVER=8.0.2 CABALVER=2.4
     compiler: ": #GHC 8.0.2"
-    addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2], sources: [hvr-ghc]}}
-  - env: BUILD=cabal GHCVER=8.2.2 CABALVER=1.24
+    addons: {apt: {packages: [cabal-install-2.4,ghc-8.0.2], sources: [hvr-ghc]}}
+  - env: BUILD=cabal GHCVER=8.2.2 CABALVER=2.4
     compiler: ": #GHC 8.2.2"
-    addons: {apt: {packages: [cabal-install-1.24,ghc-8.2.2], sources: [hvr-ghc]}}
-  - env: BUILD=cabal GHCVER=8.4.2 CABALVER=1.24
+    addons: {apt: {packages: [cabal-install-2.4,ghc-8.2.2], sources: [hvr-ghc]}}
+  - env: BUILD=cabal GHCVER=8.4.2 CABALVER=2.4
     compiler: ": #GHC 8.4.2"
-    addons: {apt: {packages: [cabal-install-1.24,ghc-8.4.2], sources: [hvr-ghc]}}
-  - env: BUILD=cabal GHCVER=8.6.1 CABALVER=1.24
+    addons: {apt: {packages: [cabal-install-2.4,ghc-8.4.2], sources: [hvr-ghc]}}
+  - env: BUILD=cabal GHCVER=8.6.1 CABALVER=2.4
     compiler: ": #GHC 8.6.1"
-    addons: {apt: {packages: [cabal-install-1.24,ghc-8.6.1], sources: [hvr-ghc]}}
-  - env: BUILD=cabal GHCVER=8.8.1 CABALVER=1.24
+    addons: {apt: {packages: [cabal-install-2.4,ghc-8.6.1], sources: [hvr-ghc]}}
+  - env: BUILD=cabal GHCVER=8.8.1 CABALVER=2.4
     compiler: ": #GHC 8.8.1"
-    addons: {apt: {packages: [cabal-install-1.24,ghc-8.8.1], sources: [hvr-ghc]}}
+    addons: {apt: {packages: [cabal-install-2.4,ghc-8.8.1], sources: [hvr-ghc]}}
+  - env: BUILD=cabal GHCVER=8.10.2 CABALVER=2.4
+    compiler: ": #GHC 8.10.2"
+    addons: {apt: {packages: [cabal-install-2.4,ghc-8.10.2], sources: [hvr-ghc]}}
 
-  - env: BUILD=stack ARGS="--resolver nightly-2020-01-30" WARNINGS=true
-    compiler: ": #stack 8.8.2"
+  - env: BUILD=stack ARGS="--resolver nightly-2020-10-23" WARNINGS=true
+    compiler: ": #stack 8.10.2"
     addons: {apt: {packages: [libgmp-dev]}}
 
 before_install:
@@ -103,9 +103,6 @@ install:
 
       # Get the list of packages from the stack.yaml file
       PACKAGES=$(stack --install-ghc query locals | grep '^ *path' | sed 's@^ *path:@@' | grep -v 'core-tests')
-
-      # don't use -O0 here; see https://github.com/haskell/primitive/issues/177
-      cabal install primitive
       ;;
   esac
   set +ex
@@ -138,7 +135,7 @@ script:
         # compatible with older versions of ghc
         if [ "$dir" != core-tests ]; then
           cd $dir
-          cabal sdist
+          cabal v1-sdist
           PKGVER=$(cabal info . | awk '{print $2;exit}')
           SRC_TGZ=$PKGVER.tar.gz
           cd dist
@@ -146,11 +143,11 @@ script:
           cd "$PKGVER"
           if [ "$GHCVER" = 7.8.4 ] # protects about pcre-light breakage
           then
-            cabal configure
+            cabal v1-configure
           else
-            cabal configure --enable-tests
+            cabal v1-configure --enable-tests
           fi
-          cabal build
+          cabal v1-build
           cd $ORIGDIR
         fi
       done
