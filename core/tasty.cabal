@@ -46,6 +46,7 @@ library
     Test.Tasty.Patterns.Parser
     Test.Tasty.Patterns.Eval
   other-modules:
+    Control.Concurrent.Async
     Test.Tasty.Parallel,
     Test.Tasty.Core,
     Test.Tasty.Options.Core,
@@ -66,7 +67,6 @@ library
     tagged >= 0.5,
     optparse-applicative >= 0.14,
     unbounded-delays >= 0.1,
-    async >= 2.0,
     ansi-terminal >= 0.9
   if(!impl(ghc >= 8.0))
     build-depends: semigroups
