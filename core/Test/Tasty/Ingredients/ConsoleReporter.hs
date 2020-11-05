@@ -41,7 +41,7 @@ import Test.Tasty.Runners.Utils
 import Text.Printf
 import qualified Data.IntMap as IntMap
 import Data.Char
-#ifdef UNIX
+#ifdef VERSION_wcwidth
 import Data.Char.WCWidth (wcwidth)
 #endif
 import Data.Maybe
@@ -612,7 +612,7 @@ computeAlignment opts =
 --   (This only works properly on Unix at the moment; on Windows, the function
 --   treats every character as width-1 like 'Data.List.length' does.)
 stringWidth :: String -> Int
-#ifdef UNIX
+#ifdef VERSION_wcwidth
 stringWidth = Prelude.sum . map charWidth
  where charWidth c = case wcwidth c of
         -1 -> 1  -- many chars have "undefined" width; default to 1 for these.

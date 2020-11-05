@@ -19,7 +19,7 @@ import qualified System.Clock as Clock
 #endif
 
 -- Install handlers only on UNIX
-#define INSTALL_HANDLERS defined __UNIX__
+#define INSTALL_HANDLERS defined VERSION_unix
 
 #if INSTALL_HANDLERS
 import System.Posix.Signals
