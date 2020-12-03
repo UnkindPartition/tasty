@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable,
+{-# LANGUAGE CPP, ScopedTypeVariables, DeriveDataTypeable,
              ExistentialQuantification, GADTs,
              FlexibleInstances, UndecidableInstances,
              TypeOperators #-}
@@ -40,6 +40,9 @@ import qualified Data.Semigroup (Semigroup((<>)))
 #endif
 #if !MIN_VERSION_base(4,5,0)
 import Data.Semigroup (Semigroup((<>)))
+#endif
+#if !MIN_VERSION_base(4,4,0)
+import Data.Orphans ()
 #endif
 
 -- | An option is a data type that inhabits the `IsOption` type class.

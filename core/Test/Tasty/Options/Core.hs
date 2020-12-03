@@ -18,6 +18,9 @@ import GHC.Conc
 #if !MIN_VERSION_base(4,11,0)
 import Data.Semigroup (Semigroup((<>)))
 #endif
+#if !MIN_VERSION_base(4,4,0)
+import Data.Orphans ()
+#endif
 
 import Test.Tasty.Options
 import Test.Tasty.Patterns

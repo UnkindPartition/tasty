@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE CPP, GeneralizedNewtypeDeriving #-}
 -- | See <http://pubs.opengroup.org/onlinepubs/9699919799/utilities/awk.html> for the
 -- full awk grammar.
 module Test.Tasty.Patterns.Parser
@@ -20,6 +20,9 @@ import Control.Applicative
 import Control.Monad
 import Test.Tasty.Patterns.Types
 import Test.Tasty.Patterns.Expr
+#if !MIN_VERSION_base(4,6,0)
+import Data.Orphans ()
+#endif
 
 type Token = ReadP
 
