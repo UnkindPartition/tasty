@@ -332,7 +332,7 @@ statusMapResult lookahead0 smap
   | IntMap.null smap = return True
   | otherwise =
       join . atomically $
-        IntMap.foldrWithKey f finish smap mempty lookahead0
+        foldr (uncurry f) finish (IntMap.toAscList smap) mempty lookahead0
   where
     f :: Int
       -> TVar Status
