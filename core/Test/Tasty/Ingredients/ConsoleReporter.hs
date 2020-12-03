@@ -46,7 +46,8 @@ import Data.Char.WCWidth (wcwidth)
 #endif
 import Data.Maybe
 import Data.Monoid (Any(..))
-import Data.Typeable
+import Data.Proxy (Proxy(..))
+import Data.Typeable (Typeable)
 import Options.Applicative hiding (action, str, Success, Failure)
 import System.IO
 import System.Console.ANSI

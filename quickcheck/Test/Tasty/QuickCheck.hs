@@ -45,7 +45,8 @@ import Test.QuickCheck hiding -- for re-export
   , verboseCheckAll
   )
 
-import Data.Typeable
+import Data.Proxy (Proxy(..))
+import Data.Typeable (Typeable)
 import Data.List
 import Text.Printf
 import Test.QuickCheck.Random (mkQCGen)
