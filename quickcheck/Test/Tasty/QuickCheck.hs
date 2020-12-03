@@ -73,7 +73,7 @@ testProperties name = testGroup name . map (uncurry testProperty)
 
 -- | Number of test cases for QuickCheck to generate
 newtype QuickCheckTests = QuickCheckTests Int
-  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+  deriving (Num, Ord, Eq, Real, Enum, Integral, Show, Typeable)
 
 newtype QuickCheckReplay = QuickCheckReplay (Maybe Int)
   deriving (Typeable)
@@ -84,11 +84,11 @@ newtype QuickCheckShowReplay = QuickCheckShowReplay Bool
 
 -- | Size of the biggest test cases
 newtype QuickCheckMaxSize = QuickCheckMaxSize Int
-  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+  deriving (Num, Ord, Eq, Real, Enum, Integral, Show, Typeable)
 
 -- | Maximum number of of discarded tests per successful test before giving up.
 newtype QuickCheckMaxRatio = QuickCheckMaxRatio Int
-  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+  deriving (Num, Ord, Eq, Real, Enum, Integral, Show, Typeable)
 
 -- | Show the test cases that QuickCheck generates
 newtype QuickCheckVerbose = QuickCheckVerbose Bool
@@ -96,7 +96,7 @@ newtype QuickCheckVerbose = QuickCheckVerbose Bool
 
 -- | Number of shrinks allowed before QuickCheck will fail a test.
 newtype QuickCheckMaxShrinks = QuickCheckMaxShrinks Int
-  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+  deriving (Num, Ord, Eq, Real, Enum, Integral, Show, Typeable)
 
 instance IsOption QuickCheckTests where
   defaultValue = 100

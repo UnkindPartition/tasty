@@ -25,7 +25,7 @@ testProperty name prop = singleTest name $ (SC.test prop :: SC.Property IO)
 
 -- | The \"depth\" parameter for SmallCheck
 newtype SmallCheckDepth = SmallCheckDepth Int
-  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+  deriving (Num, Ord, Eq, Real, Enum, Integral, Show, Typeable)
 
 instance IsOption SmallCheckDepth where
   defaultValue = 5

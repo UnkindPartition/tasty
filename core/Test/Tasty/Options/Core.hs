@@ -30,7 +30,7 @@ import Test.Tasty.Patterns
 -- reporters are handled already involves parallelism. Other ingredients
 -- may also choose to include this option.
 newtype NumThreads = NumThreads { getNumThreads :: Int }
-  deriving (Eq, Ord, Num, Typeable)
+  deriving (Eq, Ord, Num, Show, Typeable)
 instance IsOption NumThreads where
   defaultValue = NumThreads numCapabilities
   parseValue = mfilter onlyPositive . fmap NumThreads . safeRead
