@@ -75,11 +75,15 @@ library
     ansi-terminal >= 0.9
   if(!impl(ghc >= 8.0))
     build-depends: semigroups
+  if(!impl(ghc >= 7.6))
+    build-depends: ghc-prim
+  if(!impl(ghc >= 7.2))
+    build-depends: unbounded-delays < 0.1.0.10
 
   if flag(clock)
     build-depends: clock >= 0.4.4.0
   else
-    build-depends: time >= 1.4
+    build-depends: time
 
   if !os(windows) && !impl(ghcjs)
     build-depends: wcwidth
