@@ -1,7 +1,11 @@
 -- | Core types and definitions
 {-# LANGUAGE GeneralizedNewtypeDeriving, FlexibleContexts,
              ExistentialQuantification, RankNTypes, DeriveDataTypeable, NoMonomorphismRestriction,
-             DeriveGeneric #-}
+             CPP #-}
+#if __GLASGOW_HASKELL__ >= 702
+{-# LANGUAGE DeriveGeneric #-}
+#endif
+
 module Test.Tasty.Core where
 
 import Control.Exception
@@ -43,7 +47,11 @@ data FailureReason
 data Outcome
   = Success -- ^ test succeeded
   | Failure FailureReason -- ^ test failed because of the 'FailureReason'
+#if __GLASGOW_HASKELL__ >= 702
   deriving (Show, Generic)
+#else
+  deriving (Show)
+#endif
 
 -- | Time in seconds. Used to measure how long the tests took to run.
 type Time = Double
