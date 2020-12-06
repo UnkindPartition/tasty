@@ -5,7 +5,6 @@ module Test.Tasty.Runners.Utils where
 
 import Control.Exception
 import Control.Applicative
-import Control.Concurrent (mkWeakThreadId, myThreadId)
 import Control.Monad (forM_)
 #ifndef VERSION_clock
 import Data.Time.Clock.POSIX (getPOSIXTime)
@@ -18,10 +17,12 @@ import Foreign.C (CInt)
 import qualified System.Clock as Clock
 #endif
 
--- Install handlers only on UNIX
-#define INSTALL_HANDLERS defined VERSION_unix
+-- Install handlers only on UNIX and on GHC >= 7.6
+-- because GHC 7.4 lacks mkWeakThreadId (see #181).
+#define INSTALL_HANDLERS defined VERSION_unix && MIN_VERSION_base(4,6,0)
 
 #if INSTALL_HANDLERS
+import Control.Concurrent (mkWeakThreadId, myThreadId)
 import System.Posix.Signals
 import System.Mem.Weak (deRefWeak)
 #endif
