@@ -15,7 +15,7 @@
 -- >    -- assertion no. 3 (would have failed, but won't be executed because
 -- >    -- the previous assertion has already failed)
 -- >    "foo" @?= "bar"
-{-# LANGUAGE TypeFamilies, DeriveDataTypeable #-}
+{-# LANGUAGE CPP, TypeFamilies, DeriveDataTypeable #-}
 module Test.Tasty.HUnit
   (
     -- * Constructing test cases
@@ -33,6 +33,7 @@ module Test.Tasty.HUnit
     -- * Data types
   , Assertion
   , HUnitFailure(..)
+#if MIN_VERSION_base(4,5,0)
     -- * Accurate location for domain-specific assertion functions
     -- | It is common to define domain-specific assertion functions based
     -- on the standard ones, e.g.
@@ -50,6 +51,7 @@ module Test.Tasty.HUnit
     -- > assertNonEmpty = assertBool "List is empty" . not . null
     --
     , HasCallStack
+#endif
     -- * Deprecated functions and types
     -- | These definitions come from HUnit, but I don't see why one would
     -- need them. If you have a valid use case for them, please contact me
@@ -65,9 +67,14 @@ import Test.Tasty.Providers
 import Test.Tasty.HUnit.Orig
 import Test.Tasty.HUnit.Steps
 
-import Data.Typeable
-import Data.CallStack (HasCallStack)
 import Control.Exception
+import Data.Typeable
+
+#if MIN_VERSION_base(4,5,0)
+import Data.CallStack (HasCallStack)
+#else
+#define HasCallStack Eq ()
+#endif
 
 -- | Turn an 'Assertion' into a tasty test case
 testCase :: TestName -> Assertion -> TestTree

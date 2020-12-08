@@ -1,7 +1,8 @@
-{-# LANGUAGE DeriveDataTypeable, FlexibleInstances, TypeSynonymInstances #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, FlexibleContexts, FlexibleInstances, TypeSynonymInstances #-}
 
--- required for HasCallStack by different versions of GHC
-{-# LANGUAGE ConstraintKinds, FlexibleContexts #-}
+#if MIN_VERSION_base(4,5,0)
+{-# LANGUAGE ConstraintKinds #-}
+#endif
 
 -- | This is the code copied from the original hunit package (v. 1.2.5.2).
 -- with minor modifications
@@ -10,7 +11,27 @@ module Test.Tasty.HUnit.Orig where
 import qualified Control.Exception as E
 import Control.Monad
 import Data.Typeable (Typeable)
+
+#if MIN_VERSION_base(4,5,0)
 import Data.CallStack
+#else
+#define HasCallStack Eq ()
+
+callStack :: [a]
+callStack = []
+
+-- https://hackage.haskell.org/package/base-4.14.0.0/docs/GHC-Stack.html#t:SrcLoc
+data SrcLoc = SrcLoc
+  { srcLocPackage   :: String
+  , srcLocModule    :: String
+  , srcLocFile      :: String
+  , srcLocStartLine :: Int
+  , srcLocStartCol  :: Int
+  , srcLocEndLine   :: Int
+  , srcLocEndCol    :: Int
+  } deriving (Eq, Show)
+
+#endif
 
 -- Interfaces
 -- ----------
