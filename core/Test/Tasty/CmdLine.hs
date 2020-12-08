@@ -11,7 +11,7 @@ import Control.Arrow
 import Control.Monad
 import Data.Maybe
 import Data.Proxy
-import Data.Typeable (typeRep)
+import Data.Typeable (typeOf1)
 import Options.Applicative
 import Options.Applicative.Common (evalParser)
 import qualified Options.Applicative.Types as Applicative (Option(..))
@@ -97,7 +97,7 @@ finalizeCLParser _ p = (warnings, setCLParserShowDefaultValue mbDef p)
 
     prov :: String
     prov = "WARNING (in the IsOption instance for "
-             ++ show (typeRep (Proxy :: Proxy v)) ++ "):"
+             ++ show (typeOf1 (Proxy :: Proxy v)) ++ "):"
 
 -- Replace an `optionCLParser`'s 'propShowDefault' with 'showDefaultValue' from
 -- the 'IsOption' class. It's tempting to try doing this when constructing the
