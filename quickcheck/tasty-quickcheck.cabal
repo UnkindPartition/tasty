@@ -26,7 +26,7 @@ library
   exposed-modules:     Test.Tasty.QuickCheck
   -- other-modules:
   other-extensions:    GeneralizedNewtypeDeriving, DeriveDataTypeable
-  build-depends:       base >= 4.7 && < 5, tagged, tasty >= 1.0.1, random, QuickCheck >= 2.10,
+  build-depends:       base >= 4.3 && < 5, tagged, tasty >= 1.0.1, random, QuickCheck >= 2.10,
                        optparse-applicative
 
   -- hs-source-dirs:
