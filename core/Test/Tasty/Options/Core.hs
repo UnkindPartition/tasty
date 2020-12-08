@@ -16,7 +16,7 @@ import Data.Fixed
 import Options.Applicative hiding (str)
 import GHC.Conc
 #if !MIN_VERSION_base(4,11,0)
-import Data.Monoid
+import Data.Semigroup (Semigroup((<>)))
 #endif
 
 import Test.Tasty.Options

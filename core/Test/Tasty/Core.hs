@@ -16,6 +16,10 @@ import Test.Tasty.Patterns.Types
 import Data.Foldable
 import qualified Data.Sequence as Seq
 import Data.Monoid
+#if !MIN_VERSION_base(4,11,0)
+import Data.Semigroup (Semigroup)
+import qualified Data.Semigroup (Semigroup((<>)))
+#endif
 import Data.Typeable
 import qualified Data.Map as Map
 import Data.Tagged

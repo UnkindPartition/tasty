@@ -20,8 +20,9 @@ import Prelude  -- Silence AMP and FTP import warnings
 import System.Exit
 import System.IO
 #if !MIN_VERSION_base(4,11,0)
-import Data.Monoid
 import Data.Foldable (foldMap)
+import Data.Monoid (mempty)
+import Data.Semigroup (Semigroup((<>)))
 #endif
 
 import Test.Tasty.Core

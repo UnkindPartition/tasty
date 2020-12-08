@@ -38,6 +38,9 @@ import Options.Applicative
 import Data.Semigroup (Semigroup)
 import qualified Data.Semigroup (Semigroup((<>)))
 #endif
+#if !MIN_VERSION_base(4,5,0)
+import Data.Semigroup (Semigroup((<>)))
+#endif
 
 -- | An option is a data type that inhabits the `IsOption` type class.
 class Typeable v => IsOption v where
