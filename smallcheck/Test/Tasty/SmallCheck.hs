@@ -1,6 +1,6 @@
 -- | This module allows to use SmallCheck properties in tasty.
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FlexibleContexts,
-             TypeOperators, DeriveDataTypeable, TypeFamilies, PatternGuards,
+             TypeOperators, DeriveDataTypeable, TypeFamilies,
              GeneralizedNewtypeDeriving #-}
 module Test.Tasty.SmallCheck
   ( testProperty
@@ -28,10 +28,6 @@ testProperty name prop = singleTest name $ (SC.test prop :: SC.Property IO)
 newtype SmallCheckDepth = SmallCheckDepth Int
   deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
 
--- | The maximum test count
-newtype SmallCheckMaxCount = SmallCheckMaxCount Int
-  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
-
 instance IsOption SmallCheckDepth where
   defaultValue = 5
   parseValue = fmap SmallCheckDepth . safeRead
@@ -39,15 +35,23 @@ instance IsOption SmallCheckDepth where
   optionHelp = return "Depth to use for smallcheck tests"
   optionCLParser = mkOptionCLParser $ metavar "NUMBER"
 
+-- | The maximum number of test cases to generate. Can be used as an
+-- alternative to setting 'SmallCheckDepth'.
+newtype SmallCheckMaxCount = SmallCheckMaxCount Int
+  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+
 instance IsOption SmallCheckMaxCount where
-  defaultValue = 256
+  defaultValue = SmallCheckMaxCount maxBound -- disable by default
   parseValue = fmap SmallCheckMaxCount . safeRead
   optionName = return "smallcheck-max-count"
   optionHelp = return "Maximum smallcheck test count"
   optionCLParser = mkOptionCLParser $ metavar "NUMBER"
 
 instance IsTest (SC.Property IO) where
-  testOptions = return [Option (Proxy :: Proxy SmallCheckDepth), Option (Proxy :: Proxy SmallCheckMaxCount)]
+  testOptions = return
+    [ Option (Proxy :: Proxy SmallCheckDepth)
+    , Option (Proxy :: Proxy SmallCheckMaxCount)
+    ]
 
   run opts prop yieldProgress = do
     let
@@ -66,7 +70,7 @@ instance IsTest (SC.Property IO) where
 
         count <- myAtomicModifyIORef' counter (\c -> let c' = inc c in (c', fst c'))
 
-        when (count >= maxCount) $ throw Finish
+        when (count >= maxCount) $ throwIO Finish
 
         -- submit progress data to tasty
         yieldProgress $ Progress

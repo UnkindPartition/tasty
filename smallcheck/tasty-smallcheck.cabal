@@ -1,6 +1,6 @@
 Name:                tasty-smallcheck
 Version:             0.8.1
-Cabal-Version:       >= 1.6
+Cabal-Version:       >= 1.10
 Category:            Testing
 Synopsis:            SmallCheck support for the Tasty test framework.
 Description:         SmallCheck support for the Tasty test framework.
@@ -27,4 +27,5 @@ Library
                                 tagged,
                                 optparse-applicative
         ghc-options: -Wall -fno-warn-orphans
+        default-language: Haskell2010
         default-extensions: CPP
