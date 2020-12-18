@@ -1,6 +1,21 @@
 Changes
 =======
 
+Version 1.4.0.1
+---------------
+
+The only point of this release is to introduce compatibility with GHCs back to 7.0
+(see https://github.com/feuerbach/tasty/pull/287).
+
+Note, however, that these changes are not merged to the master branch, and the
+future releases will only support the GHC/base versions from the last 5 years,
+as per our usual policy. To test with even older GHCs, you'll have to use this
+particular version of tasty (or have the constraint solver pick it for you when
+testing with older GHCs).
+
+The source of this release is in the `support-old-ghcs` branch of the tasty
+repository.
+
 Version 1.4
 -----------
 
