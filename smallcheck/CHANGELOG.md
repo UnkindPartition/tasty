@@ -2,6 +2,12 @@
 Changes
 =======
 
+Version 0.8.2
+-------------
+
+Add a `--smallcheck-max-count` option, which limits the number of test cases for
+a given property test
+
 Version 0.8.1
 -------------
 
