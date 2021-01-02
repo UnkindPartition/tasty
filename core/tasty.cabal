@@ -76,7 +76,7 @@ library
   if(!impl(ghc >= 8.0))
     build-depends: semigroups
 
-  if flag(clock)
+  if flag(clock) && !impl(ghcjs)
     build-depends: clock >= 0.4.4.0
   else
     build-depends: time >= 1.4
