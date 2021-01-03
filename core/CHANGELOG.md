@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 1.4.0.2
+---------------
+
+Automatically disable the dependency on the `clock` package when compiled by ghcjs.
+
 Version 1.4.0.1
 ---------------
 
