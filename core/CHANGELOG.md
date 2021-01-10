@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 1.4.0.3
+---------------
+
+Fix CPP warning/error `macro expansion producing 'defined' has undefined behavior`
+
 Version 1.4.0.2
 ---------------
 
