@@ -32,7 +32,7 @@ library
   other-modules:       Test.Tasty.HUnit.Orig
                        Test.Tasty.HUnit.Steps
   other-extensions:    TypeFamilies, DeriveDataTypeable
-  build-depends:       base >= 4.7 && < 5, tasty >= 1.2.2, call-stack
+  build-depends:       base >= 4.8 && < 5, tasty >= 1.2.2, call-stack
   -- hs-source-dirs:      
   default-language:    Haskell2010
   ghc-options: -Wall
