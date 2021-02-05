@@ -15,6 +15,7 @@ module Test.Tasty.Options
   , lookupOption
   , singleOption
   , OptionDescription(..)
+  , uniqueOptionDescriptions
     -- * Utilities
   , flagCLParser
   , mkFlagCLParser
@@ -32,6 +33,7 @@ import Data.Proxy
 import Data.Typeable
 import Data.Monoid
 import Data.Foldable
+import qualified Data.Set as S
 import Prelude hiding (mod) -- Silence FTP import warnings
 import Options.Applicative
 #if !MIN_VERSION_base(4,11,0)
@@ -128,6 +130,15 @@ singleOption v = setOption v mempty
 -- corresponding to a particular option.
 data OptionDescription where
   Option :: IsOption v => Proxy v -> OptionDescription
+
+-- | Remove duplicated 'OptionDescription', preserving existing order otherwise
+uniqueOptionDescriptions :: [OptionDescription] -> [OptionDescription]
+uniqueOptionDescriptions = go S.empty
+  where
+    go _ [] = []
+    go acc (Option o : os)
+      | typeOf o `S.member` acc = go acc os
+      | otherwise = Option o : go (S.insert (typeOf o) acc) os
 
 -- | Command-line parser to use with flags
 flagCLParser
