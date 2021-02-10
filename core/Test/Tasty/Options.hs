@@ -132,6 +132,8 @@ data OptionDescription where
   Option :: IsOption v => Proxy v -> OptionDescription
 
 -- | Remove duplicated 'OptionDescription', preserving existing order otherwise
+--
+-- @since 1.4.1
 uniqueOptionDescriptions :: [OptionDescription] -> [OptionDescription]
 uniqueOptionDescriptions = go S.empty
   where

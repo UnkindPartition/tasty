@@ -1,6 +1,12 @@
 Changes
 =======
 
+Version 1.4.1
+-------------
+
+Deduplicate command line options when there is more than one TestReporter.
+Expose the function that does that, `uniqueOptionDescriptions`.
+
 Version 1.4.0.3
 ---------------
 
