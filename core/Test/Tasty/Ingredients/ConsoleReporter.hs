@@ -3,6 +3,7 @@
 -- | Console reporter ingredient
 module Test.Tasty.Ingredients.ConsoleReporter
   ( consoleTestReporter
+  , consoleTestReporterWithHook
   , Quiet(..)
   , HideSuccesses(..)
   , AnsiTricks(..)
@@ -86,6 +87,16 @@ instance Monoid TestOutput where
   mappend = Seq
 instance Semigroup TestOutput where
   (<>) = mappend
+
+applyHook :: ([TestName] -> Result -> IO Result) -> TestOutput -> TestOutput
+applyHook hook = go []
+  where
+    go path (PrintTest name printName printResult) =
+      PrintTest name printName (printResult <=< hook (name : path))
+    go path (PrintHeading name printName printBody) =
+      PrintHeading name printName (go (name : path) printBody)
+    go path (Seq a b) = Seq (go path a) (go path b)
+    go _ Skip = mempty
 
 type Level = Int
 
@@ -377,7 +388,17 @@ statusMapResult lookahead0 smap
 
 -- | A simple console UI
 consoleTestReporter :: Ingredient
-consoleTestReporter =
+consoleTestReporter = consoleTestReporterWithHook (const return)
+
+-- | A simple console UI with a hook to postprocess results,
+-- depending on their names and external conditions
+-- (e. g., its previous outcome, stored in a file).
+-- Names are listed in reverse order:
+-- from test's own name to a name of the outermost test group.
+--
+-- @since 1.4.2.0
+consoleTestReporterWithHook :: ([TestName] -> Result -> IO Result) -> Ingredient
+consoleTestReporterWithHook hook =
   TestReporter
     [ Option (Proxy :: Proxy Quiet)
     , Option (Proxy :: Proxy HideSuccesses)
@@ -413,7 +434,7 @@ consoleTestReporter =
             ?colors = useColor whenColor isTermColor
 
           let
-            toutput = buildTestOutput opts tree
+            toutput = applyHook hook $ buildTestOutput opts tree
 
           case () of { _
             | hideSuccesses && isTerm && ansiTricks ->
