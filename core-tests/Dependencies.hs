@@ -131,7 +131,7 @@ resourceDependenciesTest = testCase "Resource+dependencies interaction" $ do
     return $ const $ return ()
 
 -- An example with resources and dependencies, from
--- https://github.com/feuerbach/tasty/issues/48#issuecomment-430541146
+-- https://github.com/UnkindPartition/tasty/issues/48#issuecomment-430541146
 resDepTree :: TestTree
 resDepTree = testGroup "L1"
   [ withResource (return ()) (const $ return ()) $ const $ testGroup "L2"

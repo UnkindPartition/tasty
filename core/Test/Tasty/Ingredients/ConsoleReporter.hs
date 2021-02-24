@@ -495,9 +495,9 @@ instance IsOption UseColor where
 -- These tricks sometimes fail, however—in particular, when the test names
 -- happen to be longer than the width of the terminal window. See
 --
--- * <https://github.com/feuerbach/tasty/issues/152>
+-- * <https://github.com/UnkindPartition/tasty/issues/152>
 --
--- * <https://github.com/feuerbach/tasty/issues/250>
+-- * <https://github.com/UnkindPartition/tasty/issues/250>
 --
 -- When that happens, this option can be used to disable the tricks. In
 -- that case, the test name will be printed only once the test fails.

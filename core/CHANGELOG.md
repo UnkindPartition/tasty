@@ -21,7 +21,7 @@ Version 1.4.0.1
 ---------------
 
 The only point of this release is to introduce compatibility with GHCs back to 7.0
-(see https://github.com/feuerbach/tasty/pull/287).
+(see https://github.com/UnkindPartition/tasty/pull/287).
 
 Note, however, that these changes are not merged to the master branch, and the
 future releases will only support the GHC/base versions from the last 5 years,
@@ -120,7 +120,7 @@ The new patterns have been around for a relatively short time (5 months), so
 hopefully the breakage won't be too big. I'm sorry about any problems caused by
 the change.
 
-See <https://github.com/feuerbach/tasty/issues/220> for the discussion.
+See <https://github.com/UnkindPartition/tasty/issues/220> for the discussion.
 
 * The field separator in patterns is changed from slash (`/`) to period (`.`),
   and `.` is now allowed in raw patterns.
@@ -345,7 +345,7 @@ Version 0.8.1.3
 ---------------
 
 Be careful not to export the `Show (a -> b)` instance, see
-<https://github.com/feuerbach/tasty/issues/71>
+<https://github.com/UnkindPartition/tasty/issues/71>
 
 Version 0.8.1.2
 ---------------
@@ -449,7 +449,7 @@ Print the failure description in red
 Version 0.4.0.1
 ---------------
 
-Fix a bug ([#25](https://github.com/feuerbach/tasty/issues/25))
+Fix a bug ([#25](https://github.com/UnkindPartition/tasty/issues/25))
 
 Version 0.4
 -----------

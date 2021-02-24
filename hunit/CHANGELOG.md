@@ -5,7 +5,7 @@ Version 0.10.0.3
 ----------------
 
 The only point of this release is to introduce compatibility with GHCs back to 7.0
-(see https://github.com/feuerbach/tasty/pull/287).
+(see https://github.com/UnkindPartition/tasty/pull/287).
 
 Note, however, that these changes are not merged to the master branch, and the
 future releases will only support the GHC/base versions from the last 5 years,

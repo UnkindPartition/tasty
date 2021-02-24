@@ -18,7 +18,7 @@ Features:
 
 To find out what's new, read the **[change log][]**.
 
-[change log]: https://github.com/feuerbach/tasty/blob/master/core/CHANGELOG.md
+[change log]: https://github.com/UnkindPartition/tasty/blob/master/core/CHANGELOG.md
 
 ## Example
 
@@ -75,7 +75,7 @@ unitTests = testGroup "Unit tests"
 
 And here is the output of the above program:
 
-![](https://raw.github.com/feuerbach/tasty/master/screenshot.png)
+![](https://raw.github.com/UnkindPartition/tasty/master/screenshot.png)
 
 (Note that whether QuickCheck finds a counterexample to the third property is
 determined by chance.)
@@ -768,7 +768,7 @@ Here are some caveats to keep in mind regarding dependencies in Tasty:
 
     **A**: It is not recommended that you print anything to the console when using the
     console test reporter (which is the default one).
-    See [#103](https://github.com/feuerbach/tasty/issues/103) for the
+    See [#103](https://github.com/UnkindPartition/tasty/issues/103) for the
     discussion.
 
     Some ideas on how to work around this:
@@ -784,7 +784,7 @@ Here are some caveats to keep in mind regarding dependencies in Tasty:
     output. A workaround is to disable ANSI tricks: pass `--ansi-tricks=false`
     on the command line or set `TASTY_ANSI_TRICKS=false` in the environment.
 
-    See [issue #152](https://github.com/feuerbach/tasty/issues/152).
+    See [issue #152](https://github.com/UnkindPartition/tasty/issues/152).
 
 ## Press
 
@@ -815,7 +815,7 @@ We only support the GHC/base versions [from the last 5 years](https://wiki.haske
 Maintainers
 -----------
 
-[Roman Cheplyaka](https://github.com/feuerbach) is the primary maintainer.
+[Roman Cheplyaka](https://github.com/UnkindPartition) is the primary maintainer.
 
 [Oliver Charles](https://github.com/ocharles) is the backup maintainer. Please
 get in touch with him if the primary maintainer cannot be reached.

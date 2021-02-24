@@ -12,8 +12,8 @@ license:             MIT
 license-file:        LICENSE
 author:              Roman Cheplyaka <roma@ro-che.info>
 maintainer:          Roman Cheplyaka <roma@ro-che.info>
-homepage:            https://github.com/feuerbach/tasty
-bug-reports:         https://github.com/feuerbach/tasty/issues
+homepage:            https://github.com/UnkindPartition/tasty
+bug-reports:         https://github.com/UnkindPartition/tasty/issues
 -- copyright:
 category:            Testing
 build-type:          Simple
@@ -22,7 +22,7 @@ cabal-version:       >=1.10
 
 Source-repository head
   type:     git
-  location: git://github.com/feuerbach/tasty.git
+  location: git://github.com/UnkindPartition/tasty.git
   subdir:   core
 
 flag clock

@@ -102,7 +102,7 @@ instance IsOption QuickCheckTests where
   defaultValue = 100
   parseValue =
     -- We allow numeric underscores for readability; see
-    -- https://github.com/feuerbach/tasty/issues/263
+    -- https://github.com/UnkindPartition/tasty/issues/263
     fmap QuickCheckTests . safeRead . filter (/= '_')
   optionName = return "quickcheck-tests"
   optionHelp = return "Number of test cases for QuickCheck to generate. Underscores accepted: e.g. 10_000_000"

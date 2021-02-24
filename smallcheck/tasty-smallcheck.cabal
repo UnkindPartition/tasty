@@ -8,14 +8,14 @@ License:             MIT
 License-File:        LICENSE
 Author:              Roman Cheplyaka <roma@ro-che.info>
 Maintainer:          Roman Cheplyaka <roma@ro-che.info>
-Homepage:            https://github.com/feuerbach/tasty
-Bug-reports:         https://github.com/feuerbach/tasty/issues
+Homepage:            https://github.com/UnkindPartition/tasty
+Bug-reports:         https://github.com/UnkindPartition/tasty/issues
 Build-Type:          Simple
 extra-source-files:  CHANGELOG.md
 
 Source-repository head
   type:     git
-  location: git://github.com/feuerbach/tasty.git
+  location: git://github.com/UnkindPartition/tasty.git
   subdir:   smallcheck
 
 Library

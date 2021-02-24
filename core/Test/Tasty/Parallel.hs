@@ -47,7 +47,7 @@ runInParallel nthreads actions = do
   -- Don't let the main thread be garbage-collected
   -- Otherwise we may get a "thread blocked indefinitely in an STM
   -- transaction" exception when a child thread is blocked and GC'd.
-  -- (See e.g. https://github.com/feuerbach/tasty/issues/15)
+  -- (See e.g. https://github.com/UnkindPartition/tasty/issues/15)
   -- FIXME is this still needed?
   _ <- newStablePtr callingThread
 

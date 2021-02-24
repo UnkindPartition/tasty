@@ -21,7 +21,7 @@
 -- >      assertBool "Oops, 7 is odd" (even 7)
 -- >  ]
 --
--- Take a look at the <https://github.com/feuerbach/tasty#readme README>:
+-- Take a look at the <https://github.com/UnkindPartition/tasty#readme README>:
 -- it contains a comprehensive list of test providers, a bigger example,
 -- and a lot of other information.
 
