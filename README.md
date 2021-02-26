@@ -182,10 +182,11 @@ Mmm... tasty test suite
 Usage: test [-p|--pattern PATTERN] [-t|--timeout DURATION] [-l|--list-tests]
             [-j|--num-threads NUMBER] [-q|--quiet] [--hide-successes]
             [--color never|always|auto] [--ansi-tricks ARG]
-            [--smallcheck-depth NUMBER] [--quickcheck-tests NUMBER]
-            [--quickcheck-replay SEED] [--quickcheck-show-replay]
-            [--quickcheck-max-size NUMBER] [--quickcheck-max-ratio NUMBER]
-            [--quickcheck-verbose] [--quickcheck-shrinks NUMBER]
+            [--smallcheck-depth NUMBER] [--smallcheck-max-count NUMBER]
+            [--quickcheck-tests NUMBER] [--quickcheck-replay SEED]
+            [--quickcheck-show-replay] [--quickcheck-max-size NUMBER]
+            [--quickcheck-max-ratio NUMBER] [--quickcheck-verbose]
+            [--quickcheck-shrinks NUMBER]
 
 Available options:
   -h,--help                Show this help text
@@ -200,13 +201,16 @@ Available options:
                            the exit code
   --hide-successes         Do not print tests that passed successfully
   --color never|always|auto
-                           When to use colored output (default: 'auto')
+                           When to use colored output (default: auto)
   --ansi-tricks ARG        Enable various ANSI terminal tricks. Can be set to
-                           'true' (default) or 'false'.
+                           'true' or 'false'. (default: true)
   --smallcheck-depth NUMBER
                            Depth to use for smallcheck tests
+  --smallcheck-max-count NUMBER
+                           Maximum smallcheck test count
   --quickcheck-tests NUMBER
-                           Number of test cases for QuickCheck to generate
+                           Number of test cases for QuickCheck to generate.
+                           Underscores accepted: e.g. 10_000_000
   --quickcheck-replay SEED Random seed to use for replaying a previous test run
                            (use same --quickcheck-max-size)
   --quickcheck-show-replay Show a replay token for replaying tests
