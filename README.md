@@ -153,6 +153,9 @@ you
 your tests.
 * [tasty-expected-failure](https://github.com/nomeata/tasty-expected-failure) provides
 test markers for when you expect failures or wish to ignore tests.
+* [tasty-bench](https://hackage.haskell.org/package/tasty-bench) covers performance
+regression testing and extends `tasty` to a benchmark framework
+similar to `criterion` and `gauge`.
 
 
 ## Options
