@@ -103,7 +103,7 @@ The following providers exist:
   (based on [smallcheck](https://hackage.haskell.org/package/smallcheck))
 * [tasty-quickcheck](https://hackage.haskell.org/package/tasty-quickcheck) — for randomized
   property-based testing (based on [QuickCheck](http://hackage.haskell.org/package/QuickCheck))
-* [tasty-hedgehog](https://github.com/qfpl/tasty-hedgehog) — for randomized
+* [tasty-hedgehog](https://hackage.haskell.org/package/tasty-hedgehog) — for randomized
   property-based testing (based on [Hedgehog](https://hackage.haskell.org/package/hedgehog))
 * [tasty-hspec](https://hackage.haskell.org/package/tasty-hspec) — for
   [Hspec](https://hspec.github.io/) tests
@@ -149,9 +149,9 @@ discovers tests based on the function names and generate the boilerplate code fo
 you
 * [tasty-hunit-adapter](https://hackage.haskell.org/package/tasty-hunit-adapter)
   converts existing HUnit test suites into tasty test suites
-* [tasty-discover](https://github.com/lwm/tasty-discover) automatically discovers
+* [tasty-discover](https://hackage.haskell.org/package/tasty-discover) automatically discovers
 your tests.
-* [tasty-expected-failure](https://github.com/nomeata/tasty-expected-failure) provides
+* [tasty-expected-failure](https://hackage.haskell.org/package/tasty-expected-failure) provides
 test markers for when you expect failures or wish to ignore tests.
 * [tasty-bench](https://hackage.haskell.org/package/tasty-bench) covers performance
 regression testing and extends `tasty` to a benchmark framework
