@@ -112,7 +112,11 @@ The following providers exist:
   (based on [LeanCheck](https://hackage.haskell.org/package/leancheck))
 * [tasty-program](https://hackage.haskell.org/package/tasty-program) — run
   external program and test whether it terminates successfully
-* [tasty-wai](https://hackage.haskell.org/package/tasty-wai) - for testing [wai](https://hackage.haskell.org/wai) endpoints.
+* [tasty-wai](https://hackage.haskell.org/package/tasty-wai) — 
+  for testing [wai](https://hackage.haskell.org/wai) endpoints.
+* [tasty-inspection-testing](https://hackage.haskell.org/package/tasty-inspection-testing) —
+  for compile-time testing of code properties
+  (based on [inspection-testing](http://hackage.haskell.org/package/inspection-testing)).
 
 [tasty-golden]: https://hackage.haskell.org/package/tasty-golden
 
