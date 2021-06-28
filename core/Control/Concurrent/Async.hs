@@ -266,4 +266,4 @@ catchAll = Control.Exception.catch
 {-# INLINE rawForkIO #-}
 rawForkIO :: IO () -> IO ThreadId
 rawForkIO action = IO $ \ s ->
-   case (fork# action s) of (# s1, tid #) -> (# s1, ThreadId tid #)
+   case (fork# (unIO action) s) of (# s1, tid #) -> (# s1, ThreadId tid #)
