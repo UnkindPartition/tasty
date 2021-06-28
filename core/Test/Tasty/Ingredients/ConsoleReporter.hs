@@ -26,7 +26,7 @@ module Test.Tasty.Ingredients.ConsoleReporter
   , withConsoleFormat
   ) where
 
-import Prelude hiding (fail)
+import Prelude hiding (fail, EQ)
 import Control.Monad.State hiding (fail)
 import Control.Monad.Reader hiding (fail,reader)
 import Control.Concurrent.STM
@@ -37,6 +37,8 @@ import Test.Tasty.Run
 import Test.Tasty.Ingredients
 import Test.Tasty.Options
 import Test.Tasty.Options.Core
+import Test.Tasty.Patterns.Printer
+import Test.Tasty.Patterns.Types
 import Test.Tasty.Runners.Reducers
 import Test.Tasty.Runners.Utils
 import Text.Printf
@@ -45,6 +47,7 @@ import Data.Char
 #ifdef VERSION_wcwidth
 import Data.Char.WCWidth (wcwidth)
 #endif
+import Data.List (intercalate)
 import Data.Maybe
 import Data.Monoid (Any(..))
 import Data.Typeable
@@ -388,7 +391,15 @@ statusMapResult lookahead0 smap
 
 -- | A simple console UI
 consoleTestReporter :: Ingredient
-consoleTestReporter = consoleTestReporterWithHook (const return)
+consoleTestReporter = consoleTestReporterWithHook ((return .) . appendPatternIfTestFailed)
+
+appendPatternIfTestFailed :: [TestName] -> Result -> Result
+appendPatternIfTestFailed names res = case resultOutcome res of
+  Success -> res
+  Failure{} -> res { resultDescription = resultDescription res ++ msg }
+  where
+    name = intercalate "." (reverse names)
+    msg = "\nUse -p '" ++ printAwkExpr (EQ (Field (IntLit 0)) (StringLit name)) ++ "' to rerun this test only."
 
 -- | A simple console UI with a hook to postprocess results,
 -- depending on their names and external conditions
