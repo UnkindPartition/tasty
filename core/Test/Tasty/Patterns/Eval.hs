@@ -6,7 +6,7 @@ import Control.Monad.Reader
 import Control.Monad.Error.Class (throwError) -- see #201
 import qualified Data.Sequence as Seq
 import Data.Foldable
-import Data.List
+import Data.List hiding (length)
 import Data.Maybe
 import Data.Char
 import Test.Tasty.Patterns.Types
