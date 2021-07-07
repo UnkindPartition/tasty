@@ -29,7 +29,7 @@ newtype Parser a = Parser (ReadP a)
   deriving (Functor, Applicative, Alternative, Monad, MonadPlus)
 
 data ParseResult a = Success a | Invalid | Ambiguous [a]
-  deriving Show
+  deriving (Eq, Show)
 
 token :: Token a -> Parser a
 token a = Parser (a <* skipSpaces)

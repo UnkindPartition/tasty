@@ -1,4 +1,8 @@
+{-# LANGUAGE DeriveGeneric #-}
+
 module Test.Tasty.Patterns.Types where
+
+import GHC.Generics
 
 data Expr
   = IntLit !Int
@@ -27,4 +31,4 @@ data Expr
   | LengthFn (Maybe Expr)
   | MatchFn Expr String
   | SubstrFn Expr Expr (Maybe Expr)
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
