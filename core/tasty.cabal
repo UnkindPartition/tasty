@@ -49,6 +49,7 @@ library
     -- for testing only
     Test.Tasty.Patterns.Types
     Test.Tasty.Patterns.Parser
+    Test.Tasty.Patterns.Printer
     Test.Tasty.Patterns.Eval
   other-modules:
     Control.Concurrent.Async
