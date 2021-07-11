@@ -35,8 +35,10 @@ import Test.Tasty.Core
 import Test.Tasty.Providers.ConsoleFormat
 import Test.Tasty.Run
 import Test.Tasty.Ingredients
+import Test.Tasty.Ingredients.ListTests
 import Test.Tasty.Options
 import Test.Tasty.Options.Core
+import Test.Tasty.Patterns
 import Test.Tasty.Patterns.Printer
 import Test.Tasty.Patterns.Types
 import Test.Tasty.Runners.Reducers
@@ -47,7 +49,7 @@ import Data.Char
 #ifdef VERSION_wcwidth
 import Data.Char.WCWidth (wcwidth)
 #endif
-import Data.List (intercalate)
+import Data.List (isInfixOf)
 import Data.Maybe
 import Data.Monoid (Any(..))
 import Data.Typeable
@@ -391,15 +393,45 @@ statusMapResult lookahead0 smap
 
 -- | A simple console UI
 consoleTestReporter :: Ingredient
-consoleTestReporter = consoleTestReporterWithHook ((return .) . appendPatternIfTestFailed)
+consoleTestReporter = TestReporter consoleTestReporterOptions go
+  where
+    go opts tree = cb opts tree
+      where
+        TestPattern pattern = lookupOption opts
+        tests = testsNames opts tree
+        hook = (return .) . appendPatternIfTestFailed tests pattern
+        TestReporter _ cb = consoleTestReporterWithHook hook
 
-appendPatternIfTestFailed :: [TestName] -> Result -> Result
-appendPatternIfTestFailed names res = case resultOutcome res of
+appendPatternIfTestFailed
+  :: [TestName] -- ^ list of (pre-intercalated) test names
+  -> Maybe Expr -- ^ current pattern, if any
+  -> [TestName] -- ^ name of current test, represented as a list of group names
+  -> Result     -- ^ vanilla result
+  -> Result
+appendPatternIfTestFailed [_] _ _ res = res -- if there is only one test, nothing to refine
+appendPatternIfTestFailed _ _ [] res  = res -- should be impossible
+appendPatternIfTestFailed tests currentPattern (name : names) res = case resultOutcome res of
   Success -> res
   Failure{} -> res { resultDescription = resultDescription res ++ msg }
   where
-    name = intercalate "." (reverse names)
-    msg = "\nUse -p '" ++ printAwkExpr (EQ (Field (IntLit 0)) (StringLit name)) ++ "' to rerun this test only."
+    msg = "\nUse -p '" ++ printAwkExpr pattern ++ "' to rerun this test only."
+
+    findPattern [_] pat _ = ERE pat
+    findPattern _  pat [] = EQ (Field (IntLit 0)) (StringLit pat)
+    findPattern ts pat (n : ns) = let pat' = n ++ '.' : pat in
+      findPattern (filter (pat' `isInfixOf`) ts) pat' ns
+
+    individualPattern = findPattern (filter (name `isInfixOf`) tests) name names
+
+    pattern = maybe id And currentPattern individualPattern
+
+consoleTestReporterOptions :: [OptionDescription]
+consoleTestReporterOptions =
+  [ Option (Proxy :: Proxy Quiet)
+  , Option (Proxy :: Proxy HideSuccesses)
+  , Option (Proxy :: Proxy UseColor)
+  , Option (Proxy :: Proxy AnsiTricks)
+  ]
 
 -- | A simple console UI with a hook to postprocess results,
 -- depending on their names and external conditions
@@ -409,13 +441,7 @@ appendPatternIfTestFailed names res = case resultOutcome res of
 --
 -- @since 1.4.2.0
 consoleTestReporterWithHook :: ([TestName] -> Result -> IO Result) -> Ingredient
-consoleTestReporterWithHook hook =
-  TestReporter
-    [ Option (Proxy :: Proxy Quiet)
-    , Option (Proxy :: Proxy HideSuccesses)
-    , Option (Proxy :: Proxy UseColor)
-    , Option (Proxy :: Proxy AnsiTricks)
-    ] $
+consoleTestReporterWithHook hook = TestReporter consoleTestReporterOptions $
   \opts tree -> Just $ \smap -> do
 
   let
