@@ -98,6 +98,11 @@ newtype QuickCheckVerbose = QuickCheckVerbose Bool
 newtype QuickCheckMaxShrinks = QuickCheckMaxShrinks Int
   deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
 
+-- | Enable QuickCheck's chatty option.
+--
+newtype QuickCheckChatty = QuickCheckChatty Bool
+  deriving (Typeable)
+
 instance IsOption QuickCheckTests where
   defaultValue = 100
   parseValue =
@@ -154,6 +159,13 @@ instance IsOption QuickCheckMaxShrinks where
   optionHelp = return "Number of shrinks allowed before QuickCheck will fail a test"
   optionCLParser = mkOptionCLParser $ metavar "NUMBER"
 
+instance IsOption QuickCheckChatty where
+    defaultValue = QuickCheckChatty False
+    parseValue = fmap QuickCheckChatty . safeReadBool
+    optionName = return "quickcheck-chatty"
+    optionHelp = return "Let QuickCheck report number of tests / shrinks done so far"
+    optionCLParser = flagCLParser Nothing (QuickCheckChatty True)
+
 -- | Convert tasty options into QuickCheck options.
 --
 -- This is a low-level function that was originally added for tasty-hspec
@@ -167,7 +179,7 @@ optionSetToArgs opts = do
     Just seed -> return seed
 
   let args = QC.stdArgs
-        { QC.chatty          = False
+        { QC.chatty          = chatty
         , QC.maxSuccess      = nTests
         , QC.maxSize         = maxSize
         , QC.replay          = Just (mkQCGen replaySeed, 0)
@@ -183,6 +195,7 @@ optionSetToArgs opts = do
     QuickCheckMaxSize    maxSize    = lookupOption opts
     QuickCheckMaxRatio   maxRatio   = lookupOption opts
     QuickCheckMaxShrinks maxShrinks = lookupOption opts
+    QuickCheckChatty     chatty     = lookupOption opts
 
 instance IsTest QC where
   testOptions = return
@@ -193,6 +206,7 @@ instance IsTest QC where
     , Option (Proxy :: Proxy QuickCheckMaxRatio)
     , Option (Proxy :: Proxy QuickCheckVerbose)
     , Option (Proxy :: Proxy QuickCheckMaxShrinks)
+    , Option (Proxy :: Proxy QuickCheckChatty)
     ]
 
   run opts (QC prop) _yieldProgress = do
@@ -201,6 +215,7 @@ instance IsTest QC where
     let
       QuickCheckShowReplay showReplay = lookupOption opts
       QuickCheckVerbose    verbose    = lookupOption opts
+      QuickCheckChatty     chatty     = lookupOption opts
       maxSize = QC.maxSize args
       testRunner = if verbose
                      then QC.verboseCheckWithResult
@@ -219,8 +234,8 @@ instance IsTest QC where
         putReplayInDesc = (not testSuccessful) || showReplay
     return $
       (if testSuccessful then testPassed else testFailed)
-      (qcOutputNl ++
-        (if putReplayInDesc then replayMsg else ""))
+      (   (if chatty then "" else qcOutputNl)
+       ++ (if putReplayInDesc then replayMsg else ""))
 
 successful :: QC.Result -> Bool
 successful r =
