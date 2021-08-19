@@ -414,7 +414,9 @@ appendPatternIfTestFailed tests currentPattern (name : names) res = case resultO
   Success -> res
   Failure{} -> res { resultDescription = resultDescription res ++ msg }
   where
-    msg = "\nUse -p '" ++ printAwkExpr pattern ++ "' to rerun this test only."
+    msg = "\nUse -p '" ++ escapeQuotes (printAwkExpr pattern) ++ "' to rerun this test only."
+
+    escapeQuotes = concatMap $ \c -> if c == '\'' then "'\\''" else [c]
 
     findPattern [_] pat _ = ERE pat
     findPattern _  pat [] = EQ (Field (IntLit 0)) (StringLit pat)
