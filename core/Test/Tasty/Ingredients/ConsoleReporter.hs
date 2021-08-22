@@ -393,14 +393,13 @@ statusMapResult lookahead0 smap
 
 -- | A simple console UI
 consoleTestReporter :: Ingredient
-consoleTestReporter = TestReporter consoleTestReporterOptions go
-  where
-    go opts tree = cb opts tree
-      where
-        TestPattern pattern = lookupOption opts
-        tests = testsNames opts tree
-        hook = (return .) . appendPatternIfTestFailed tests pattern
-        TestReporter _ cb = consoleTestReporterWithHook hook
+consoleTestReporter = TestReporter consoleTestReporterOptions $ \opts tree ->
+  let
+    TestPattern pattern = lookupOption opts
+    tests = testsNames opts tree
+    hook = (return .) . appendPatternIfTestFailed tests pattern
+    TestReporter _ cb = consoleTestReporterWithHook hook
+  in cb opts tree
 
 appendPatternIfTestFailed
   :: [TestName] -- ^ list of (pre-intercalated) test names
