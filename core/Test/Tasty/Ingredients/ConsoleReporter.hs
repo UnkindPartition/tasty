@@ -440,7 +440,7 @@ consoleTestReporterOptions =
 -- Names are listed in reverse order:
 -- from test's own name to a name of the outermost test group.
 --
--- @since 1.4.2.0
+-- @since 1.4.2
 consoleTestReporterWithHook :: ([TestName] -> Result -> IO Result) -> Ingredient
 consoleTestReporterWithHook hook = TestReporter consoleTestReporterOptions $
   \opts tree -> Just $ \smap -> do

@@ -8,6 +8,7 @@ module Test.Tasty.Patterns.Printer
 import Prelude hiding (LT, GT, EQ)
 import Test.Tasty.Patterns.Types
 
+-- | @since 1.4.2
 printAwkExpr :: Expr -> String
 printAwkExpr e = go 0 e ""
 

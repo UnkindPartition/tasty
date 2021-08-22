@@ -1,6 +1,13 @@
 Changes
 =======
 
+Version 1.4.2
+-------------
+
+* Add `consoleTestReporterWithHook`
+* Suggest pattern to rerun an individual failing test
+* Add `Test.Tasty.Patterns.Printer`
+
 Version 1.4.1
 -------------
 
