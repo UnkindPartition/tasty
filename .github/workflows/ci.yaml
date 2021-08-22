@@ -1,0 +1,40 @@
+# Mostly copied from the haskell/bytestring repo
+name: ci
+on: [push]
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest]
+        ghc: ['8.0', '8.2', '8.4', '8.6', '8.8', '8.10', '9.0']
+    steps:
+    - uses: actions/checkout@v2
+    - uses: haskell/actions/setup@v1
+      id: setup-haskell-cabal
+      with:
+        ghc-version: ${{ matrix.ghc }}
+    - name: Update cabal package database
+      run: cabal update
+    - uses: actions/cache@v2
+      name: Cache cabal stuff
+      with:
+        path: |
+          ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
+          dist-newstyle
+        key: ${{ runner.os }}-${{ matrix.ghc }}
+    - name: Test
+      run: |
+        set -e
+
+        cabal build all
+        cabal install ./core-tests
+        export PATH=$HOME/.cabal/bin:$PATH
+
+        (cd core-tests && tasty-core-tests +RTS -N2)
+        core-tests/exit-status-tests.sh
+        core-tests/resource-release-test.sh
+        core-tests/failing-pattern-test.sh
+    - name: Haddock
+      run: cabal haddock all
