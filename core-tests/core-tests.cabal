@@ -40,3 +40,10 @@ executable resource-release-test
   default-language:    Haskell2010
   default-extensions:  CPP
   ghc-options:         -Wall -fno-warn-type-defaults -threaded -with-rtsopts=-N
+
+executable failing-pattern-test
+  main-is:             failing-pattern-test.hs
+  build-depends:       base <= 5, tasty, tasty-hunit, random >= 1.2, mtl
+  default-language:    Haskell2010
+  default-extensions:  ScopedTypeVariables
+  ghc-options:         -Wall -fno-warn-type-defaults -threaded -with-rtsopts=-N

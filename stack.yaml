@@ -1,4 +1,4 @@
-resolver: lts-16.24
+resolver: nightly-2021-08-22
 packages:
 - core/
 - hunit/
