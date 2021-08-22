@@ -3,7 +3,7 @@
 module Test.Tasty.Patterns.Printer
   ( printAwkExpr
   )
-  where 
+  where
 
 import Prelude hiding (LT, GT, EQ)
 import Test.Tasty.Patterns.Types
