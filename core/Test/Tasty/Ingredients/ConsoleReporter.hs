@@ -77,10 +77,10 @@ import Data.Foldable (foldMap)
 -- @since 0.12
 data TestOutput
   = PrintTest
-      {- test name         -} String
-      {- print test name   -} (IO ())
+      {- test name           -} String
+      {- print test name     -} (IO ())
       {- print test progress -} (Progress -> IO ())
-      {- print test result -} (Result -> IO ())
+      {- print test result   -} (Result -> IO ())
       -- ^ Name of a test, an action that prints the test name, and an action
       -- that renders the result of the action.
       --
@@ -270,7 +270,8 @@ consoleOutput toutput smap =
       , Any True)
     foldHeading _name printHeading (printBody, Any nonempty) =
       ( Traversal $ do
-          when nonempty $ do printHeading :: IO (); getTraversal printBody
+          when nonempty $ printHeading
+          getTraversal printBody
       , Any nonempty
       )
 
