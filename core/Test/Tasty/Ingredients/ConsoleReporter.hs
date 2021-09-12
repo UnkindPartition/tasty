@@ -79,9 +79,12 @@ data TestOutput
   = PrintTest
       {- test name         -} String
       {- print test name   -} (IO ())
+      {- print test progress -} (Progress -> IO ())
       {- print test result -} (Result -> IO ())
       -- ^ Name of a test, an action that prints the test name, and an action
       -- that renders the result of the action.
+      --
+      -- @since 1.5
   | PrintHeading String (IO ()) TestOutput
       -- ^ Name of a test group, an action that prints the heading of a test
       -- group and the 'TestOutput' for that test group.
@@ -103,8 +106,8 @@ instance Monoid TestOutput where
 applyHook :: ([TestName] -> Result -> IO Result) -> TestOutput -> TestOutput
 applyHook hook = go []
   where
-    go path (PrintTest name printName printResult) =
-      PrintTest name printName (printResult <=< hook (name : path))
+    go path (PrintTest name printName printProgress printResult) =
+      PrintTest name printName printProgress (printResult <=< hook (name : path))
     go path (PrintHeading name printName printBody) =
       PrintHeading name printName (go (name : path) printBody)
     go path (Seq a b) = Seq (go path a) (go path b)
@@ -131,10 +134,31 @@ buildTestOutput opts tree =
       level <- ask
 
       let
+        postNamePadding = alignment - indentSize * level - stringWidth name
+
+        testNamePadded = printf "%s%s: %s"
+          (indent level)
+          name
+          (replicate postNamePadding ' ')
+
+        resultPosition = length testNamePadded
+
         printTestName = do
-          printf "%s%s: %s" (indent level) name
-            (replicate (alignment - indentSize * level - stringWidth name) ' ')
+          putStr testNamePadded
           hFlush stdout
+
+        printTestProgress progress | progress == emptyProgress
+                                   = pure ()
+        printTestProgress progress =
+          let
+            msg = case (progressText progress, 100 * progressPercent progress) of
+                    ("",  pct) -> printf "%.0f%%" pct
+                    (txt, 0.0) -> printf "%s" txt
+                    (txt, pct) -> printf "%s : %.0f%%" txt pct
+          in do
+            setCursorColumn resultPosition
+            infoOk msg
+            hFlush stdout
 
         printTestResult result = do
           rDesc <- formatMessage $ resultDescription result
@@ -147,6 +171,10 @@ buildTestOutput opts tree =
                 Failure TestDepFailed -> skipped
                 _ -> fail
             time = resultTime result
+
+          setCursorColumn resultPosition
+          clearFromCursorToLineEnd
+
           printFn (resultShortDescription result)
           when (floor (time * 1e6) >= minDurationMicros) $
             printFn (printf " (%.2fs)" time)
@@ -158,7 +186,7 @@ buildTestOutput opts tree =
           case resultDetailsPrinter result of
             ResultDetailsPrinter action -> action level withConsoleFormat
 
-      return $ PrintTest name printTestName printTestResult
+      return $ PrintTest name printTestName printTestProgress printTestResult
 
     runGroup :: OptionSet -> TestName -> [Ap (Reader Level) TestOutput] -> Ap (Reader Level) TestOutput
     runGroup _opts name grp = Ap $ do
@@ -194,15 +222,17 @@ foldTestOutput
   -> b
 foldTestOutput foldTest foldHeading outputTree smap =
   flip evalState 0 $ getApp $ go outputTree where
-  go (PrintTest name printName printResult) = Ap $ do
+
+  go (PrintTest name printName printProgress printResult) = Ap $ do
     ix <- get
     put $! ix + 1
     let
       statusVar =
         fromMaybe (error "internal error: index out of bounds") $
         IntMap.lookup ix smap
-      readStatusVar = getResultFromTVar statusVar
-    return $ foldTest name printName readStatusVar printResult
+
+    return $ foldTest name printName (ppProgressOrResult statusVar printProgress) printResult
+
   go (PrintHeading name printName printBody) = Ap $
     foldHeading name printName <$> getApp (go printBody)
   go (Seq a b) = mappend (go a) (go b)
@@ -213,6 +243,17 @@ foldTestOutput foldTest foldHeading outputTree smap =
 --------------------------------------------------
 -- TestOutput modes
 --------------------------------------------------
+
+ppProgressOrResult :: TVar Status -> (Progress -> IO ()) -> IO Result
+ppProgressOrResult statusVar ppProgress = go where
+  go = either (\p -> ppProgress p *> go) return =<< (atomically $ do
+    status <- readTVar statusVar 
+    case status of
+      Executing p -> pure $ Left p
+      Done r      -> pure $ Right r
+      _           -> retry
+    )
+
 -- {{{
 consoleOutput :: (?colors :: Bool) => TestOutput -> StatusMap -> IO ()
 consoleOutput toutput smap =

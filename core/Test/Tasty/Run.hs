@@ -122,10 +122,15 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
     -- anyway.
     initResources
 
+    let
+      cursorMischiefManaged = do
+        atomically $ writeTVar statusVar (Executing emptyProgress)
+        action yieldProgress
+
     -- If all initializers ran successfully, actually run the test.
     -- We run it in a separate thread, so that the test's exception
     -- handler doesn't interfere with our timeout.
-    withAsync (action yieldProgress) $ \asy -> do
+    withAsync cursorMischiefManaged $ \asy -> do
       labelThread (asyncThreadId asy) "tasty_test_execution_thread"
       timed $ applyTimeout timeoutOpt $ do
         r <- wait asy
@@ -140,7 +145,7 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
   -- no matter what, try to run each finalizer
   mbExn <- destroyResources restore
 
-  atomically . writeTVar statusVar $ Done $
+  atomically . writeTVar statusVar . Done $
     case resultOrExn <* maybe (Right ()) Left mbExn of
       Left ex -> exceptionResult ex
       Right (t,r) -> r { resultTime = t }
@@ -218,13 +223,14 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
 
             tell $ First mbExcn
 
-    -- The callback
-    -- Since this is not used yet anyway, disable for now.
-    -- I'm not sure whether we should get rid of this altogether. For most
-    -- providers this is either difficult to implement or doesn't make
-    -- sense at all.
-    -- See also https://github.com/UnkindPartition/tasty/issues/33
-    yieldProgress _ = return ()
+    yieldProgress newP | newP == emptyProgress =
+      -- This could be changed to `Maybe Progress` to lets more easily indicate
+      -- when progress should try to be printed ?
+      pure ()
+    yieldProgress newP = liftIO
+      . atomically
+      . writeTVar statusVar
+      $ Executing newP
 
 -- | Traversal type used in 'createTestActions'
 type Tr = ReaderT (Path, Seq Dependency) IO (TestActionTree UnresolvedAction)
