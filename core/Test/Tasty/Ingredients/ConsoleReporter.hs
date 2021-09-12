@@ -150,15 +150,18 @@ buildTestOutput opts tree =
         printTestProgress progress | progress == emptyProgress
                                    = pure ()
         printTestProgress progress =
-          let
-            msg = case (progressText progress, 100 * progressPercent progress) of
-                    ("",  pct) -> printf "%.0f%%" pct
-                    (txt, 0.0) -> printf "%s" txt
-                    (txt, pct) -> printf "%s : %.0f%%" txt pct
-          in do
-            setCursorColumn resultPosition
-            infoOk msg
-            hFlush stdout
+          case lookupOption opts of
+            HideProgress True  -> pure ()
+            HideProgress False -> 
+              let
+                msg = case (progressText progress, 100 * progressPercent progress) of
+                        ("",  pct) -> printf "%.0f%%" pct
+                        (txt, 0.0) -> printf "%s" txt
+                        (txt, pct) -> printf "%s : %.0f%%" txt pct
+              in do
+                setCursorColumn resultPosition
+                infoOk msg
+                hFlush stdout
 
         printTestResult result = do
           rDesc <- formatMessage $ resultDescription result
