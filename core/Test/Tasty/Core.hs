@@ -11,6 +11,7 @@ module Test.Tasty.Core
   , resultSuccessful
   , exceptionResult
   , Progress(..)
+  , emptyProgress
   , IsTest(..)
   , TestName
   , ResourceSpec(..)
@@ -181,7 +182,14 @@ data Progress = Progress
   }
   deriving
   ( Show -- ^ @since 1.2
+  , Eq   -- ^ @since 1.5
   )
+
+-- | Empty progress
+--
+-- @since 1.5
+emptyProgress :: Progress
+emptyProgress = Progress mempty 0.0
 
 -- | The interface to be implemented by a test provider.
 --
@@ -201,9 +209,6 @@ class Typeable t => IsTest t where
     :: OptionSet -- ^ options
     -> t -- ^ the test to run
     -> (Progress -> IO ()) -- ^ a callback to report progress.
-                           -- Note: the callback is a no-op at the moment
-                           -- and there are no plans to use it;
-                           -- feel free to ignore this argument for now.
     -> IO Result
 
   -- | The list of options that affect execution of tests of this type
