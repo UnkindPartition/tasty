@@ -1,5 +1,5 @@
 -- | This module allows to use QuickCheck properties in tasty.
-{-# LANGUAGE GeneralizedNewtypeDeriving, DeriveDataTypeable #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, DeriveDataTypeable, NamedFieldPuns #-}
 module Test.Tasty.QuickCheck
   ( testProperty
   , testProperties
@@ -22,7 +22,10 @@ import Test.Tasty ( testGroup )
 import Test.Tasty.Providers
 import Test.Tasty.Options
 import qualified Test.QuickCheck as QC
-import Test.Tasty.Runners (formatMessage)
+import qualified Test.QuickCheck.Test as QC
+import qualified Test.QuickCheck.State as QC
+import qualified Test.QuickCheck.Text as QC
+import Test.Tasty.Runners (formatMessage, emptyProgress)
 import Test.QuickCheck hiding -- for re-export
   ( quickCheck
   , Args(..)
@@ -195,20 +198,20 @@ instance IsTest QC where
     , Option (Proxy :: Proxy QuickCheckMaxShrinks)
     ]
 
-  run opts (QC prop) _yieldProgress = do
+  run opts (QC prop) yieldProgress = do
     (replaySeed, args) <- optionSetToArgs opts
-
+    -- This IORef contains the number of examples tested so far,
+    -- for displaying progress.
     let
       QuickCheckShowReplay showReplay = lookupOption opts
       QuickCheckVerbose    verbose    = lookupOption opts
       maxSize = QC.maxSize args
-      testRunner = if verbose
-                     then QC.verboseCheckWithResult
-                     else QC.quickCheckWithResult
       replayMsg = makeReplayMsg replaySeed maxSize
 
     -- Quickcheck already catches exceptions, no need to do it here.
-    r <- testRunner args prop
+    r <- quickCheck yieldProgress
+                    args
+                    (if verbose then QC.verbose prop else prop)
 
     qcOutput <- formatMessage $ QC.output r
     let qcOutputNl =
@@ -221,6 +224,21 @@ instance IsTest QC where
       (if testSuccessful then testPassed else testFailed)
       (qcOutputNl ++
         (if putReplayInDesc then replayMsg else ""))
+
+
+-- | Like the original 'QC.quickCheck' but is reporting progress using tasty
+-- callback.
+--
+quickCheck :: (Progress -> IO ())
+           -> QC.Args
+           -> QC.Property
+           -> IO QC.Result
+quickCheck yieldProgress args prop = do
+  tm <- QC.newTerminal
+          (\progressText -> yieldProgress emptyProgress { progressText })
+          (\progressText -> yieldProgress emptyProgress { progressText })
+  QC.withState args $ \ s ->
+    QC.test s { QC.terminal = tm } prop
 
 successful :: QC.Result -> Bool
 successful r =
