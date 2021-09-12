@@ -112,7 +112,7 @@ executeTest
   -> Seq Finalizer -- ^ finalizers (to be executed in this order)
   -> IO ()
 executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
-  resultOrExn <- try $ restore $ do
+  resultOrExn <- try . restore $ do
     -- N.B. this can (re-)throw an exception. It's okay. By design, the
     -- actual test will not be run, then. We still run all the
     -- finalizers.
