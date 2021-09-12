@@ -5,6 +5,7 @@ module Test.Tasty.Options.Core
   ( NumThreads(..)
   , Timeout(..)
   , mkTimeout
+  , HideProgress(..)
   , coreOptions
   )
   where
@@ -86,6 +87,15 @@ mkTimeout n =
   Timeout n $
     showFixed True (fromInteger n / (10^6) :: Micro) ++ "s"
 
+newtype HideProgress = HideProgress { getHideProgress :: Bool }
+  deriving (Eq, Ord, Typeable)
+instance IsOption HideProgress where
+    defaultValue = HideProgress False
+    parseValue = fmap HideProgress . safeReadBool
+    optionName = return "no-progress"
+    optionHelp = return "Do not show progress"
+    optionCLParser = mkFlagCLParser mempty (HideProgress True)
+
 -- | The list of all core options, i.e. the options not specific to any
 -- provider or ingredient, but to tasty itself. Currently contains
 -- 'TestPattern' and 'Timeout'.
@@ -93,4 +103,5 @@ coreOptions :: [OptionDescription]
 coreOptions =
   [ Option (Proxy :: Proxy TestPattern)
   , Option (Proxy :: Proxy Timeout)
+  , Option (Proxy :: Proxy HideProgress)
   ]
