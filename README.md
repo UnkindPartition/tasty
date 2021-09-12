@@ -191,9 +191,9 @@ your test suite with the `--help` flag. The output will look something like this
 % ./test --help
 Mmm... tasty test suite
 
-Usage: test [-p|--pattern PATTERN] [-t|--timeout DURATION] [-l|--list-tests]
-            [-j|--num-threads NUMBER] [-q|--quiet] [--hide-successes]
-            [--color never|always|auto] [--ansi-tricks ARG]
+Usage: test [-p|--pattern PATTERN] [-t|--timeout DURATION] [--no-progress]
+            [-l|--list-tests] [-j|--num-threads NUMBER] [-q|--quiet]
+            [--hide-successes] [--color never|always|auto] [--ansi-tricks ARG]
             [--smallcheck-depth NUMBER] [--smallcheck-max-count NUMBER]
             [--quickcheck-tests NUMBER] [--quickcheck-replay SEED]
             [--quickcheck-show-replay] [--quickcheck-max-size NUMBER]
@@ -206,6 +206,7 @@ Available options:
                            expression
   -t,--timeout DURATION    Timeout for individual tests (suffixes: ms,s,m,h;
                            default: s)
+  --no-progress            Do not show progress
   -l,--list-tests          Do not run the tests; just print their names
   -j,--num-threads NUMBER  Number of threads to use for tests execution
                            (default: # of cores/capabilities)
