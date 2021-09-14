@@ -797,6 +797,12 @@ Here are some caveats to keep in mind regarding dependencies in Tasty:
 
     See [issue #152](https://github.com/UnkindPartition/tasty/issues/152).
 
+3. **Q**: Patterns with slashes do not work on Windows. How can I fix it?
+  
+   **A**: If you are running Git for Windows terminal, it has a habit of converting slashes 
+   to backslashes. Set `MSYS_NO_PATHCONV=1` to prevent this behaviour, or follow other 
+   suggestions from [Known Issues](https://github.com/git-for-windows/build-extra/blob/main/ReleaseNotes.md#known-issues).
+   
 ## Press
 
 Blog posts and other publications related to tasty. If you wrote or just found
