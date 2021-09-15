@@ -147,21 +147,19 @@ buildTestOutput opts tree =
           putStr testNamePadded
           hFlush stdout
 
-        printTestProgress progress | progress == emptyProgress
-                                   = pure ()
-        printTestProgress progress =
-          case lookupOption opts of
-            HideProgress True  -> pure ()
-            HideProgress False -> 
+        printTestProgress progress
+          | getHideProgress (lookupOption opts ) ||
+            progress == emptyProgress = pure ()
+
+          | otherwise = do
               let
                 msg = case (progressText progress, 100 * progressPercent progress) of
                         ("",  pct) -> printf "%.0f%%" pct
                         (txt, 0.0) -> printf "%s" txt
-                        (txt, pct) -> printf "%s : %.0f%%" txt pct
-              in do
-                setCursorColumn resultPosition
-                infoOk msg
-                hFlush stdout
+                        (txt, pct) -> printf "%s: %.0f%%" txt pct
+              setCursorColumn resultPosition
+              infoOk msg
+              hFlush stdout
 
         printTestResult result = do
           rDesc <- formatMessage $ resultDescription result
@@ -250,7 +248,7 @@ foldTestOutput foldTest foldHeading outputTree smap =
 ppProgressOrResult :: TVar Status -> (Progress -> IO ()) -> IO Result
 ppProgressOrResult statusVar ppProgress = go where
   go = either (\p -> ppProgress p *> go) return =<< (atomically $ do
-    status <- readTVar statusVar 
+    status <- readTVar statusVar
     case status of
       Executing p -> pure $ Left p
       Done r      -> pure $ Right r
