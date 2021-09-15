@@ -142,7 +142,7 @@ buildTestOutput opts tree =
 
           | otherwise = do
               let
-                msg = case (progressText progress, 100 * progressPercent progress) of
+                msg = case (cleanupProgressText $ progressText progress, 100 * progressPercent progress) of
                         ("",  pct) -> printf "%.0f%%" pct
                         (txt, 0.0) -> printf "%s" txt
                         (txt, pct) -> printf "%s: %.0f%%" txt pct
@@ -195,6 +195,12 @@ buildTestOutput opts tree =
           , foldGroup = runGroup
           }
           opts tree
+
+-- | Make sure the progress text does not contain any newlines or line feeds,
+-- lest our ANSI magic breaks. Since the progress text is expected to be short,
+-- we simply drop anything after a newline.
+cleanupProgressText :: String -> String
+cleanupProgressText = takeWhile $ \c -> c /= '\n' && c /= '\r'
 
 -- | Fold function for the 'TestOutput' tree into a 'Monoid'.
 --
