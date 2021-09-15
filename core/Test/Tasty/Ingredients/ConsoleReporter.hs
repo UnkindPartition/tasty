@@ -242,11 +242,13 @@ foldTestOutput foldTest foldHeading outputTree smap =
 --------------------------------------------------
 
 ppProgressOrResult :: TVar Status -> (Progress -> IO ()) -> IO Result
-ppProgressOrResult statusVar ppProgress = go where
-  go = either (\p -> ppProgress p *> go) return =<< (atomically $ do
+ppProgressOrResult statusVar ppProgress = go emptyProgress where
+  go old_p = either (\p -> ppProgress p *> go p) return =<< (atomically $ do
     status <- readTVar statusVar
     case status of
-      Executing p -> pure $ Left p
+      Executing p
+        | p == old_p -> retry
+        | otherwise -> pure $ Left p
       Done r      -> pure $ Right r
       _           -> retry
     )
