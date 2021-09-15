@@ -200,8 +200,6 @@ instance IsTest QC where
 
   run opts (QC prop) yieldProgress = do
     (replaySeed, args) <- optionSetToArgs opts
-    -- This IORef contains the number of examples tested so far,
-    -- for displaying progress.
     let
       QuickCheckShowReplay showReplay = lookupOption opts
       QuickCheckVerbose    verbose    = lookupOption opts
