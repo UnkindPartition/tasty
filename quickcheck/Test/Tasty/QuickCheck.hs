@@ -237,6 +237,8 @@ quickCheck :: (Progress -> IO ())
            -> QC.Property
            -> IO QC.Result
 quickCheck yieldProgress args prop = do
+  -- Here we rely on the fact that QuickCheck currently prints its progress to
+  -- stderr and the overall status (which we don't need) to stdout
   tm <- QC.newTerminal
           (const $ pure ())
           (\progressText -> yieldProgress emptyProgress { progressText = parseProgress progressText })
