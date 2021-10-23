@@ -21,6 +21,7 @@ import Data.Monoid
 
 import Test.Tasty.Options
 import Test.Tasty.Patterns
+import Test.Tasty.Hpc
 
 -- | Number of parallel threads to use for running tests.
 --
@@ -93,4 +94,5 @@ coreOptions :: [OptionDescription]
 coreOptions =
   [ Option (Proxy :: Proxy TestPattern)
   , Option (Proxy :: Proxy Timeout)
+  , Option (Proxy :: Proxy Hpc)
   ]

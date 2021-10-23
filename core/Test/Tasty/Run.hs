@@ -25,6 +25,10 @@ import Control.Exception as E
 import Control.Applicative
 import Control.Arrow
 import GHC.Conc (labelThread)
+import System.FilePath
+import System.Directory
+import Trace.Hpc.Tix
+import Trace.Hpc.Reflect
 import Prelude  -- Silence AMP and FTP import warnings
 
 import Test.Tasty.Core
@@ -33,6 +37,7 @@ import Test.Tasty.Patterns
 import Test.Tasty.Patterns.Types
 import Test.Tasty.Options
 import Test.Tasty.Options.Core
+import Test.Tasty.Hpc
 import Test.Tasty.Runners.Reducers
 import Test.Tasty.Runners.Utils (timed, forceElements)
 import Test.Tasty.Providers.ConsoleFormat (noResultDetails)
@@ -82,15 +87,18 @@ data Finalizer
 
 -- | Execute a test taking care of resources
 executeTest
-  :: ((Progress -> IO ()) -> IO Result)
+  :: Seq.Seq TestName
+    -- ^ along with the path from the root of the test tree
+  -> ((Progress -> IO ()) -> IO Result)
     -- ^ the action to execute the test, which takes a progress callback as
     -- a parameter
   -> TVar Status -- ^ variable to write status to
   -> Timeout -- ^ optional timeout to apply
+  -> Hpc -- ^ optional Hpc integration options
   -> Seq.Seq Initializer -- ^ initializers (to be executed in this order)
   -> Seq.Seq Finalizer -- ^ finalizers (to be executed in this order)
   -> IO ()
-executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
+executeTest path action statusVar timeoutOpt hpcOpt inits fins = mask $ \restore -> do
   resultOrExn <- try $ restore $ do
     -- N.B. this can (re-)throw an exception. It's okay. By design, the
     -- actual test will not be run, then. We still run all the
@@ -104,7 +112,7 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
     -- If all initializers ran successfully, actually run the test.
     -- We run it in a separate thread, so that the test's exception
     -- handler doesn't interfere with our timeout.
-    withAsync (action yieldProgress) $ \asy -> do
+    withAsync (wrapHpc hpcOpt (action yieldProgress)) $ \asy -> do
       labelThread (asyncThreadId asy) "tasty_test_execution_thread"
       timed $ applyTimeout timeoutOpt $ do
         r <- wait asy
@@ -169,6 +177,25 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
             , resultDetailsPrinter = noResultDetails
             }
       fromMaybe timeoutResult <$> timeout t a
+
+    -- Wrap an IO action with the Hpc reflection handler
+    wrapHpc :: Hpc -> IO a -> IO a
+    wrapHpc NoHpc theAction = theAction
+    wrapHpc (SaveHpc tixPath) theAction = do
+      -- Create a directory to store the .tix file based on its full name in the
+      -- test tree. For instance:
+      -- 'testGroup "One" [ testGroup "Two" [ testCase "Three" _ ] ]'
+      -- Will become:
+      -- 'tixPath/One/Two/Three.tix'
+      let parents Seq.:> name = Seq.viewr path
+      let dir = foldl (</>) tixPath parents
+      let filepath = makeValid (dir </> name <.> "tix")
+      createDirectoryIfMissing True dir
+      clearTix
+      res <- theAction
+      tix <- examineTix
+      writeTix filepath tix
+      return res
 
     -- destroyResources should not be interrupted by an exception
     -- Here's how we ensure this:
@@ -266,7 +293,7 @@ createTestActions opts0 tree = do
       let
         path = parentPath Seq.|> name
         act (inits, fins) =
-          executeTest (run opts test) statusVar (lookupOption opts) inits fins
+          executeTest path (run opts test) statusVar (lookupOption opts) (lookupOption opts) inits fins
       tell ([(act, (statusVar, path, deps))], mempty)
     addInitAndRelease :: OptionSet -> ResourceSpec a -> (IO a -> Tr) -> Tr
     addInitAndRelease _opts (ResourceSpec doInit doRelease) a = wrap $ \path deps -> do
@@ -400,7 +427,7 @@ destroyResource restore (Finalizer doRelease stateVar _) = join . atomically $ d
 -- Once the callback returns, stop running the tests.
 --
 -- The number of test running threads is determined by the 'NumThreads'
--- option.
+-- option. Enabling the Hpc integration disables parallelism.
 launchTestTree
   :: OptionSet
   -> TestTree
@@ -420,7 +447,8 @@ launchTestTree
   -> IO a
 launchTestTree opts tree k0 = do
   (testActions, fins) <- createTestActions opts tree
-  let NumThreads numTheads = lookupOption opts
+  -- let NumThreads numTheads = lookupOption opts
+  let numTheads = if (lookupOption opts == NoHpc) then getNumThreads (lookupOption opts) else 1
   (t,k1) <- timed $ do
      abortTests <- runInParallel numTheads (fst <$> testActions)
      (do let smap = IntMap.fromList $ zip [0..] (snd <$> testActions)
