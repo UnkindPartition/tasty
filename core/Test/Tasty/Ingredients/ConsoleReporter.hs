@@ -52,13 +52,12 @@ import Data.Char.WCWidth (wcwidth)
 import Data.List (isInfixOf)
 import Data.Maybe
 import Data.Monoid (Any(..))
+import qualified Data.Semigroup as Sem
 import Data.Typeable
 import Options.Applicative hiding (action, str, Success, Failure)
 import System.IO
 import System.Console.ANSI
 #if !MIN_VERSION_base(4,11,0)
-import Data.Semigroup (Semigroup)
-import qualified Data.Semigroup (Semigroup((<>)))
 import Data.Monoid
 import Data.Foldable (foldMap)
 #endif
@@ -87,11 +86,13 @@ data TestOutput
 
 -- The monoid laws should hold observationally w.r.t. the semantics defined
 -- in this module
+instance Sem.Semigroup TestOutput where
+  (<>) = Seq
 instance Monoid TestOutput where
   mempty = Skip
-  mappend = Seq
-instance Semigroup TestOutput where
-  (<>) = mappend
+#if !MIN_VERSION_base(4,11,0)
+  mappend = (Sem.<>)
+#endif
 
 applyHook :: ([TestName] -> Result -> IO Result) -> TestOutput -> TestOutput
 applyHook hook = go []
@@ -294,11 +295,13 @@ data Statistics = Statistics
   , statFailures :: !Int -- ^ Number of active tests that failed.
   }
 
+instance Sem.Semigroup Statistics where
+  Statistics t1 f1 <> Statistics t2 f2 = Statistics (t1 + t2) (f1 + f2)
 instance Monoid Statistics where
-  Statistics t1 f1 `mappend` Statistics t2 f2 = Statistics (t1 + t2) (f1 + f2)
   mempty = Statistics 0 0
-instance Semigroup Statistics where
-  (<>) = mappend
+#if !MIN_VERSION_base(4,11,0)
+  mappend = (Sem.<>)
+#endif
 
 -- | @computeStatistics@ computes a summary 'Statistics' for
 -- a given state of the 'StatusMap'.
@@ -638,14 +641,15 @@ data Maximum a
   = Maximum a
   | MinusInfinity
 
+instance Ord a => Sem.Semigroup (Maximum a) where
+  Maximum a <> Maximum b = Maximum (a `max` b)
+  MinusInfinity <> a = a
+  a <> MinusInfinity = a
 instance Ord a => Monoid (Maximum a) where
   mempty = MinusInfinity
-
-  Maximum a `mappend` Maximum b = Maximum (a `max` b)
-  MinusInfinity `mappend` a = a
-  a `mappend` MinusInfinity = a
-instance Ord a => Semigroup (Maximum a) where
-  (<>) = mappend
+#if !MIN_VERSION_base(4,11,0)
+  mappend = (Sem.<>)
+#endif
 
 -- | Compute the amount of space needed to align \"OK\"s and \"FAIL\"s
 computeAlignment :: OptionSet -> TestTree -> Int
