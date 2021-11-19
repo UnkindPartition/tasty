@@ -1,4 +1,4 @@
-resolver: nightly-2021-08-22
+resolver: nightly-2021-11-15
 packages:
 - core/
 - hunit/
