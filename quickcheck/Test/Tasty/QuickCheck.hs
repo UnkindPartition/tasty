@@ -9,6 +9,8 @@ module Test.Tasty.QuickCheck
   , QuickCheckMaxSize(..)
   , QuickCheckMaxRatio(..)
   , QuickCheckVerbose(..)
+  , QuickCheckMaxShrinks(..)
+    -- * Re-export of Test.QuickCheck
   , module Test.QuickCheck
     -- * Internal
     -- | If you are building a test suite, you don't need these functions.
