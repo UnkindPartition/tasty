@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.10.2
+--------------
+
+Export `QuickCheckMaxShrinks`
+
 Version 0.10.1.2
 ----------------
 

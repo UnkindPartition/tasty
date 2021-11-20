@@ -97,6 +97,8 @@ newtype QuickCheckVerbose = QuickCheckVerbose Bool
   deriving (Typeable)
 
 -- | Number of shrinks allowed before QuickCheck will fail a test.
+--
+-- @since 0.10.2
 newtype QuickCheckMaxShrinks = QuickCheckMaxShrinks Int
   deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
 
