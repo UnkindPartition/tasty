@@ -7,7 +7,7 @@ import Test.Tasty.Options
 import Test.Tasty.Runners
 import Test.Tasty.HUnit
 import Control.Concurrent
-import Control.Monad.Writer
+import Control.Monad (void)
 import qualified Data.IntMap as IntMap
 import Data.Maybe
 import Data.Foldable

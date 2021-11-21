@@ -3,7 +3,8 @@ import Test.Tasty.Options
 import Test.Tasty.HUnit
 import Data.Typeable
 import System.Random
-import Control.Monad.State
+import Control.Monad (replicateM)
+import Control.Monad.State (State, state, evalState)
 
 newtype Seed = Seed Int
   deriving Typeable

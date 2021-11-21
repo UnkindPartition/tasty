@@ -14,9 +14,10 @@ import qualified Data.Foldable as F
 import Data.Maybe
 import Data.Graph (SCC(..), stronglyConnComp)
 import Data.Typeable
-import Control.Monad.State
-import Control.Monad.Writer
-import Control.Monad.Reader
+import Control.Monad (forever, guard, join, liftM)
+import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Reader (ReaderT(..), local, ask)
+import Control.Monad.Writer (WriterT(..), execWriterT, tell)
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Concurrent.Timeout (timeout)
@@ -24,6 +25,7 @@ import Control.Concurrent.Async
 import Control.Exception as E
 import Control.Applicative
 import Control.Arrow
+import Data.Monoid (First(..))
 import GHC.Conc (labelThread)
 import Prelude  -- Silence AMP and FTP import warnings
 
