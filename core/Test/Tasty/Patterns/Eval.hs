@@ -2,7 +2,8 @@
 module Test.Tasty.Patterns.Eval (Path, eval, withFields, asB) where
 
 import Prelude hiding (Ordering(..))
-import Control.Monad.Reader
+import Control.Monad ((<=<))
+import Control.Monad.Reader (ReaderT, runReaderT, ask)
 import Control.Monad.Error.Class (throwError) -- see #201
 import qualified Data.Sequence as Seq
 import Data.Foldable

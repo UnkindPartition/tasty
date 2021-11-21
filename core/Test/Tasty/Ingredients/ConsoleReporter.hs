@@ -27,8 +27,10 @@ module Test.Tasty.Ingredients.ConsoleReporter
   ) where
 
 import Prelude hiding (fail, EQ)
-import Control.Monad.State hiding (fail)
-import Control.Monad.Reader hiding (fail,reader)
+import Control.Monad (join, unless, void, when, (<=<))
+import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Reader (Reader, runReader, ask)
+import Control.Monad.State (evalState, evalStateT, get, modify, put)
 import Control.Concurrent.STM
 import Control.Exception
 import Test.Tasty.Core
