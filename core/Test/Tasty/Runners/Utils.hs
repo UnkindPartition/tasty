@@ -5,8 +5,7 @@ module Test.Tasty.Runners.Utils where
 
 import Control.Exception
 import Control.Applicative
-import Control.Concurrent (mkWeakThreadId, myThreadId)
-import Control.Monad (forM_)
+import Control.Monad
 #ifndef VERSION_clock
 import Data.Time.Clock.POSIX (getPOSIXTime)
 #endif
@@ -18,16 +17,11 @@ import Foreign.C (CInt)
 import qualified System.Clock as Clock
 #endif
 
--- Install handlers only on UNIX
-#ifdef VERSION_unix
-#define INSTALL_HANDLERS 1
-#else
-#define INSTALL_HANDLERS 0
-#endif
-
 #if INSTALL_HANDLERS
-import System.Posix.Signals
+import System.Posix.Signals as Sig
 import System.Mem.Weak (deRefWeak)
+import Control.Concurrent (mkWeakThreadId, myThreadId)
+import Data.IORef
 #endif
 
 import Test.Tasty.Core (Time)
@@ -56,34 +50,67 @@ formatMessage = go 3
 forceElements :: [a] -> ()
 forceElements = foldr seq ()
 
--- from https://ro-che.info/articles/2014-07-30-bracket
--- | Install signal handlers so that e.g. the cursor is restored if the test
--- suite is killed by SIGTERM. Upon a signal, a 'SignalException' will be
--- thrown to the thread that has executed this action.
+{-# DEPRECATED installSignalHandlers "installSignalHandlers is a no-op now. Please use withSignalHandlers instead" #-}
+-- | This was an old way to install signal handlers. The issue with it was that
+-- it didn't communicate the signal information to the parent process
+-- (see <https://www.cons.org/cracauer/sigint.html>). It is now deprecated in
+-- favor of 'withSignalHandlers' and is a no-op, left only for backwards
+-- compatibility.
+installSignalHandlers :: IO ()
+installSignalHandlers = return ()
+
+-- see https://ro-che.info/articles/2014-07-30-bracket
+-- | Install signal handlers while the action is running so that e.g. the cursor
+-- is restored if the test suite is killed by SIGTERM. Upon a signal, a
+-- 'SignalException' will be thrown to the thread that has executed this action
+-- in order to let it clean up. However, once the clean up is finished, the
+-- original signal will be raised again in order to communicate to the parent
+-- process that we finished abnormally because of it (see
+-- <https://www.cons.org/cracauer/sigint.html>).
+--
+-- After the action returns, the signal actions are restored to their original
+-- handlers.
 --
 -- This function is called automatically from the @defaultMain*@ family of
 -- functions. You only need to call it explicitly if you call
 -- 'tryIngredients' yourself.
 --
--- This function does nothing on non-UNIX systems or when compiled with GHC
--- older than 7.6.
-installSignalHandlers :: IO ()
-installSignalHandlers = do
+-- This function does nothing on non-UNIX systems or under GHCJS.
+--
+-- @since 1.4.3
+withSignalHandlers :: IO () -> IO ()
+withSignalHandlers =
 #if INSTALL_HANDLERS
-  main_thread_id <- myThreadId
-  weak_tid <- mkWeakThreadId main_thread_id
-  forM_ [ sigHUP, sigTERM, sigUSR1, sigUSR2, sigXCPU, sigXFSZ ] $ \sig ->
-    installHandler sig (Catch $ send_exception weak_tid sig) Nothing
+  bracket install_handlers uninstall_handlers_and_maybe_die . const
   where
-    send_exception weak_tid sig = do
+    signals = [ sigINT, sigHUP, sigTERM, sigUSR1, sigUSR2, sigXCPU, sigXFSZ ]
+    install_handlers :: IO (IORef (Maybe Signal), [Sig.Handler])
+    install_handlers = do
+      main_thread_id <- myThreadId
+      weak_tid <- mkWeakThreadId main_thread_id
+      signal_ref <- newIORef Nothing
+      old_handlers <- forM signals $ \sig ->
+        installHandler sig (Catch $ handle_signal weak_tid signal_ref sig) Nothing
+      return (signal_ref, old_handlers)
+    uninstall_handlers_and_maybe_die :: (IORef (Maybe Signal), [Sig.Handler]) -> IO ()
+    uninstall_handlers_and_maybe_die (signal_ref, old_handlers) = do
+      forM_ (zip signals old_handlers) $ \(sig, old_handler) ->
+        installHandler sig old_handler Nothing
+      mb_received_signal <- readIORef signal_ref
+      -- If we received a signal, raise it again.
+      -- Now that the handlers are uninstalled, it should kill the current
+      -- process, conveying the correct information to the parent process/shell
+      -- (see https://www.cons.org/cracauer/sigint.html)
+      mapM_ Sig.raiseSignal mb_received_signal
+    handle_signal weak_tid signal_ref sig = do
+      writeIORef signal_ref (Just sig)
       m <- deRefWeak weak_tid
       case m of
         Nothing  -> return ()
         Just tid -> throwTo tid (toException $ SignalException sig)
 #else
-  return ()
+  const $ return ()
 #endif
-
 -- | This exception is thrown when the program receives a signal, assuming
 -- 'installSignalHandlers' was called.
 --
