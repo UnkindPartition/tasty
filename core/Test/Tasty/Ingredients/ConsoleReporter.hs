@@ -502,7 +502,9 @@ instance IsOption Quiet where
   optionHelp = return "Do not produce any output; indicate success only by the exit code"
   optionCLParser = mkFlagCLParser (short 'q') (Quiet True)
 
--- | Report only failed tests
+-- | Report only failed tests.
+--
+-- At the moment, this option only works globally. As an argument to 'localOption', it does nothing.
 newtype HideSuccesses = HideSuccesses Bool
   deriving (Eq, Ord, Typeable)
 instance IsOption HideSuccesses where
