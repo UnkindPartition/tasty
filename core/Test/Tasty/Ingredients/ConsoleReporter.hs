@@ -7,6 +7,7 @@ module Test.Tasty.Ingredients.ConsoleReporter
   , Quiet(..)
   , HideSuccesses(..)
   , AnsiTricks(..)
+  , ShowDurations(..)
   -- * Internals
   -- | The following functions and datatypes are internals that are exposed to
   -- simplify the task of rolling your own custom console reporter UI.
@@ -124,6 +125,8 @@ buildTestOutput opts tree =
     runSingleTest _opts name _test = Ap $ do
       level <- ask
 
+      let showDurations = lookupOption opts
+
       let
         printTestName = do
           printf "%s%s: %s" (indent level) name
@@ -143,8 +146,10 @@ buildTestOutput opts tree =
             time = resultTime result
           printFn (resultShortDescription result)
           -- print time only if it's significant
-          when (time >= 0.01) $
-            printFn (printf " (%.2fs)" time)
+          when (
+            time >= 0.01 &&
+            (showDurations == TestDurations || showDurations == AllDurations)
+           ) $ printFn (printf " (%.2fs)" time)
           printFn "\n"
 
           when (not $ null rDesc) $
@@ -437,6 +442,7 @@ consoleTestReporterOptions =
   , Option (Proxy :: Proxy HideSuccesses)
   , Option (Proxy :: Proxy UseColor)
   , Option (Proxy :: Proxy AnsiTricks)
+  , Option (Proxy :: Proxy ShowDurations)
   ]
 
 -- | A simple console UI with a hook to postprocess results,
@@ -456,6 +462,7 @@ consoleTestReporterWithHook hook = TestReporter consoleTestReporterOptions $
     HideSuccesses hideSuccesses = lookupOption opts
     NumThreads numThreads = lookupOption opts
     AnsiTricks ansiTricks = lookupOption opts
+    showDurations = lookupOption opts
 
   if quiet
     then do
@@ -489,7 +496,13 @@ consoleTestReporterWithHook hook = TestReporter consoleTestReporterOptions $
 
           return $ \time -> do
             stats <- computeStatistics smap
-            printStatistics stats time
+
+            if
+              showDurations == AllDurations ||
+              showDurations == OverallDuration
+            then printStatistics stats time
+            else printStatisticsNoTime stats
+
             return $ statFailures stats == 0
 
 -- | Do not print test results (see README for details)
@@ -564,6 +577,34 @@ displayBool b =
   case b of
     False -> "false"
     True  -> "true"
+
+-- | By default, the output includes the durations of individual tests
+-- as well as the overall duration of the test suite. When the option
+-- @--show-durations@ is given, its value determines which test durations
+-- are displayed.
+--
+-- @since 1.4.3
+data ShowDurations
+  = NoDurations -- ^ Do not display any test durations.
+  | TestDurations -- ^ Only display individual test durations.
+  | OverallDuration -- ^ Only display the overall test duration.
+  | AllDurations -- ^ Display both individual and overall test durations.
+  deriving (Eq, Show, Typeable)
+
+instance IsOption ShowDurations where
+  defaultValue = AllDurations
+  parseValue = parseShowDurations
+  optionName = return "show-durations"
+  optionHelp = return "Which test durations to display"
+
+parseShowDurations :: String -> Maybe ShowDurations
+parseShowDurations s =
+  case map toLower s of
+    "none" -> return NoDurations
+    "tests" -> return TestDurations
+    "overall" -> return OverallDuration
+    "all" -> return AllDurations
+    _ -> Nothing
 
 -- | @useColor when isTerm@ decides if colors should be used,
 --   where @isTerm@ indicates whether @stdout@ is a terminal device.
