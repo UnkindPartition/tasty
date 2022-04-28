@@ -25,10 +25,8 @@ instance IsTest TestCaseSteps where
         tme <- getTime
         atomicModifyIORef ref (\l -> ((tme,msg):l, ()))
 
-    hunitResult <- (Right <$> assertionFn stepFn) `catches`
-      [ Handler (\(HUnitFailure mbloc errMsg) -> return $ Left (prependLocation mbloc errMsg))
-      , Handler (\(SomeException ex)          -> return $ Left (show ex))
-      ]
+    hunitResult <- (Right <$> assertionFn stepFn) `catch`
+        \(SomeException ex) -> return $ Left (displayException ex)
 
     endTime <- getTime
 

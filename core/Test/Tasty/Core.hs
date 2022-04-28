@@ -159,7 +159,7 @@ resultSuccessful r =
 exceptionResult :: SomeException -> Result
 exceptionResult e = Result
   { resultOutcome = Failure $ TestThrewException e
-  , resultDescription = "Exception: " ++ show e
+  , resultDescription = "Exception: " ++ displayException e
   , resultShortDescription = "FAIL"
   , resultTime = 0
   , resultDetailsPrinter = noResultDetails
