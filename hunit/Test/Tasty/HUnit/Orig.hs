@@ -135,7 +135,8 @@ instance (AssertionPredicable t) => AssertionPredicable (IO t)
 -- | Exception thrown by 'assertFailure' etc.
 data HUnitFailure = HUnitFailure (Maybe SrcLoc) String
     deriving (Eq, Show, Typeable)
-instance E.Exception HUnitFailure
+instance E.Exception HUnitFailure where
+  displayException (HUnitFailure mbloc s) = prependLocation mbloc s
 
 prependLocation :: Maybe SrcLoc -> String -> String
 prependLocation mbloc s =
