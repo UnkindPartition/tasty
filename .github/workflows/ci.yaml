@@ -1,6 +1,12 @@
 # Mostly copied from the haskell/bytestring repo
 name: ci
-on: [push]
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -10,20 +16,32 @@ jobs:
         os: [ubuntu-latest]
         ghc: ['8.0', '8.2', '8.4', '8.6', '8.8', '8.10', '9.0', '9.2']
     steps:
+
     - uses: actions/checkout@v2
+
     - uses: haskell/actions/setup@v1
       id: setup-haskell-cabal
       with:
         ghc-version: ${{ matrix.ghc }}
+
     - name: Update cabal package database
       run: cabal update
+
+    - name: Build plan
+      run: cabal freeze --enable-tests --enable-benchmarks
+
+    # Cache logic see https://github.com/haskell/actions/issues/7#issuecomment-745697160
     - uses: actions/cache@v2
       name: Cache cabal stuff
       with:
         path: |
           ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
           dist-newstyle
-        key: ${{ runner.os }}-${{ matrix.ghc }}
+        key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}-$${ github.sha }
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}-
+          ${{ runner.os }}-${{ matrix.ghc }}-
+
     - name: Test
       run: |
         set -e
@@ -36,5 +54,6 @@ jobs:
         core-tests/exit-status-tests.sh
         core-tests/resource-release-test.sh
         core-tests/failing-pattern-test.sh
+
     - name: Haddock
       run: cabal haddock all
