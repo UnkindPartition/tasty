@@ -1,6 +1,12 @@
 Changes
 =======
 
+Version 1.4.2.2
+---------------
+
+- Fix compilation with `mtl-2.3`
+- Tested with GHC 8.0 - 9.2; dropped support for GHC 7.x
+
 Version 1.4.2.1
 ---------------
 
