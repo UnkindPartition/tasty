@@ -28,6 +28,9 @@ data Value
 
 type M = ReaderT Path (Either String)
 
+throwError :: String -> M a
+throwError s = lift $ Left s
+
 asS :: Value -> M String
 asS v = return $
   case v of
@@ -49,8 +52,8 @@ asN v =
     VS True s ->
       case parseN s of
         Just n -> return n
-        Nothing -> lift $ Left $ "Not a number: " ++ show s
-    VS False s -> lift $ Left $ "String is not numeric: " ++ show s
+        Nothing -> throwError $ "Not a number: " ++ show s
+    VS False s -> throwError $ "String is not numeric: " ++ show s
     Uninitialized -> return 0
 
 isN :: Value -> Bool

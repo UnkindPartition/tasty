@@ -245,9 +245,9 @@ createTestActions opts0 tree = do
           { foldSingle = runSingleTest
           , foldResource = addInitAndRelease
           , foldGroup = \_opts name (Traversal a) ->
-              Traversal $ (mapWriterT . local) (first (Seq.|> name)) a
+              Traversal $ mapWriterT (local (first (Seq.|> name))) a
           , foldAfter = \_opts deptype pat (Traversal a) ->
-              Traversal $ (mapWriterT . local) (second ((deptype, pat) :)) a
+              Traversal $ mapWriterT (local (second ((deptype, pat) :))) a
           }
         opts0 tree
   (tests, fins) <- unwrap (mempty :: Path) (mempty :: Deps) traversal
@@ -280,7 +280,7 @@ createTestActions opts0 tree = do
       let
         ini = Initializer doInit initVar
         fin = Finalizer doRelease initVar finishVar
-        tests' = map (first (. ((Seq.|> ini) *** (fin Seq.<|)))) tests
+        tests' = map (first (\f (x, y) -> f (x Seq.|> ini, fin Seq.<| y))) tests
       return (tests', fins Seq.|> fin)
     wrap
       :: (Path ->
