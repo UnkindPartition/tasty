@@ -16,8 +16,9 @@ import Data.Graph (SCC(..), stronglyConnComp)
 import Data.Typeable
 import Control.Monad (forever, guard, join, liftM)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (ReaderT(..), local, ask)
-import Control.Monad.Writer (WriterT(..), execWriterT, tell)
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Reader (ReaderT(..), local, ask)
+import Control.Monad.Trans.Writer (WriterT(..), execWriterT, mapWriterT, tell)
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Concurrent.Timeout (timeout)
@@ -244,9 +245,9 @@ createTestActions opts0 tree = do
           { foldSingle = runSingleTest
           , foldResource = addInitAndRelease
           , foldGroup = \_opts name (Traversal a) ->
-              Traversal $ local (first (Seq.|> name)) a
+              Traversal $ (mapWriterT . local) (first (Seq.|> name)) a
           , foldAfter = \_opts deptype pat (Traversal a) ->
-              Traversal $ local (second ((deptype, pat) :)) a
+              Traversal $ (mapWriterT . local) (second ((deptype, pat) :)) a
           }
         opts0 tree
   (tests, fins) <- unwrap (mempty :: Path) (mempty :: Deps) traversal
@@ -264,7 +265,7 @@ createTestActions opts0 tree = do
     runSingleTest :: IsTest t => OptionSet -> TestName -> t -> Tr
     runSingleTest opts name test = Traversal $ do
       statusVar <- liftIO $ atomically $ newTVar NotStarted
-      (parentPath, deps) <- ask
+      (parentPath, deps) <- lift ask
       let
         path = parentPath Seq.|> name
         act (inits, fins) =
@@ -279,7 +280,7 @@ createTestActions opts0 tree = do
       let
         ini = Initializer doInit initVar
         fin = Finalizer doRelease initVar finishVar
-        tests' = map (first $ local $ (Seq.|> ini) *** (fin Seq.<|)) tests
+        tests' = map (first (. ((Seq.|> ini) *** (fin Seq.<|)))) tests
       return (tests', fins Seq.|> fin)
     wrap
       :: (Path ->

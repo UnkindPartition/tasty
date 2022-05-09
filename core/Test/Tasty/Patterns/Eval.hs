@@ -3,8 +3,8 @@ module Test.Tasty.Patterns.Eval (Path, eval, withFields, asB) where
 
 import Prelude hiding (Ordering(..))
 import Control.Monad ((<=<))
-import Control.Monad.Reader (ReaderT, runReaderT, ask)
-import Control.Monad.Error.Class (throwError) -- see #201
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Reader (ReaderT, runReaderT, ask)
 import qualified Data.Sequence as Seq
 import Data.Foldable
 import Data.List hiding (length)
@@ -49,8 +49,8 @@ asN v =
     VS True s ->
       case parseN s of
         Just n -> return n
-        Nothing -> throwError $ "Not a number: " ++ show s
-    VS False s -> throwError $ "String is not numeric: " ++ show s
+        Nothing -> lift $ Left $ "Not a number: " ++ show s
+    VS False s -> lift $ Left $ "String is not numeric: " ++ show s
     Uninitialized -> return 0
 
 isN :: Value -> Bool
