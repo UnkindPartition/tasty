@@ -7,7 +7,7 @@ Version 1.4.2.3
 _2022-05-10_
 
 - Drop `mtl` dependency
-- Tested with GHC 8.0 - 9.2
+- Warning-free under GHC 8.0 - 9.2
 
 Version 1.4.2.2
 ---------------

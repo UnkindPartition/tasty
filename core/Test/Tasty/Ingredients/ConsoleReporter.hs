@@ -60,7 +60,6 @@ import Options.Applicative hiding (action, str, Success, Failure)
 import System.IO
 import System.Console.ANSI
 #if !MIN_VERSION_base(4,11,0)
-import Data.Monoid
 import Data.Foldable (foldMap)
 #endif
 
