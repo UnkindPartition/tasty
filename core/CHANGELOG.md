@@ -1,8 +1,18 @@
 Changes
 =======
 
+Version 1.4.2.3
+---------------
+
+_2022-05-10_
+
+- Drop `mtl` dependency
+- Tested with GHC 8.0 - 9.2
+
 Version 1.4.2.2
 ---------------
+
+_2022-05-10_
 
 - Fix compilation with `mtl-2.3`
 - Tested with GHC 8.0 - 9.2; dropped support for GHC 7.x
