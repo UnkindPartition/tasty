@@ -7,7 +7,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Reader (ReaderT, runReaderT, ask)
 import qualified Data.Sequence as Seq
 import Data.Foldable
-import Data.List hiding (length)
+import Data.List (findIndex, intercalate, isInfixOf, isPrefixOf, tails)
 import Data.Maybe
 import Data.Char
 import Test.Tasty.Patterns.Types
