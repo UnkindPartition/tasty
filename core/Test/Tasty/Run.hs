@@ -1,6 +1,7 @@
 -- | Running tests
 {-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes,
-             FlexibleContexts, BangPatterns, CPP, DeriveDataTypeable #-}
+             FlexibleContexts, BangPatterns, CPP, DeriveDataTypeable,
+             LambdaCase #-}
 module Test.Tasty.Run
   ( Status(..)
   , StatusMap
@@ -12,6 +13,7 @@ import qualified Data.IntMap as IntMap
 import qualified Data.Sequence as Seq
 import qualified Data.Foldable as F
 import Data.Maybe
+import Data.List (intercalate)
 import Data.Graph (SCC(..), stronglyConnComp)
 import Data.Typeable
 import Control.Monad (forever, guard, join, liftM)
@@ -219,14 +221,21 @@ type Tr = Traversal
 
 -- | Exceptions related to dependencies between tests.
 data DependencyException
-  = DependencyLoop
-    -- ^ Test dependencies form a loop. In other words, test A cannot start
+  = DependencyLoop [[Path]]
+    -- ^ Test dependencies form cycles. In other words, test A cannot start
     -- until test B finishes, and test B cannot start until test
-    -- A finishes.
+    -- A finishes. Field lists detected cycles.
   deriving (Typeable)
 
 instance Show DependencyException where
-  show DependencyLoop = "Test dependencies form a loop."
+  show (DependencyLoop css) = "Test dependencies have cycles:\n" ++ showCycles css
+    where
+      showCycles = intercalate "\n" . map showCycle
+      showPath = intercalate "." . F.toList
+
+      -- For clarity in the error message, the first element is repeated at the end
+      showCycle []     = "- <empty cycle>"
+      showCycle (x:xs) = "- " ++ intercalate ", " (map showPath (x:xs ++ [x]))
 
 instance Exception DependencyException
 
@@ -252,14 +261,14 @@ createTestActions opts0 tree = do
         opts0 tree
   (tests, fins) <- unwrap (mempty :: Path) (mempty :: Deps) traversal
   let
-    mb_tests :: Maybe [(Action, TVar Status)]
+    mb_tests :: Either [[Path]] [(Action, TVar Status)]
     mb_tests = resolveDeps $ map
       (\(act, testInfo) ->
         (act (Seq.empty, Seq.empty), testInfo))
       tests
   case mb_tests of
-    Just tests' -> return (tests', fins)
-    Nothing -> throwIO DependencyLoop
+    Right tests' -> return (tests', fins)
+    Left cycles -> throwIO (DependencyLoop cycles)
 
   where
     runSingleTest :: IsTest t => OptionSet -> TestName -> t -> Tr
@@ -297,8 +306,10 @@ createTestActions opts0 tree = do
 
 -- | Take care of the dependencies.
 --
--- Return 'Nothing' if there is a dependency cycle.
-resolveDeps :: [(IO (), (TVar Status, Path, Deps))] -> Maybe [(Action, TVar Status)]
+-- Return 'Left' if there is a dependency cycle, containing the detected cycles.
+resolveDeps
+  :: [(IO (), (TVar Status, Path, Deps))]
+  -> Either [[Path]] [(Action, TVar Status)]
 resolveDeps tests = checkCycles $ do
   (run_test, (statusVar, path0, deps)) <- tests
   let
@@ -340,18 +351,20 @@ resolveDeps tests = checkCycles $ do
       }
   return ((action, statusVar), (path0, dep_paths))
 
-checkCycles :: Ord b => [(a, (b, [b]))] -> Maybe [a]
+checkCycles :: Ord b => [(a, (b, [b]))] -> Either [[b]] [a]
 checkCycles tests = do
   let
     result = fst <$> tests
-    graph = [ ((), v, vs) | (v, vs) <- snd <$> tests ]
+    graph = [ (v, v, vs) | (v, vs) <- snd <$> tests ]
     sccs = stronglyConnComp graph
-    not_cyclic = all (\scc -> case scc of
-        AcyclicSCC{} -> True
-        CyclicSCC{}  -> False)
-      sccs
-  guard not_cyclic
-  return result
+    cycles =
+      flip mapMaybe sccs $ \case
+        AcyclicSCC{} -> Nothing
+        CyclicSCC vs -> Just vs
+
+  case cycles of
+    [] -> Right result
+    _  -> Left cycles
 
 -- | Used to create the IO action which is passed in a WithResource node
 getResource :: TVar (Resource r) -> IO r
