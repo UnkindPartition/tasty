@@ -112,7 +112,7 @@ The following providers exist:
   (based on [LeanCheck](https://hackage.haskell.org/package/leancheck))
 * [tasty-program](https://hackage.haskell.org/package/tasty-program) — run
   external program and test whether it terminates successfully
-* [tasty-wai](https://hackage.haskell.org/package/tasty-wai) — 
+* [tasty-wai](https://hackage.haskell.org/package/tasty-wai) —
   for testing [wai](https://hackage.haskell.org/wai) endpoints.
 * [tasty-inspection-testing](https://hackage.haskell.org/package/tasty-inspection-testing) —
   for compile-time testing of code properties
@@ -755,7 +755,7 @@ Here are some caveats to keep in mind regarding dependencies in Tasty:
    typos. Fortunately, misspecified dependencies usually lead to test failures
    and so can be detected that way.
 1. Dependencies shouldn't form a cycle, otherwise Tasty with fail with the
-   message "Test dependencies form a loop." A common cause of this is a test
+   message "Test dependencies have cycles." A common cause of this is a test
    matching its own dependency pattern.
 1. Using dependencies may introduce quadratic complexity. Specifically,
    resolving dependencies is *O(number_of_tests × number_of_dependencies)*,
@@ -798,11 +798,11 @@ Here are some caveats to keep in mind regarding dependencies in Tasty:
     See [issue #152](https://github.com/UnkindPartition/tasty/issues/152).
 
 3. **Q**: Patterns with slashes do not work on Windows. How can I fix it?
-  
-   **A**: If you are running Git for Windows terminal, it has a habit of converting slashes 
-   to backslashes. Set `MSYS_NO_PATHCONV=1` to prevent this behaviour, or follow other 
+
+   **A**: If you are running Git for Windows terminal, it has a habit of converting slashes
+   to backslashes. Set `MSYS_NO_PATHCONV=1` to prevent this behaviour, or follow other
    suggestions from [Known Issues](https://github.com/git-for-windows/build-extra/blob/main/ReleaseNotes.md#known-issues).
-   
+
 ## Press
 
 Blog posts and other publications related to tasty. If you wrote or just found
