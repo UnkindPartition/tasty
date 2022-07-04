@@ -167,8 +167,7 @@ parseOptions ins tree = do
 -- that indicates whether any tests have failed. See 'defaultMain' for
 -- details.
 defaultMainWithIngredients :: [Ingredient] -> TestTree -> IO ()
-defaultMainWithIngredients ins testTree = do
-  installSignalHandlers
+defaultMainWithIngredients ins testTree = withSignalHandlers $ do
   opts <- parseOptions ins testTree
 
   case tryIngredients ins opts testTree of

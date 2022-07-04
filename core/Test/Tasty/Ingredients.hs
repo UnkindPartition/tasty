@@ -96,6 +96,9 @@ tryIngredient (TestManager _ manage) opts testTree =
 --
 -- If no one accepts the task, return 'Nothing'. This is usually a sign of
 -- misconfiguration.
+--
+-- When you call this function, you should probably wrap it in
+-- 'withSignalHandlers'.
 tryIngredients :: [Ingredient] -> OptionSet -> TestTree -> Maybe (IO Bool)
 tryIngredients ins opts tree =
   msum $ map (\i -> tryIngredient i opts tree) ins
