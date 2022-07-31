@@ -12,6 +12,7 @@ module Test.Tasty.Run
 import qualified Data.IntMap as IntMap
 import qualified Data.Sequence as Seq
 import qualified Data.Foldable as F
+import Data.Int (Int64)
 import Data.Maybe
 import Data.List (intercalate)
 import Data.Graph (SCC(..), stronglyConnComp)
@@ -23,7 +24,6 @@ import Control.Monad.Trans.Reader (ReaderT(..), local, ask)
 import Control.Monad.Trans.Writer (WriterT(..), execWriterT, mapWriterT, tell)
 import Control.Concurrent
 import Control.Concurrent.STM
-import Control.Concurrent.Timeout (timeout)
 import Control.Concurrent.Async
 import Control.Exception as E
 import Control.Applicative
@@ -31,6 +31,12 @@ import Control.Arrow
 import Data.Monoid (First(..))
 import GHC.Conc (labelThread)
 import Prelude  -- Silence AMP and FTP import warnings
+
+#ifdef MIN_VERSION_unbounded_delays
+import Control.Concurrent.Timeout (timeout)
+#else
+import System.Timeout (timeout)
+#endif
 
 import Test.Tasty.Core
 import Test.Tasty.Parallel
@@ -173,7 +179,9 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
             , resultTime = fromIntegral t
             , resultDetailsPrinter = noResultDetails
             }
-      fromMaybe timeoutResult <$> timeout t a
+      -- If compiled with unbounded-delays then t' :: Integer, otherwise t' :: Int
+      let t' = fromInteger (min (max 0 t) (toInteger (maxBound :: Int64)))
+      fromMaybe timeoutResult <$> timeout t' a
 
     -- destroyResources should not be interrupted by an exception
     -- Here's how we ensure this:
