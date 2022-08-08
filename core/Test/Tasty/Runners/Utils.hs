@@ -7,15 +7,15 @@ import Control.Exception
 import Control.Applicative
 import Control.Concurrent (mkWeakThreadId, myThreadId)
 import Control.Monad (forM_)
-#ifndef VERSION_clock
-import Data.Time.Clock.POSIX (getPOSIXTime)
-#endif
 import Data.Typeable (Typeable)
 import Prelude  -- Silence AMP import warnings
 import Text.Printf
 import Foreign.C (CInt)
-#ifdef VERSION_clock
-import qualified System.Clock as Clock
+
+#if MIN_VERSION_base(4,11,0)
+import GHC.Clock (getMonotonicTime)
+#else
+import Data.Time.Clock.POSIX (getPOSIXTime)
 #endif
 
 -- Install handlers only on UNIX
@@ -102,21 +102,13 @@ timed t = do
   end   <- getTime
   return (end-start, r)
 
-#ifdef VERSION_clock
+#if MIN_VERSION_base(4,11,0)
 -- | Get monotonic time
 --
 -- Warning: This is not the system time, but a monotonically increasing time
 -- that facilitates reliable measurement of time differences.
 getTime :: IO Time
-getTime = do
-  t <- Clock.getTime Clock.Monotonic
-  let ns = realToFrac $
-#if MIN_VERSION_clock(0,7,1)
-        Clock.toNanoSecs t
-#else
-        Clock.timeSpecAsNanoSecs t
-#endif
-  return $ ns / 10 ^ (9 :: Int)
+getTime = getMonotonicTime
 #else
 -- | Get system time
 getTime :: IO Time

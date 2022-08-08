@@ -22,11 +22,6 @@ Source-repository head
   location: git://github.com/UnkindPartition/tasty.git
   subdir:   core
 
-flag clock
-  description:
-    Depend on the clock package for more accurate time measurement
-  default: True
-
 flag unix
   description:
     Depend on the unix package to install signal handlers
@@ -80,10 +75,8 @@ library
   if(!impl(ghc >= 8.0))
     build-depends: semigroups
 
-  if flag(clock) && !impl(ghcjs)
-    build-depends: clock >= 0.4.4.0
-  else
-    build-depends: time  >= 1.4
+  if(!impl(ghc >= 8.4))
+    build-depends: time >= 1.4
 
   if !os(windows) && !impl(ghcjs)
     build-depends: wcwidth
