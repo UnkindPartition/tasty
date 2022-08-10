@@ -79,7 +79,7 @@ library
     build-depends: time >= 1.4
 
   if !os(windows) && !impl(ghcjs)
-    build-depends: wcwidth
+    cpp-options: -DUSE_WCWIDTH
     if flag(unix)
       build-depends: unix
 
