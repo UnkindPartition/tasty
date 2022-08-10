@@ -1,5 +1,5 @@
 -- vim:fdm=marker
-{-# LANGUAGE BangPatterns, ImplicitParams, MultiParamTypeClasses, DeriveDataTypeable, FlexibleContexts #-}
+{-# LANGUAGE BangPatterns, ImplicitParams, MultiParamTypeClasses, DeriveDataTypeable, FlexibleContexts, CApiFFI #-}
 -- | Console reporter ingredient
 module Test.Tasty.Ingredients.ConsoleReporter
   ( consoleTestReporter
@@ -48,8 +48,8 @@ import Test.Tasty.Runners.Utils
 import Text.Printf
 import qualified Data.IntMap as IntMap
 import Data.Char
-#ifdef VERSION_wcwidth
-import Data.Char.WCWidth (wcwidth)
+#ifdef USE_WCWIDTH
+import Foreign.C.Types (CInt(..), CWchar(..))
 #endif
 import Data.List (isInfixOf)
 import Data.Maybe
@@ -678,11 +678,12 @@ computeAlignment opts =
 --   (This only works properly on Unix at the moment; on Windows, the function
 --   treats every character as width-1 like 'Data.List.length' does.)
 stringWidth :: String -> Int
-#ifdef VERSION_wcwidth
+#ifdef USE_WCWIDTH
 stringWidth = Prelude.sum . map charWidth
- where charWidth c = case wcwidth c of
+ where charWidth c = case wcwidth (fromIntegral (ord c)) of
         -1 -> 1  -- many chars have "undefined" width; default to 1 for these.
-        w  -> w
+        w  -> fromIntegral w
+foreign import capi safe "wchar.h wcwidth" wcwidth :: CWchar -> CInt
 #else
 stringWidth = length
 #endif
