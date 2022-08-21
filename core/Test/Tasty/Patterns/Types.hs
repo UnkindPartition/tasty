@@ -31,4 +31,4 @@ data Expr
   | LengthFn (Maybe Expr)
   | MatchFn Expr String
   | SubstrFn Expr Expr (Maybe Expr)
-  deriving (Show, Eq, Generic)
+  deriving (Show, Eq, Generic, Ord)

@@ -195,7 +195,14 @@ data DependencyType
   | AllFinish
     -- ^ The current test tree will be executed after its dependencies finish,
     -- regardless of whether they succeed or not.
-  deriving (Eq, Show)
+  deriving (Eq, Show, Ord)
+
+-- | Determines mode of execution of a 'TestGroupWithMode'
+data ExecutionMode
+  = Sequential DependencyType
+  -- ^ Execute tests one after another
+  | Parallel
+  -- ^ Execute tests in parallel
 
 -- | The main data structure defining a test suite.
 --
@@ -210,7 +217,7 @@ data DependencyType
 data TestTree
   = forall t . IsTest t => SingleTest TestName t
     -- ^ A single test of some particular type
-  | TestGroup TestName [TestTree]
+  | TestGroup ExecutionMode TestName [TestTree]
     -- ^ Assemble a number of tests into a cohesive group
   | PlusTestOptions (OptionSet -> OptionSet) TestTree
     -- ^ Add some options to child tests
@@ -225,9 +232,15 @@ data TestTree
     -- ^ Only run after all tests that match a given pattern finish
     -- (and, depending on the 'DependencyType', succeed)
 
--- | Create a named group of test cases or other groups
+-- | Create a named group of test cases or other groups. Tests are executed in
+-- parallel. For sequential execution, see 'sequentialTestGroup'.
 testGroup :: TestName -> [TestTree] -> TestTree
-testGroup = TestGroup
+testGroup = TestGroup Parallel
+
+-- | Create a named group of test cases or other groups. Tests are executed in
+-- order. For parallel execution, see 'testGroup'.
+sequentialTestGroup :: TestName -> DependencyType -> [TestTree] -> TestTree
+sequentialTestGroup nm depType = TestGroup (Sequential depType) nm
 
 -- | Like 'after', but accepts the pattern as a syntax tree instead
 -- of a string. Useful for generating a test tree programmatically.
@@ -371,7 +384,8 @@ foldTestTree (TreeFold fTest fGroup fResource fAfter) opts0 tree0 =
           | testPatternMatches pat (path Seq.|> name)
             -> fTest opts name test
           | otherwise -> mempty
-        TestGroup name trees ->
+        TestGroup _execMode name trees ->
+          -- TODO: Add 'execMode' argument to 'fGroup'?
           fGroup opts name $ foldMap (go (path Seq.|> name) opts) trees
         PlusTestOptions f tree -> go path (f opts) tree
         WithResource res0 tree -> fResource opts res0 $ \res -> go path opts (tree res)

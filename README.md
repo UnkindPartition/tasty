@@ -691,13 +691,16 @@ Tasty executes tests in parallel to make them finish faster.
 If this parallelism is not desirable, you can declare *dependencies* between
 tests, so that one test will not start until certain other tests finish.
 
-Dependencies are declared using the `after` combinator:
+Dependencies are declared using the `after` or `sequentialTestGroup` combinator:
 
 * `after AllFinish "pattern" my_tests` will execute the test tree `my_tests` only after all
     tests that match the pattern finish.
 * `after AllSucceed "pattern" my_tests` will execute the test tree `my_tests` only after all
     tests that match the pattern finish **and** only if they all succeed. If at
     least one dependency fails, then `my_tests` will be skipped.
+* `sequentialTestGroup groupName dependencyType [tree1, tree2, ..]` will execute all tests
+   in `tree1` first, after which it will execute all tests in `tree2`, and so forth. Like
+   `after`, `dependencyType` can either be set to `AllFinish` or `AllSucceed`.
 
 The relevant types are:
 
@@ -707,6 +710,12 @@ after
   -> String         -- ^ the pattern
   -> TestTree       -- ^ the subtree that depends on other tests
   -> TestTree       -- ^ the subtree annotated with dependency information
+
+sequentialTestGroup
+  :: TestName       -- ^ Name of the group
+  -> DependencyType -- ^ whether to run the tests even if some of the dependencies fail
+  -> [TestTree]     -- ^ Trees to execute sequentially
+  -> TestTree
 
 data DependencyType = AllSucceed | AllFinish
 ```
@@ -744,12 +753,15 @@ tests. The resource may or may not be managed by `withResource`.)
      ]
    ```
 
-Here are some caveats to keep in mind regarding dependencies in Tasty:
 
-1. If Test B depends on Test A, remember that either of them may be filtered out
-   using the `--pattern` option. Collecting the dependency info happens *after*
-   filtering. Therefore, if Test A is filtered out, Test B will run
-   unconditionally, and if Test B is filtered out, it simply won't run.
+Filtering might not behave the way you expect when using dependencies:
+if Test B depends on Test A, remember that either of them may be filtered out
+using the `--pattern` option. Collecting the dependency info happens *after*
+filtering. Therefore, if Test A is filtered out, Test B will run
+unconditionally, and if Test B is filtered out, it simply won't run.
+
+Using patterns to specify dependencies has a few more caveats:
+
 1. Tasty does not currently check whether the pattern in a dependency matches
    anything at all, so make sure your patterns are correct and do not contain
    typos. Fortunately, misspecified dependencies usually lead to test failures
@@ -770,6 +782,8 @@ Here are some caveats to keep in mind regarding dependencies in Tasty:
    dependencies is sufficiently different from the natural order of tests in the
    test tree, searching for the next test to execute may also have an
    overhead quadratic in the number of tests.
+
+Use `sequentialTestGroup` to mitigate these problems.
 
 
 ## FAQ

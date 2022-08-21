@@ -1,7 +1,7 @@
 -- | Running tests
 {-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes,
-             FlexibleContexts, BangPatterns, CPP, DeriveDataTypeable,
-             LambdaCase #-}
+             FlexibleContexts, CPP, DeriveDataTypeable, RecordWildCards,
+             LambdaCase, TupleSections, NamedFieldPuns #-}
 module Test.Tasty.Run
   ( Status(..)
   , StatusMap
@@ -9,34 +9,26 @@ module Test.Tasty.Run
   , DependencyException(..)
   ) where
 
-import qualified Data.IntMap as IntMap
-import qualified Data.Sequence as Seq
-import qualified Data.Foldable as F
-import Data.Int (Int64)
-import Data.Maybe
-import Data.List (intercalate)
-import Data.Graph (SCC(..), stronglyConnComp)
-import Data.Typeable
+import Control.Concurrent
+import Control.Concurrent.Async
+import Control.Concurrent.STM
+import Control.Exception as E
 import Control.Monad (forever, guard, join, liftM)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Reader (ReaderT(..), local, ask)
-import Control.Monad.Trans.Writer (WriterT(..), execWriterT, mapWriterT, tell)
-import Control.Concurrent
-import Control.Concurrent.STM
-import Control.Concurrent.Async
-import Control.Exception as E
-import Control.Applicative
-import Control.Arrow
+import Control.Monad.Trans.Writer (execWriterT, tell)
+import Data.Graph (SCC(..), stronglyConnComp)
+import Data.Int (Int64)
+import Data.List (intercalate)
+import Data.Maybe
 import Data.Monoid (First(..))
+import Data.Sequence (Seq ((:|>)), (|>), (<|))
+import Data.Typeable
 import GHC.Conc (labelThread)
-import Prelude  -- Silence AMP and FTP import warnings
-
-#ifdef MIN_VERSION_unbounded_delays
-import Control.Concurrent.Timeout (timeout)
-#else
 import System.Timeout (timeout)
-#endif
+
+import qualified Data.Sequence as Seq
+import qualified Data.Foldable as F
+import qualified Data.IntMap as IntMap
 
 import Test.Tasty.Core
 import Test.Tasty.Parallel
@@ -98,8 +90,8 @@ executeTest
     -- a parameter
   -> TVar Status -- ^ variable to write status to
   -> Timeout -- ^ optional timeout to apply
-  -> Seq.Seq Initializer -- ^ initializers (to be executed in this order)
-  -> Seq.Seq Finalizer -- ^ finalizers (to be executed in this order)
+  -> Seq Initializer -- ^ initializers (to be executed in this order)
+  -> Seq Finalizer -- ^ finalizers (to be executed in this order)
   -> IO ()
 executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
   resultOrExn <- try $ restore $ do
@@ -216,17 +208,6 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
     -- See also https://github.com/UnkindPartition/tasty/issues/33
     yieldProgress _ = return ()
 
-type InitFinPair = (Seq.Seq Initializer, Seq.Seq Finalizer)
-
--- | Dependencies of a test
-type Deps = [(DependencyType, Expr)]
-
--- | Traversal type used in 'createTestActions'
-type Tr = Traversal
-        (WriterT ([(InitFinPair -> IO (), (TVar Status, Path, Deps))], Seq.Seq Finalizer)
-        (ReaderT (Path, Deps)
-        IO))
-
 -- | Exceptions related to dependencies between tests.
 data DependencyException
   = DependencyLoop [[Path]]
@@ -247,89 +228,146 @@ instance Show DependencyException where
 
 instance Exception DependencyException
 
+-- | Specifies how to calculate a dependency
+data DependencySpec
+  = ExactDep (Seq TestName) (TVar Status)
+  -- ^ Dependency specified by 'TestGroup'. Note that the first field is only
+  -- there for dependency cycle detection - which can be introduced by using
+  -- 'PatternDep'.
+  | PatternDep Expr
+  -- ^ All tests matching this 'Expr' should be considered dependencies
+  deriving (Eq)
+
+instance Show DependencySpec where
+  show (PatternDep dep) = "PatternDep (" <> show dep <> ")"
+  show (ExactDep testName _) = "ExactDep (" <> show testName <> ") (<TVar>)"
+
+-- | Dependency of a test. Either it points to an exact path it depends on, or
+-- contains a pattern that should be tested against all tests in a 'TestTree'.
+data Dependency = Dependency DependencyType DependencySpec
+  deriving (Eq, Show)
+
+-- | Is given 'Dependency' a dependency that was introduced with 'After'?
+isPatternDependency :: Dependency -> Bool
+isPatternDependency (Dependency _ (PatternDep {})) = True
+isPatternDependency _ = False
+
+data TestAction dep = TestAction
+  { testPath    :: Seq TestName
+  , testAction  :: (Seq Initializer, Seq Finalizer) -> IO ()
+  , testStatus  :: TVar Status
+  , testDepends :: [dep]
+  }
+
+-- Behaves like a combination of fmap and foldl; it applies a function to each
+-- element of a structure, passing an accumulating parameter from left to right,
+-- and returning a final value of this accumulator together with the new
+-- structure. Monadic version of 'mapAccumL'.
+mapAccumLM :: Monad m => (acc -> x -> m (acc, y)) -> acc -> [x] -> m (acc, [y])
+mapAccumLM _ acc [] = return (acc, [])
+mapAccumLM f acc (x:xs) = do
+  (acc', y) <- f acc x
+  (acc'', ys) <- mapAccumLM f acc' xs
+  return (acc'', y:ys)
+
 -- | Turn a test tree into a list of actions to run tests coupled with
 -- variables to watch them.
 createTestActions
   :: OptionSet
   -> TestTree
-  -> IO ([(Action, TVar Status)], Seq.Seq Finalizer)
-createTestActions opts0 tree = do
-  let
-    traversal :: Tr
-    traversal =
-      foldTestTree
-        (trivialFold :: TreeFold Tr)
-          { foldSingle = runSingleTest
-          , foldResource = addInitAndRelease
-          , foldGroup = \_opts name (Traversal a) ->
-              Traversal $ mapWriterT (local (first (Seq.|> name))) a
-          , foldAfter = \_opts deptype pat (Traversal a) ->
-              Traversal $ mapWriterT (local (second ((deptype, pat) :))) a
-          }
-        opts0 tree
-  (tests, fins) <- unwrap (mempty :: Path) (mempty :: Deps) traversal
-  let
-    mb_tests :: Either [[Path]] [(Action, TVar Status)]
-    mb_tests = resolveDeps $ map
-      (\(act, testInfo) ->
-        (act (Seq.empty, Seq.empty), testInfo))
-      tests
-  case mb_tests of
-    Right tests' -> return (tests', fins)
+  -> IO ([(Action, TVar Status)], Seq Finalizer)
+createTestActions opts0 tree0 = do
+  (tests0, fins) <- go mempty opts0 mempty tree0
+  tests1 <- case resolveDeps (F.toList tests0) of
     Left cycles -> throwIO (DependencyLoop cycles)
-
-  where
-    runSingleTest :: IsTest t => OptionSet -> TestName -> t -> Tr
-    runSingleTest opts name test = Traversal $ do
-      statusVar <- liftIO $ atomically $ newTVar NotStarted
-      (parentPath, deps) <- lift ask
+    Right ts -> pure ts
+  pure (tests1, fins)
+ where
+  go
+    :: Seq TestName
+    -> OptionSet
+    -> Seq Dependency
+    -> TestTree
+    -> IO (Seq (TestAction Dependency), Seq Finalizer)
+  go path opts deps = \case
+    SingleTest testName test -> (,mempty) <$> do
       let
-        path = parentPath Seq.|> name
-        act (inits, fins) =
-          executeTest (run opts test) statusVar (lookupOption opts) inits fins
-      tell ([(act, (statusVar, path, deps))], mempty)
-    addInitAndRelease :: OptionSet -> ResourceSpec a -> (IO a -> Tr) -> Tr
-    addInitAndRelease _opts (ResourceSpec doInit doRelease) a = wrap $ \path deps -> do
-      initVar <- atomically $ newTVar NotCreated
-      (tests, fins) <- unwrap path deps $ a (getResource initVar)
-      let ntests = length tests
-      finishVar <- atomically $ newTVar ntests
+        testPath = path :|> testName
+        pat = lookupOption opts :: TestPattern
+
+      if testPatternMatches pat testPath then do
+        statusVar <- liftIO (newTVarIO NotStarted)
+        let act = uncurry (executeTest (run opts test) statusVar (lookupOption opts))
+        pure (pure (TestAction testPath act statusVar (F.toList deps)))
+      else
+        pure mempty
+
+    TestGroup Parallel testName testTrees ->
+      mconcat <$> mapM (go (path :|> testName) opts deps) testTrees
+
+    TestGroup (Sequential depType) testName testTrees ->
+      mconcat . snd <$>
+        mapAccumLM
+          (goSeqGroup depType (path :|> testName) opts)
+          deps
+          testTrees
+
+    PlusTestOptions f tree ->
+      go path (f opts) deps tree
+
+    WithResource (ResourceSpec doInit doRelease) fTree -> do
+      initVar <- newTVarIO NotCreated
+      (tests, fins) <- go path opts deps (fTree (getResource initVar))
+      -- The resource will get cleaned up after all the tests in 'tests' have
+      -- run. This is tracked by counting down to zero in 'finishVar'. This
+      -- counting happens in executeTest's 'destroyResources'.
+      finishVar <- newTVarIO (length tests)
       let
         ini = Initializer doInit initVar
         fin = Finalizer doRelease initVar finishVar
-        tests' = map (first (\f (x, y) -> f (x Seq.|> ini, fin Seq.<| y))) tests
-      return (tests', fins Seq.|> fin)
-    wrap
-      :: (Path ->
-          Deps ->
-          IO ([(InitFinPair -> IO (), (TVar Status, Path, Deps))], Seq.Seq Finalizer))
-      -> Tr
-    wrap = Traversal . WriterT . fmap ((,) ()) . ReaderT . uncurry
-    unwrap
-      :: Path
-      -> Deps
-      -> Tr
-      -> IO ([(InitFinPair -> IO (), (TVar Status, Path, Deps))], Seq.Seq Finalizer)
-    unwrap path deps = flip runReaderT (path, deps) . execWriterT . getTraversal
+      pure (goResource ini fin <$> tests, fins |> fin)
 
--- | Take care of the dependencies.
---
--- Return 'Left' if there is a dependency cycle, containing the detected cycles.
-resolveDeps
-  :: [(IO (), (TVar Status, Path, Deps))]
-  -> Either [[Path]] [(Action, TVar Status)]
-resolveDeps tests = checkCycles $ do
-  (run_test, (statusVar, path0, deps)) <- tests
+    AskOptions f ->
+      go path opts deps (f opts)
+
+    After depType expr tree ->
+      let dep = Dependency depType (PatternDep expr)
+       in go path opts (deps :|> dep) tree
+
+  goSeqGroup
+    :: DependencyType
+    -> Seq TestName
+    -> OptionSet
+    -> Seq Dependency
+    -> TestTree
+    -> IO (Seq Dependency, (Seq (TestAction Dependency), Seq Finalizer))
+  goSeqGroup depType path opts deps tree = do
+    (actions, finalizers) <- go path opts deps tree
+    let
+      deps1
+        -- If this test tree is empty (either due to it being actually empty, or due
+        -- to all tests being filtered) we need to propagate the previous dependencies.
+        | Seq.null actions = deps
+        | otherwise = flip fmap actions $ \TestAction{..} ->
+            Dependency depType $ ExactDep testPath testStatus
+
+    pure (deps1, (actions, finalizers))
+
+  goResource
+    :: Initializer
+    -> Finalizer
+    -> TestAction Dependency
+    -> TestAction Dependency
+  goResource ini fin action@TestAction{..} = action{testAction =
+    \(inits, fins) -> testAction (inits |> ini, fin <| fins)
+  }
+
+resolveDeps :: [TestAction Dependency] -> Either [[Path]] [(Action, TVar Status)]
+resolveDeps tests = maybeCheckCycles $ do
+  TestAction{..} <- tests
+
   let
-    -- Note: Duplicate dependencies may arise if the same test name matches
-    -- multiple patterns. It's not clear that removing them is worth the
-    -- trouble; might consider this in the future.
-    deps' :: [(DependencyType, TVar Status, Path)]
-    deps' = do
-      (deptype, depexpr) <- deps
-      (_, (statusVar1, path, _)) <- tests
-      guard $ exprMatches depexpr path
-      return (deptype, statusVar1, path)
+    deps' = concatMap findDeps testDepends
 
     getStatus :: STM ActionStatus
     getStatus = foldr
@@ -347,8 +385,8 @@ resolveDeps tests = checkCycles $ do
     dep_paths = map (\(_, _, path) -> path) deps'
     action = Action
       { actionStatus = getStatus
-      , actionRun = run_test
-      , actionSkip = writeTVar statusVar $ Done $ Result
+      , actionRun = testAction (mempty, mempty)
+      , actionSkip = writeTVar testStatus $ Done $ Result
           -- See Note [Skipped tests]
           { resultOutcome = Failure TestDepFailed
           , resultDescription = ""
@@ -357,8 +395,35 @@ resolveDeps tests = checkCycles $ do
           , resultDetailsPrinter = noResultDetails
           }
       }
-  return ((action, statusVar), (path0, dep_paths))
 
+  return
+    ( (action, testStatus)
+    , (testPath, dep_paths)
+    )
+ where
+  -- Skip cycle checking if no patterns are used: sequential test groups  can't
+  -- introduce cycles on their own.
+  maybeCheckCycles
+    | any isPatternDependency (concatMap testDepends tests) = checkCycles
+    | otherwise = Right . map fst
+
+  findDeps :: Dependency -> [(DependencyType, TVar Status, Seq TestName)]
+  findDeps (Dependency depType depSpec) =
+    case depSpec of
+      ExactDep testPath statusVar ->
+        -- A dependency defined using 'TestGroup' has already been pinpointed
+        -- to its 'statusVar' in 'createTestActions'.
+        [(depType, statusVar, testPath)]
+      PatternDep expr -> do
+        -- A dependency defined using patterns needs to scan the whole test
+        -- tree for matching tests.
+        TestAction{testPath, testStatus} <- tests
+        guard $ exprMatches expr testPath
+        [(depType, testStatus, testPath)]
+
+-- | Check a graph, given as an adjecency list, for cycles. Return 'Left' if the
+-- graph contained cycles, or return all nodes in the graph as a 'Right' if it
+-- didn't.
 checkCycles :: Ord b => [(a, (b, [b]))] -> Either [[b]] [a]
 checkCycles tests = do
   let
