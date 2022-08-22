@@ -16,9 +16,11 @@ import Control.Exception as E
 import Control.Monad (forever, guard, join, liftM)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Writer (execWriterT, tell)
+import Data.Bifunctor (second)
+import Data.Coerce (coerce)
 import Data.Graph (SCC(..), stronglyConnComp)
 import Data.Int (Int64)
-import Data.List (intercalate)
+import Data.List (intercalate, mapAccumL)
 import Data.Maybe
 import Data.Monoid (First(..))
 import Data.Sequence (Seq ((:|>)), (|>), (<|))
@@ -256,7 +258,7 @@ data TestAction dep = TestAction
   { testPath    :: Seq TestName
   , testAction  :: (Seq Initializer, Seq Finalizer) -> IO ()
   , testStatus  :: TVar Status
-  , testDepends :: [dep]
+  , testDepends :: Seq dep
   }
 
 -- Behaves like a combination of fmap and foldl; it applies a function to each
@@ -277,7 +279,7 @@ createTestActions
   -> TestTree
   -> IO ([(Action, TVar Status)], Seq Finalizer)
 createTestActions opts0 tree0 = do
-  (tests0, fins) <- go mempty opts0 mempty tree0
+  (_, (tests0, fins)) <- go mempty opts0 mempty mempty tree0
   tests1 <- case resolveDeps (F.toList tests0) of
     Left cycles -> throwIO (DependencyLoop cycles)
     Right ts -> pure ts
@@ -287,37 +289,48 @@ createTestActions opts0 tree0 = do
     :: Seq TestName
     -> OptionSet
     -> Seq Dependency
+    -> Matched
     -> TestTree
-    -> IO (Seq (TestAction Dependency), Seq Finalizer)
-  go path opts deps = \case
-    SingleTest testName test -> (,mempty) <$> do
+    -> IO (Matched, (Seq (TestAction Dependency), Seq Finalizer))
+  go path opts deps forceFilter = \case
+    SingleTest testName test -> do
       let
         testPath = path :|> testName
         pat = lookupOption opts :: TestPattern
 
-      if testPatternMatches pat testPath then do
+      if coerce forceFilter || testPatternMatches pat testPath then do
         statusVar <- liftIO (newTVarIO NotStarted)
         let act = uncurry (executeTest (run opts test) statusVar (lookupOption opts))
-        pure (pure (TestAction testPath act statusVar (F.toList deps)))
+        pure
+          ( Matched True
+          , ( pure (TestAction testPath act statusVar deps)
+            , mempty
+            )
+          )
       else
         pure mempty
 
     TestGroup Parallel testName testTrees ->
-      mconcat <$> mapM (go (path :|> testName) opts deps) testTrees
+      mconcat <$> mapM (go (path :|> testName) opts deps forceFilter) testTrees
 
     TestGroup (Sequential depType) testName testTrees ->
-      mconcat . snd <$>
-        mapAccumLM
-          (goSeqGroup depType (path :|> testName) opts)
-          deps
-          testTrees
+      fmap
+        -- Add all tests of /nth/ tree to the dependencies of /(n+1)th/ tree
+        (second (mconcat . snd . mapAccumL (goSeqGroup depType) deps . reverse))
+
+        -- If a test is selected for running, make sure all its dependencies
+        -- run too by setting the 'forceFilter' argument.
+        (mapAccumLM
+          (go (path :|> testName) opts mempty)
+          forceFilter
+          (reverse testTrees))
 
     PlusTestOptions f tree ->
-      go path (f opts) deps tree
+      go path (f opts) deps forceFilter tree
 
     WithResource (ResourceSpec doInit doRelease) fTree -> do
       initVar <- newTVarIO NotCreated
-      (tests, fins) <- go path opts deps (fTree (getResource initVar))
+      (forceFilter1, (tests, fins)) <- go path opts deps forceFilter (fTree (getResource initVar))
       -- The resource will get cleaned up after all the tests in 'tests' have
       -- run. This is tracked by counting down to zero in 'finishVar'. This
       -- counting happens in executeTest's 'destroyResources'.
@@ -325,33 +338,34 @@ createTestActions opts0 tree0 = do
       let
         ini = Initializer doInit initVar
         fin = Finalizer doRelease initVar finishVar
-      pure (goResource ini fin <$> tests, fins |> fin)
+      pure (forceFilter1, (goResource ini fin <$> tests, fins |> fin))
 
     AskOptions f ->
-      go path opts deps (f opts)
+      go path opts deps forceFilter (f opts)
 
     After depType expr tree ->
       let dep = Dependency depType (PatternDep expr)
-       in go path opts (deps :|> dep) tree
+       in go path opts (deps :|> dep) forceFilter tree
 
   goSeqGroup
     :: DependencyType
-    -> Seq TestName
-    -> OptionSet
     -> Seq Dependency
-    -> TestTree
-    -> IO (Seq Dependency, (Seq (TestAction Dependency), Seq Finalizer))
-  goSeqGroup depType path opts deps tree = do
-    (actions, finalizers) <- go path opts deps tree
-    let
-      deps1
-        -- If this test tree is empty (either due to it being actually empty, or due
-        -- to all tests being filtered) we need to propagate the previous dependencies.
-        | Seq.null actions = deps
-        | otherwise = flip fmap actions $ \TestAction{..} ->
-            Dependency depType $ ExactDep testPath testStatus
+    -> (Seq (TestAction Dependency), Seq Finalizer)
+    -> (Seq Dependency, (Seq (TestAction Dependency), Seq Finalizer))
+  goSeqGroup depType deps0 (actions0, finalizers) = do
+    (deps1, (actions1, finalizers))
+   where
+    actions1 = fmap updateDepends actions0
 
-    pure (deps1, (actions, finalizers))
+    updateDepends a@TestAction{testDepends} =
+      a{testDepends=deps0 <> testDepends}
+
+    deps1
+      -- If this test tree is empty (either due to it being actually empty, or due
+      -- to all tests being filtered) we need to propagate the previous dependencies.
+      | Seq.null actions0 = deps0
+      | otherwise = flip fmap actions0 $ \TestAction{..} ->
+          Dependency depType $ ExactDep testPath testStatus
 
   goResource
     :: Initializer
@@ -404,7 +418,7 @@ resolveDeps tests = maybeCheckCycles $ do
   -- Skip cycle checking if no patterns are used: sequential test groups  can't
   -- introduce cycles on their own.
   maybeCheckCycles
-    | any isPatternDependency (concatMap testDepends tests) = checkCycles
+    | any (any isPatternDependency . testDepends) tests = checkCycles
     | otherwise = Right . map fst
 
   findDeps :: Dependency -> [(DependencyType, TVar Status, Seq TestName)]

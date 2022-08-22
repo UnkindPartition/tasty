@@ -5,18 +5,21 @@
 module Test.Tasty.Core where
 
 import Control.Exception
-import Test.Tasty.Providers.ConsoleFormat
+import Data.Bifunctor (second)
+import Data.Coerce (coerce)
+import Data.Foldable
+import Data.List (mapAccumL)
+import Data.Monoid
+import Data.Tagged
+import Data.Typeable
+import GHC.Generics
+import Prelude  -- Silence AMP and FTP import warnings
+import qualified Data.Map as Map
+import qualified Data.Sequence as Seq
 import Test.Tasty.Options
 import Test.Tasty.Patterns
 import Test.Tasty.Patterns.Types
-import Data.Foldable
-import qualified Data.Sequence as Seq
-import Data.Monoid
-import Data.Typeable
-import qualified Data.Map as Map
-import Data.Tagged
-import GHC.Generics
-import Prelude  -- Silence AMP and FTP import warnings
+import Test.Tasty.Providers.ConsoleFormat
 import Text.Printf
 
 -- | If a test failed, 'FailureReason' describes why
@@ -324,7 +327,6 @@ after deptype s =
 data TreeFold b = TreeFold
   { foldSingle :: forall t . IsTest t => OptionSet -> TestName -> t -> b
   , foldGroup :: OptionSet -> TestName -> b -> b
-  , foldResource :: forall a . OptionSet -> ResourceSpec a -> (IO a -> b) -> b
   , foldAfter :: OptionSet -> DependencyType -> Expr -> b -> b
   }
 
@@ -343,9 +345,16 @@ trivialFold :: Monoid b => TreeFold b
 trivialFold = TreeFold
   { foldSingle = \_ _ _ -> mempty
   , foldGroup = \_ _ b -> b
-  , foldResource = \_ _ f -> f $ throwIO NotRunningTests
   , foldAfter = \_ _ _ b -> b
   }
+
+newtype Matched = Matched Bool
+
+instance Semigroup Matched where
+  (<>) = coerce (||)
+
+instance Monoid Matched where
+  mempty = Matched False
 
 -- | Fold a test tree into a single value.
 --
@@ -374,23 +383,31 @@ foldTestTree
   -> TestTree
      -- ^ the tree to fold
   -> b
-foldTestTree (TreeFold fTest fGroup fResource fAfter) opts0 tree0 =
-  go mempty opts0 tree0
+foldTestTree (TreeFold fTest fGroup fAfter) opts0 tree0 =
+  snd (go mempty opts0 mempty tree0)
   where
-    go :: (Seq.Seq TestName -> OptionSet -> TestTree -> b)
-    go path opts tree1 =
+    go :: Seq.Seq TestName -> OptionSet -> Matched -> TestTree -> (Matched, b)
+    go path opts matched tree1 =
       case tree1 of
         SingleTest name test
-          | testPatternMatches pat (path Seq.|> name)
-            -> fTest opts name test
+          | coerce matched || testPatternMatches pat (path Seq.|> name)
+            -> (Matched True, fTest opts name test)
           | otherwise -> mempty
-        TestGroup _execMode name trees ->
-          -- TODO: Add 'execMode' argument to 'fGroup'?
-          fGroup opts name $ foldMap (go (path Seq.|> name) opts) trees
-        PlusTestOptions f tree -> go path (f opts) tree
-        WithResource res0 tree -> fResource opts res0 $ \res -> go path opts (tree res)
-        AskOptions f -> go path opts (f opts)
-        After deptype dep tree -> fAfter opts deptype dep $ go path opts tree
+        TestGroup Parallel name trees ->
+          second
+            (fGroup opts name)
+            (foldMap (go (path Seq.|> name) opts matched) trees)
+        TestGroup (Sequential _) name trees ->
+          second
+            (fGroup opts name . mconcat . reverse)
+            (mapAccumL (go (path Seq.|> name) opts) matched (reverse trees))
+        PlusTestOptions f tree -> go path (f opts) matched tree
+        WithResource (ResourceSpec res _) tree -> go path opts matched (tree res)
+        AskOptions f -> go path opts matched (f opts)
+        After deptype dep tree ->
+          second
+            (fAfter opts deptype dep)
+            (go path opts matched tree)
       where
         pat = lookupOption opts :: TestPattern
 
