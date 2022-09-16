@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, FlexibleInstances, TypeSynonymInstances #-}
+{-# LANGUAGE DeriveDataTypeable, FlexibleInstances, TypeSynonymInstances, RecordWildCards #-}
 
 -- required for HasCallStack by different versions of GHC
 {-# LANGUAGE ConstraintKinds, FlexibleContexts #-}
@@ -11,6 +11,7 @@ import qualified Control.Exception as E
 import Control.Monad
 import Data.Typeable (Typeable)
 import Data.CallStack
+import Data.List
 
 -- Interfaces
 -- ----------
@@ -38,12 +39,7 @@ assertFailure
   :: HasCallStack
   => String -- ^ A message that is displayed with the assertion failure
   -> IO a
-assertFailure msg = E.throwIO (HUnitFailure location msg)
-  where
-    location :: Maybe SrcLoc
-    location = case reverse callStack of
-      (_, loc) : _ -> Just loc
-      [] -> Nothing
+assertFailure msg = E.throwIO (HUnitFailure callStack msg)
 
 -- Conditional Assertion Functions
 -- -------------------------------
@@ -133,16 +129,34 @@ instance (AssertionPredicable t) => AssertionPredicable (IO t)
 
 
 -- | Exception thrown by 'assertFailure' etc.
-data HUnitFailure = HUnitFailure (Maybe SrcLoc) String
+data HUnitFailure = HUnitFailure CallStack String
     deriving (Eq, Show, Typeable)
 instance E.Exception HUnitFailure where
-  displayException (HUnitFailure mbloc s) = prependLocation mbloc s
+  displayException (HUnitFailure mbloc s) = prependCallStack mbloc s
 
-prependLocation :: Maybe SrcLoc -> String -> String
-prependLocation mbloc s =
-  case mbloc of
-    Nothing -> s
-    Just loc -> srcLocFile loc ++ ":" ++ show (srcLocStartLine loc) ++ ":\n" ++ s
+prependCallStack :: CallStack -> String -> String
+prependCallStack cs s =
+  "Error message: " <> s <> "\n\n" <> prettyCallStack cs
+
+prettyCallStack :: CallStack -> String
+prettyCallStack = intercalate "\n" . prettyCallStackLines
+
+prettyCallStackLines :: CallStack -> [String]
+prettyCallStackLines cs = case cs of
+  []  -> []
+  stk -> "CallStack (from HasCallStack):"
+       : map (("  " ++) . prettyCallSite) stk
+  where
+    prettyCallSite (f, loc) = f ++ ", called at " ++ prettySrcLoc loc
+
+prettySrcLoc :: SrcLoc -> String
+prettySrcLoc SrcLoc {..}
+  = foldr (++) ""
+      [ srcLocFile, ":"
+      , show srcLocStartLine, ":"
+      , show srcLocStartCol, " in "
+      , srcLocPackage, ":", srcLocModule
+      ]
 
 ----------------------------------------------------------------------
 --                          DEPRECATED CODE
