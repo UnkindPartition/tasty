@@ -7,21 +7,34 @@ on:
     branches: [master]
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest]
-        # At the moment haskell/actions/setup does not know much about GHC 9.4,
-        # so we have to specify the version in full.
-        ghc: ['8.0', '8.2', '8.4', '8.6', '8.8', '8.10', '9.0', '9.2', '9.4.1']
+        os: [ubuntu-22.04]
+        ghc: ['8.0', '8.2', '8.4', '8.6', '8.8', '8.10', '9.0', '9.2', '9.4']
+        include:
+        - os: macOS-latest
+          ghc: 'latest'
+        - os: windows-latest
+          ghc: 'latest'
+
     steps:
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
-    - uses: haskell/actions/setup@v1
+    - name: Install prerequisites for GHC <= 8.2 on ubuntu-22.04
+      if: runner.os == 'Linux' && matrix.ghc <= '8.2'
+      run: |
+        sudo apt-get install libncurses5 libtinfo5
+
+    - uses: haskell/actions/setup@v2
       id: setup-haskell-cabal
       with:
         ghc-version: ${{ matrix.ghc }}
@@ -33,7 +46,7 @@ jobs:
       run: cabal freeze --enable-tests --enable-benchmarks
 
     # Cache logic see https://github.com/haskell/actions/issues/7#issuecomment-745697160
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       name: Cache cabal stuff
       with:
         path: |
