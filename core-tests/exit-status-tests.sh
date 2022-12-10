@@ -2,6 +2,14 @@
 
 set -ux
 
+# timeout executable is not always available (e. g., macOS),
+# so here is a portable workaround. While GNU timeout throws
+# error code 124, this one returns SIGALRM which is usually 142.
+if ! command -v timeout
+then
+  timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
+fi
+
 # This assumes that the compiled exit-status-test executable
 # is in the PATH
 
@@ -25,7 +33,8 @@ for fast in $(seq 0 20); do
   # When the number of slow tests >= number of threads, cannot find the failing
   # test
   timeout "$TIMEOUT" exit-status-test --result=False --slow=4 --num-threads=4 --quiet
-  [ $? -eq 124 ] || exit 1
+  exitcode=$?
+  [ $exitcode -eq 124 ] || [ $exitcode -eq 142 ] || exit 1
   # Successful case (and no slow tests)
   timeout "$TIMEOUT" exit-status-test --result=True --fast="$fast" --num-threads=4 --quiet || exit 1
 done
