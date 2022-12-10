@@ -1,0 +1,2 @@
+core-tests/awk/*.ast -text
+core-tests/awk/*.value -text
