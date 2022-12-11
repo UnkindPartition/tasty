@@ -68,7 +68,7 @@ jobs:
         (cd core-tests && tasty-core-tests +RTS -N2)
         core-tests/exit-status-tests.sh
         core-tests/resource-release-test.sh
-        core-tests/failing-pattern-test.sh
+        MSYS_NO_PATHCONV=1 core-tests/failing-pattern-test.sh
 
     - name: Haddock
       run: cabal haddock all
