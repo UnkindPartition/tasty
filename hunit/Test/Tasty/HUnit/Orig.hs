@@ -166,12 +166,12 @@ assertString s = unless (null s) (assertFailure s)
 --
 -- Since an 'Assertion' can be a sequence of @Assertion@s and @IO@ actions,
 -- there is a fair amount of flexibility of what can be achieved.  As a rule,
--- the resulting @Assertion@ should be the body of a 'TestCase' or part of
+-- the resulting @Assertion@ should be the body of a @TestCase@ or part of
 -- a @TestCase@; it should not be used to assert multiple, independent
 -- conditions.
 --
--- If more complex arrangements of assertions are needed, 'Test's and
--- 'Testable' should be used.
+-- If more complex arrangements of assertions are needed, @Test@ and
+-- @Testable@ should be used.
 class Assertable t
  where assert :: t -> Assertion
 

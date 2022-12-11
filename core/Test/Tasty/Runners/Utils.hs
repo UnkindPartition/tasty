@@ -63,7 +63,7 @@ forceElements = foldr seq ()
 --
 -- This function is called automatically from the @defaultMain*@ family of
 -- functions. You only need to call it explicitly if you call
--- 'tryIngredients' yourself.
+-- 'Test.Tasty.Runners.tryIngredients' yourself.
 --
 -- This function does nothing on non-UNIX systems or when compiled with GHC
 -- older than 7.6.

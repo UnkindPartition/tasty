@@ -110,21 +110,21 @@ expr1 = makeExprParser expr0
 --
 -- This roughly corresponds to the @unary_expr@ and @non_unary_expr@
 -- non-terminals in the awk grammar.
--- (Why roughly? See 'expr2'.)
+-- (Why roughly? See @expr2@.)
 data Unary = Unary | NonUnary
 
 -- | Arithmetic expressions.
 --
 -- Unlike awk, non-unary expressions disallow unary operators everywhere,
 -- not just in the leading position, to avoid extra complexity in
--- 'makeExprParser'.
+-- @makeExprParser@.
 --
 -- For example, the expression
 --
 -- >1 3 + -4
 --
 -- is valid in awk because @3 + -4@ is non-unary, but we disallow it here
--- because 'makeExprParser' does not allow us to distinguish it from
+-- because @makeExprParser@ does not allow us to distinguish it from
 --
 -- >1 -4 + 3
 --

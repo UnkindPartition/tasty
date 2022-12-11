@@ -7,6 +7,6 @@ import Test.Tasty.Options
 -- | This ingredient doesn't do anything apart from registering additional
 -- options.
 --
--- The option values can be accessed using 'askOption'.
+-- The option values can be accessed using 'Test.Tasty.askOption'.
 includingOptions :: [OptionDescription] -> Ingredient
 includingOptions opts = TestManager opts (\_ _ -> Nothing)

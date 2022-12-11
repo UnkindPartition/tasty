@@ -238,7 +238,7 @@ testGroup = TestGroup
 --
 -- @
 -- 'after_' 'AllFinish' ('Test.Tasty.Patterns.Types.EQ' ('Field' 'NF') ('StringLit' \"Bar\")) $
---    'testCase' \"A test that depends on Foo.Bar\" $ ...
+--    @testCase@ \"A test that depends on Foo.Bar\" $ ...
 -- @
 --
 -- @since 1.2
@@ -269,12 +269,12 @@ after_ = After
 --
 -- @
 -- 'after' 'AllFinish' \"Foo\" $
---    'testCase' \"A test that depends on Foo.Bar\" $ ...
+--    @testCase@ \"A test that depends on Foo.Bar\" $ ...
 -- @
 --
 -- Note, however, that our test also happens to contain @Foo@ as part of its name,
 -- so it also matches the pattern and becomes a dependency of itself. This
--- will result in a 'DependencyLoop' exception. To avoid this, either
+-- will result in a 'Test.Tasty.DependencyLoop' exception. To avoid this, either
 -- change the test name so that it doesn't mention @Foo@ or make the
 -- pattern more specific.
 --
@@ -282,14 +282,14 @@ after_ = After
 --
 -- @
 -- 'after' 'AllFinish' \"$0 == \\\"Tests.Foo.Bar\\\"\" $
---    'testCase' \"A test that depends on Foo.Bar\" $ ...
+--    @testCase@ \"A test that depends on Foo.Bar\" $ ...
 -- @
 --
 -- Or only specify the dependency's own name, ignoring the group names:
 --
 -- @
 -- 'after' 'AllFinish' \"$NF == \\\"Bar\\\"\" $
---    'testCase' \"A test that depends on Foo.Bar\" $ ...
+--    @testCase@ \"A test that depends on Foo.Bar\" $ ...
 -- @
 --
 -- @since 1.2

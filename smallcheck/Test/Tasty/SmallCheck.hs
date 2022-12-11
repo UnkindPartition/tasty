@@ -20,7 +20,7 @@ import Data.IORef
 import Options.Applicative (metavar)
 import Text.Printf
 
--- | Create a 'Test' for a SmallCheck 'SC.Testable' property
+-- | Create a 'TestTree' for a SmallCheck 'SC.Testable' property
 testProperty :: SC.Testable IO a => TestName -> a -> TestTree
 testProperty name prop = singleTest name $ (SC.test prop :: SC.Property IO)
 

@@ -153,7 +153,7 @@ match
   -> Bool
 match pat str = pat `isInfixOf` str
 
--- | Run the 'M' monad with a given list of fields
+-- | Run the @M@ monad with a given list of fields
 --
 -- The field list should not include @$0@; it's calculated automatically.
 withFields :: Seq.Seq String -> M a -> Either String a

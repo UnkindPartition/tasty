@@ -26,7 +26,8 @@ import Test.Tasty.Patterns
 --
 -- Note that this is /not/ included in 'coreOptions'.
 -- Instead, it's automatically included in the options for any
--- 'TestReporter' ingredient by 'ingredientOptions', because the way test
+-- 'Test.Tasty.Ingredients.TestReporter' ingredient by
+-- 'Test.Tasty.Ingredients.ingredientOptions', because the way test
 -- reporters are handled already involves parallelism. Other ingredients
 -- may also choose to include this option.
 newtype NumThreads = NumThreads { getNumThreads :: Int }
