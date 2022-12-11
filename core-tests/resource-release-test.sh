@@ -8,14 +8,8 @@ then
   exit 1
 fi
 
-# create a folder for the duration of the test, and make sure it starts empty
-DIR="$(dirname "$0")/resource-release-test-files"
-rm -rf "$DIR"
-mkdir "$DIR"
-finish() {
-  rm -rf "$DIR"
-}
-trap finish EXIT
+# create a temporary empty folder for the duration of the test
+DIR="$(mktemp -d)"
 
 # start resource-release-test and wait until it's ready
 resource-release-test "$DIR" &
