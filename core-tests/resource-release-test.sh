@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -ux
+set -eux
 
 if ! command -v resource-release-test
 then
@@ -18,7 +18,10 @@ while [ ! -f "$DIR/test-has-started" ]; do sleep 1; done
 
 # kill resource-release-test and wait for it to release its resources.
 kill -s INT "$PID"
-wait "$PID"
+wait "$PID" || exitcode=$?
+
+# check the error code
+[ $exitcode -eq 130 ] || exit 1
 
 # check that the resources were correctly released
 [ -f "$DIR/resources-are-released" ] || exit 1
