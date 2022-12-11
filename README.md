@@ -816,7 +816,7 @@ something not mentioned here, send a pull request!
 * [Custom options in Tasty][custom-options-article]
 * [Resources in Tasty (update)](https://ro-che.info/articles/2013-12-29-tasty-resources-2)
 * [Announcing tasty-rerun](https://ocharles.org.uk/blog/posts/2014-01-20-announcing-tasty-rerun.html)
-* [Code testing in Haskell revisited (with Tasty)](http://ics.p.lodz.pl/~stolarek/blog/2014/01/code-testing-in-haskell-revisited-with-tasty/)
+* [Code testing in Haskell revisited (with Tasty)](https://jstolarek.github.io/posts/2014-01-26-code-testing-in-haskell-revisited-with-tasty.html)
 * [New patterns in tasty][awk-patterns-article]
 * [Screencast: Dynamic Test Suites in Haskell using Hspec and Tasty](https://www.youtube.com/watch?v=PGsDvgmZF7A)
 * [Automatically generated directories for tasty tests][tasty-directories]
