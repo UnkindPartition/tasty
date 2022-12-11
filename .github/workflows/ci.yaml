@@ -67,8 +67,13 @@ jobs:
 
         (cd core-tests && tasty-core-tests +RTS -N2)
         core-tests/exit-status-tests.sh
-        core-tests/resource-release-test.sh
         MSYS_NO_PATHCONV=1 core-tests/failing-pattern-test.sh
+
+    - name: Test resource-release-test.sh
+      if: runner.os != 'Windows'
+      run: |
+        export PATH=$HOME/.cabal/bin:$PATH
+        core-tests/resource-release-test.sh
 
     - name: Haddock
       run: cabal haddock all
