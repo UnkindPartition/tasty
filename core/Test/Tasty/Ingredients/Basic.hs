@@ -1,7 +1,7 @@
--- | This module exports the basic ingredients defined in the 'tasty'
+-- | This module exports the basic ingredients defined in the @tasty@
 -- packages.
 --
--- Note that if @defaultIngredients@ from "Test.Tasty" suits your needs,
+-- Note that if 'Test.Tasty.defaultIngredients' from "Test.Tasty" suits your needs,
 -- use that instead of importing this module.
 module Test.Tasty.Ingredients.Basic
   (

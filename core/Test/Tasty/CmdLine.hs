@@ -141,13 +141,13 @@ suiteOptionParser ins tree = optionParser $ suiteOptions ins tree
 
 -- | Parse the command-line and environment options passed to tasty.
 --
--- Useful if you need to get the options before 'defaultMain' is called.
+-- Useful if you need to get the options before 'Test.Tasty.defaultMain' is called.
 --
--- Once within the test tree, 'askOption' should be used instead.
+-- Once within the test tree, 'Test.Tasty.askOption' should be used instead.
 --
 -- The arguments to this function should be the same as for
 -- 'defaultMainWithIngredients'. If you don't use any custom ingredients,
--- pass 'defaultIngredients'.
+-- pass 'Test.Tasty.defaultIngredients'.
 parseOptions :: [Ingredient] -> TestTree -> IO OptionSet
 parseOptions ins tree = do
   let (warnings, parser) = suiteOptionParser ins tree
@@ -163,8 +163,8 @@ parseOptions ins tree = do
 -- | Parse the command line arguments and run the tests using the provided
 -- ingredient list.
 --
--- When the tests finish, this function calls 'exitWith' with the exit code
--- that indicates whether any tests have failed. See 'defaultMain' for
+-- When the tests finish, this function calls 'System.Exit.exitWith' with the exit code
+-- that indicates whether any tests have failed. See 'Test.Tasty.defaultMain' for
 -- details.
 defaultMainWithIngredients :: [Ingredient] -> TestTree -> IO ()
 defaultMainWithIngredients ins testTree = do

@@ -110,7 +110,7 @@ ingredientOptions (TestReporter opts _) =
   Option (Proxy :: Proxy NumThreads) : opts
 ingredientOptions (TestManager opts _) = opts
 
--- | Like 'ingredientOption', but folds over multiple ingredients.
+-- | Like 'ingredientOptions', but folds over multiple ingredients.
 ingredientsOptions :: [Ingredient] -> [OptionDescription]
 ingredientsOptions = uniqueOptionDescriptions . F.foldMap ingredientOptions
 

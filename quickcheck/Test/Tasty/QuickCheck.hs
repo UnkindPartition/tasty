@@ -61,7 +61,7 @@ import Data.Monoid
 newtype QC = QC QC.Property
   deriving Typeable
 
--- | Create a 'Test' for a QuickCheck 'QC.Testable' property
+-- | Create a 'TestTree' for a QuickCheck 'QC.Testable' property
 testProperty :: QC.Testable a => TestName -> a -> TestTree
 testProperty name prop = singleTest name $ QC $ QC.property prop
 

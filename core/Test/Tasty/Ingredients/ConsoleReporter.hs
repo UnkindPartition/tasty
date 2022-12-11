@@ -83,7 +83,7 @@ data TestOutput
       -- ^ Name of a test group, an action that prints the heading of a test
       -- group and the 'TestOutput' for that test group.
   | Skip -- ^ Inactive test (e.g. not matching the current pattern)
-  | Seq TestOutput TestOutput -- ^ Two sets of 'TestOuput' on the same level
+  | Seq TestOutput TestOutput -- ^ Two sets of 'TestOutput' on the same level
 
 -- The monoid laws should hold observationally w.r.t. the semantics defined
 -- in this module
@@ -503,7 +503,8 @@ instance IsOption Quiet where
 
 -- | Report only failed tests.
 --
--- At the moment, this option only works globally. As an argument to 'localOption', it does nothing.
+-- At the moment, this option only works globally. As an argument
+-- to 'Test.Tasty.localOption', it does nothing.
 newtype HideSuccesses = HideSuccesses Bool
   deriving (Eq, Ord, Typeable)
 instance IsOption HideSuccesses where

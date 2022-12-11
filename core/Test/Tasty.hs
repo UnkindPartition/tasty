@@ -76,7 +76,7 @@ defaultIngredients = [listingTests, consoleTestReporter]
 
 -- | Parse the command line arguments and run the tests.
 --
--- When the tests finish, this function calls 'exitWith' with the exit code
+-- When the tests finish, this function calls 'System.Exit.exitWith' with the exit code
 -- that indicates whether any tests have failed. Most external systems
 -- (stack, cabal, travis-ci, jenkins etc.) rely on the exit code to detect
 -- whether the tests pass. If you want to do something else after
