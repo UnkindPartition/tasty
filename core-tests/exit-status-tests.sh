@@ -10,8 +10,11 @@ then
   timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
 fi
 
-# This assumes that the compiled exit-status-test executable
-# is in the PATH
+if ! command -v exit-status-test
+then
+  echo "exit-status-test executable is not in PATH, aborting"
+  exit 1
+fi
 
 exit-status-test --result=True > /dev/null || exit 1
 exit-status-test --result=True --quiet || exit 1
