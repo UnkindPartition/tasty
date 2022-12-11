@@ -2,6 +2,12 @@
 
 set -eu
 
+if ! command -v failing-pattern-test
+then
+  echo "failing-pattern-test executable is not in PATH, aborting"
+  exit 1
+fi
+
 # Make sure the loop is interrupted by Ctrl-C
 trap exit INT
 
