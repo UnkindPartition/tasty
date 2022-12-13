@@ -67,6 +67,7 @@ jobs:
 
         (cd core-tests && tasty-core-tests +RTS -N2)
         core-tests/exit-status-tests.sh
+        # Prevent Git for Windows from replacing slashes with backslashes in patterns
         MSYS_NO_PATHCONV=1 core-tests/failing-pattern-test.sh
 
     - name: Test resource-release-test.sh
