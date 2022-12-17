@@ -6,23 +6,33 @@ Unreleased
 
 _YYYY-MM-DD_
 
-- Dependency loop error now lists all test cases that formed a cycle
+* Dependency loop error now lists all test cases that formed a cycle
+
+Version 1.4.3
+---------------
+
+_2022-12-18_
+
+* Drop `unbounded-delays` dependency on 64-bit machines (#344).
+* Drop `clock` dependency, decomission `clock` flag (#345).
+* Drop `wcwidth` dependency (#346)
+* Tested with GHC 8.0 - 9.4.
 
 Version 1.4.2.3
 ---------------
 
 _2022-05-10_
 
-- Drop `mtl` dependency
-- Warning-free under GHC 8.0 - 9.2
+* Drop `mtl` dependency
+* Warning-free under GHC 8.0 - 9.2
 
 Version 1.4.2.2
 ---------------
 
 _2022-05-10_
 
-- Fix compilation with `mtl-2.3`
-- Tested with GHC 8.0 - 9.2; dropped support for GHC 7.x
+* Fix compilation with `mtl-2.3`
+* Tested with GHC 8.0 - 9.2; dropped support for GHC 7.x
 
 Version 1.4.2.1
 ---------------
