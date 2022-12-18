@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedLists #-}
-
 module Dependencies (testDependencies) where
 
 import Test.Tasty
@@ -12,12 +10,10 @@ import Text.Printf
 import qualified Data.IntMap as IntMap
 import Control.Monad
 import Control.Exception
-import Data.List (intercalate)
 
 testDependencies :: TestTree
 testDependencies = testGroup "Dependencies" $
   generalDependencyTests ++
-  [circDepShow] ++
   circDepTests ++
   [resourceDependenciesTest]
 
@@ -29,17 +25,6 @@ testTree deptype succeed =
     , testCase "Two" $ threadDelay 1e6
     , testCase "Three" $ threadDelay 1e6 >> assertBool "fail" succeed
     ]
-
-circDepShow :: TestTree
-circDepShow = testCase "show DependencyLoop" $
-  assertEqual
-    "dependency cycles should be shown on separate lines"
-    (show (DependencyLoop [[["a", "foo"], ["b"]], [["c"], ["d", "bar"]]]))
-    (intercalate "\n"
-      [ "Test dependencies have cycles:"
-      , "- a.foo, b, a.foo"
-      , "- c, d.bar, c"
-      ])
 
 -- an example of a tree with circular dependencies
 circDepTree1 :: TestTree
@@ -55,25 +40,12 @@ circDepTree2 = testGroup "dependency test"
 
 circDepTests :: [TestTree]
 circDepTests = do
-  (i, expectedCycles, tree) <-
-    zip3
-      [1,2]
-      [circDeps1, circDeps2]
-      [circDepTree1, circDepTree2]
-
+  (i, tree) <- zip [1,2] [circDepTree1, circDepTree2]
   return $ testCase ("Circular dependencies " ++ show i) $ do
     r <- try $ launchTestTree mempty tree $ \_ -> return $ \_ -> return ()
     case r of
-      Left (DependencyLoop cycles) ->
-        assertEqual "Unexpected cycles" expectedCycles cycles
+      Left DependencyLoop -> return ()
       _ -> assertFailure $ show r
-  where
-    circDeps1 = [[["One"]]]
-    circDeps2 = [[
-        ["dependency test", "One"]
-      , ["dependency test", "Three"]
-      , ["dependency test", "Two"]
-      ]]
 
 -- | Check the semantics of dependencies
 generalDependencyTests :: [TestTree]

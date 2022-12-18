@@ -1,13 +1,6 @@
 Changes
 =======
 
-Unreleased
----------------
-
-_YYYY-MM-DD_
-
-* Dependency loop error now lists all test cases that formed a cycle
-
 Version 1.4.3
 ---------------
 

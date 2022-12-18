@@ -755,7 +755,7 @@ Here are some caveats to keep in mind regarding dependencies in Tasty:
    typos. Fortunately, misspecified dependencies usually lead to test failures
    and so can be detected that way.
 1. Dependencies shouldn't form a cycle, otherwise Tasty with fail with the
-   message "Test dependencies have cycles." A common cause of this is a test
+   message "Test dependencies form a loop." A common cause of this is a test
    matching its own dependency pattern.
 1. Using dependencies may introduce quadratic complexity. Specifically,
    resolving dependencies is *O(number_of_tests × number_of_dependencies)*,
