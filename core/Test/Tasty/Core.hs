@@ -19,7 +19,9 @@ import GHC.Generics
 import Prelude  -- Silence AMP and FTP import warnings
 import Text.Printf
 
--- | If a test failed, 'FailureReason' describes why
+-- | If a test failed, 'FailureReason' describes why.
+--
+-- @since 0.8
 data FailureReason
   = TestFailed
     -- ^ test provider indicated failure of the code to test, either because
@@ -34,21 +36,29 @@ data FailureReason
     -- ^ test didn't complete in allotted time
   | TestDepFailed -- See Note [Skipped tests]
     -- ^ a dependency of this test failed, so this test was skipped.
+    --
+    -- @since 1.2
   deriving Show
 
 -- | Outcome of a test run
 --
 -- Note: this is isomorphic to @'Maybe' 'FailureReason'@. You can use the
 -- @generic-maybe@ package to exploit that.
+--
+-- @since 0.8
 data Outcome
   = Success -- ^ test succeeded
   | Failure FailureReason -- ^ test failed because of the 'FailureReason'
   deriving (Show, Generic)
 
 -- | Time in seconds. Used to measure how long the tests took to run.
+--
+-- @since 0.10
 type Time = Double
 
--- | A test result
+-- | A test result.
+--
+-- @since 0.1
 data Result = Result
   { resultOutcome :: Outcome
     -- ^ Did the test fail? If so, why?
@@ -61,9 +71,13 @@ data Result = Result
     --
     -- For a failed test, 'resultDescription' should typically provide more
     -- information about the failure.
+    --
+    -- @since 0.11
   , resultShortDescription :: String
     -- ^ The short description printed in the test run summary, usually @OK@ or
     -- @FAIL@.
+    --
+    -- @since 0.10
   , resultTime :: Time
     -- ^ How long it took to run the test, in seconds.
   , resultDetailsPrinter :: ResultDetailsPrinter
@@ -78,7 +92,9 @@ data Result = Result
     --
     -- @since 1.3.1
   }
-  deriving Show
+  deriving
+  ( Show -- ^ @since 1.2
+  )
 
 {- Note [Skipped tests]
    ~~~~~~~~~~~~~~~~~~~~
@@ -103,6 +119,8 @@ data Result = Result
 -}
 
 -- | 'True' for a passed test, 'False' for a failed one.
+--
+-- @since 0.8
 resultSuccessful :: Result -> Bool
 resultSuccessful r =
   case resultOutcome r of
@@ -123,6 +141,8 @@ exceptionResult e = Result
 --
 -- This may be used by a runner to provide some feedback to the user while
 -- a long-running test is executing.
+--
+-- @since 0.1
 data Progress = Progress
   { progressText :: String
     -- ^ textual information about the test's progress
@@ -131,12 +151,16 @@ data Progress = Progress
     -- 'progressPercent' should be a value between 0 and 1. If it's impossible
     -- to compute the estimate, use 0.
   }
-  deriving Show
+  deriving
+  ( Show -- ^ @since 1.2
+  )
 
 -- | The interface to be implemented by a test provider.
 --
 -- The type @t@ is the concrete representation of the test which is used by
 -- the provider.
+--
+-- @since 0.1
 class Typeable t => IsTest t where
   -- | Run the test
   --
@@ -157,11 +181,15 @@ class Typeable t => IsTest t where
   -- | The list of options that affect execution of tests of this type
   testOptions :: Tagged t [OptionDescription]
 
--- | The name of a test or a group of tests
+-- | The name of a test or a group of tests.
+--
+-- @since 0.1
 type TestName = String
 
 -- | 'ResourceSpec' describes how to acquire a resource (the first field)
 -- and how to release it (the second field).
+--
+-- @since 0.6
 data ResourceSpec a = ResourceSpec (IO a) (a -> IO ())
 
 -- | A resources-related exception
@@ -207,6 +235,8 @@ data DependencyType
 -- turn a test case into a 'TestTree'.
 --
 -- Groups can be created using 'testGroup'.
+--
+-- @since 0.1
 data TestTree
   = forall t . IsTest t => SingleTest TestName t
     -- ^ A single test of some particular type
@@ -219,13 +249,21 @@ data TestTree
     -- release it after they finish. The tree gets an `IO` action which
     -- yields the resource, although the resource is shared across all the
     -- tests.
+    --
+    -- @since 0.5
   | AskOptions (OptionSet -> TestTree)
-    -- ^ Ask for the options and customize the tests based on them
+    -- ^ Ask for the options and customize the tests based on them.
+    --
+    -- @since 0.6
   | After DependencyType Expr TestTree
     -- ^ Only run after all tests that match a given pattern finish
-    -- (and, depending on the 'DependencyType', succeed)
+    -- (and, depending on the 'DependencyType', succeed).
+    --
+    -- @since 1.2
 
 -- | Create a named group of test cases or other groups
+--
+-- @since 0.1
 testGroup :: TestName -> [TestTree] -> TestTree
 testGroup = TestGroup
 
@@ -308,11 +346,15 @@ after deptype s =
 -- Instead of constructing fresh records, build upon `trivialFold`
 -- instead. This way your code won't break when new nodes/fields are
 -- indroduced.
+--
+-- @since 0.7
 data TreeFold b = TreeFold
   { foldSingle :: forall t . IsTest t => OptionSet -> TestName -> t -> b
   , foldGroup :: OptionSet -> TestName -> b -> b
+  -- ^ @since 1.4
   , foldResource :: forall a . OptionSet -> ResourceSpec a -> (IO a -> b) -> b
   , foldAfter :: OptionSet -> DependencyType -> Expr -> b -> b
+  -- ^ @since 1.2
   }
 
 -- | 'trivialFold' can serve as the basis for custom folds. Just override
@@ -326,6 +368,8 @@ data TreeFold b = TreeFold
 --
 -- * for a resource, an IO action that throws an exception is passed (you
 -- want to override this for runners/ingredients that execute tests)
+--
+-- @since 0.7
 trivialFold :: Monoid b => TreeFold b
 trivialFold = TreeFold
   { foldSingle = \_ _ _ -> mempty
@@ -352,6 +396,8 @@ trivialFold = TreeFold
 -- Note: right now, the patterns are looked up only once, and won't be
 -- affected by the subsequent option changes. This shouldn't be a problem
 -- in practice; OTOH, this behaviour may be changed later.
+--
+-- @since 0.7
 foldTestTree
   :: forall b . Monoid b
   => TreeFold b

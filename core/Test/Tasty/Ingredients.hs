@@ -2,6 +2,8 @@
 --
 -- Ingredients themselves are provided by other modules (usually under
 -- the @Test.Tasty.Ingredients.*@ hierarchy).
+--
+-- @since 0.8
 module Test.Tasty.Ingredients
   ( Ingredient(..)
   , tryIngredients
@@ -68,15 +70,20 @@ import Control.Concurrent.Async (concurrently)
 -- what the result should be. When no tests are run, the result should
 -- probably be 'True'. Sometimes, even if some tests run and fail, it still
 -- makes sense to return 'True'.
+--
+-- @since 0.4
 data Ingredient
   = TestReporter
       [OptionDescription]
       (OptionSet -> TestTree -> Maybe (StatusMap -> IO (Time -> IO Bool)))
    -- ^ For the explanation on how the callback works, see the
    -- documentation for 'launchTestTree'.
+   --
+   -- @since 0.10
   | TestManager
       [OptionDescription]
       (OptionSet -> TestTree -> Maybe (IO Bool))
+   -- ^ @since 0.4
 
 -- | Try to run an 'Ingredient'.
 --
@@ -96,6 +103,8 @@ tryIngredient (TestManager _ manage) opts testTree =
 --
 -- If no one accepts the task, return 'Nothing'. This is usually a sign of
 -- misconfiguration.
+--
+-- @since 0.4
 tryIngredients :: [Ingredient] -> OptionSet -> TestTree -> Maybe (IO Bool)
 tryIngredients ins opts tree =
   msum $ map (\i -> tryIngredient i opts tree) ins
@@ -105,17 +114,23 @@ tryIngredients ins opts tree =
 -- Note that this isn't the same as simply pattern-matching on
 -- 'Ingredient'. E.g. options for a 'TestReporter' automatically include
 -- 'NumThreads'.
+--
+-- @since 0.4
 ingredientOptions :: Ingredient -> [OptionDescription]
 ingredientOptions (TestReporter opts _) =
   Option (Proxy :: Proxy NumThreads) : opts
 ingredientOptions (TestManager opts _) = opts
 
 -- | Like 'ingredientOptions', but folds over multiple ingredients.
+--
+-- @since 0.4
 ingredientsOptions :: [Ingredient] -> [OptionDescription]
 ingredientsOptions = uniqueOptionDescriptions . F.foldMap ingredientOptions
 
 -- | All the options relevant for this test suite. This includes the
 -- options for the test tree and ingredients, and the core options.
+--
+-- @since 0.4
 suiteOptions :: [Ingredient] -> TestTree -> [OptionDescription]
 suiteOptions ins tree = uniqueOptionDescriptions $
   coreOptions ++
@@ -129,6 +144,8 @@ suiteOptions ins tree = uniqueOptionDescriptions $
 --
 -- Be aware that it is not possible to use 'composeReporters' with a 'TestManager',
 -- it only works for 'TestReporter' ingredients.
+--
+-- @since 0.11.2
 composeReporters :: Ingredient -> Ingredient -> Ingredient
 composeReporters (TestReporter o1 f1) (TestReporter o2 f2) =
   TestReporter (o1 ++ o2) $ \o t ->

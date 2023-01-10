@@ -1,4 +1,6 @@
--- | API for test runners
+-- | API for test runners.
+--
+-- @since 0.1
 module Test.Tasty.Runners
   (
     -- * Working with the test tree

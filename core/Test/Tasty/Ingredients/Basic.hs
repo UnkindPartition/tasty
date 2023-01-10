@@ -3,6 +3,8 @@
 --
 -- Note that if 'Test.Tasty.defaultIngredients' from "Test.Tasty" suits your needs,
 -- use that instead of importing this module.
+--
+-- @since 0.8
 module Test.Tasty.Ingredients.Basic
   (
     -- ** Console test reporter

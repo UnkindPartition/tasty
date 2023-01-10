@@ -1,6 +1,8 @@
 -- vim:fdm=marker
 {-# LANGUAGE BangPatterns, ImplicitParams, MultiParamTypeClasses, DeriveDataTypeable, FlexibleContexts, CApiFFI #-}
--- | Console reporter ingredient
+-- | Console reporter ingredient.
+--
+-- @since 0.11.3
 module Test.Tasty.Ingredients.ConsoleReporter
   ( consoleTestReporter
   , consoleTestReporterWithHook
@@ -86,7 +88,9 @@ data TestOutput
   | Seq TestOutput TestOutput -- ^ Two sets of 'TestOutput' on the same level
 
 -- The monoid laws should hold observationally w.r.t. the semantics defined
--- in this module
+-- in this module.
+--
+-- @since 0.12.0.1
 instance Sem.Semigroup TestOutput where
   (<>) = Seq
 instance Monoid TestOutput where
@@ -296,6 +300,7 @@ data Statistics = Statistics
   , statFailures :: !Int -- ^ Number of active tests that failed.
   }
 
+-- | @since 0.12.0.1
 instance Sem.Semigroup Statistics where
   Statistics t1 f1 <> Statistics t2 f2 = Statistics (t1 + t2) (f1 + f2)
 instance Monoid Statistics where
@@ -306,7 +311,9 @@ instance Monoid Statistics where
 
 -- | @computeStatistics@ computes a summary 'Statistics' for
 -- a given state of the 'StatusMap'.
--- Useful in combination with @printStatistics@
+-- Useful in combination with 'printStatistics'.
+--
+-- @since 1.2.3
 computeStatistics :: StatusMap -> IO Statistics
 computeStatistics = getApp . foldMap (\var -> Ap $
   (\r -> Statistics 1 (if resultSuccessful r then 0 else 1))
@@ -395,7 +402,9 @@ statusMapResult lookahead0 smap
 --------------------------------------------------
 -- {{{
 
--- | A simple console UI
+-- | A simple console UI.
+--
+-- @since 0.4
 consoleTestReporter :: Ingredient
 consoleTestReporter = TestReporter consoleTestReporterOptions $ \opts tree ->
   let
@@ -491,7 +500,9 @@ consoleTestReporterWithHook hook = TestReporter consoleTestReporterOptions $
             printStatistics stats time
             return $ statFailures stats == 0
 
--- | Do not print test results (see README for details)
+-- | Do not print test results (see README for details).
+--
+-- @since 0.8
 newtype Quiet = Quiet Bool
   deriving (Eq, Ord, Typeable)
 instance IsOption Quiet where
@@ -505,6 +516,8 @@ instance IsOption Quiet where
 --
 -- At the moment, this option only works globally. As an argument
 -- to 'Test.Tasty.localOption', it does nothing.
+--
+-- @since 0.8
 newtype HideSuccesses = HideSuccesses Bool
   deriving (Eq, Ord, Typeable)
 instance IsOption HideSuccesses where
@@ -546,6 +559,8 @@ instance IsOption UseColor where
 --
 -- When that happens, this option can be used to disable the tricks. In
 -- that case, the test name will be printed only once the test fails.
+--
+-- @since 1.3
 newtype AnsiTricks = AnsiTricks { getAnsiTricks :: Bool }
   deriving Typeable
 

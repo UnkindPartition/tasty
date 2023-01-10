@@ -4,6 +4,8 @@
              TypeOperators #-}
 -- | Extensible options. They are used for provider-specific settings,
 -- ingredient-specific settings and core settings (such as the test name pattern).
+--
+-- @since 0.1
 module Test.Tasty.Options
   (
     -- * IsOption class
@@ -39,6 +41,8 @@ import Prelude hiding (mod) -- Silence FTP import warnings
 import Options.Applicative
 
 -- | An option is a data type that inhabits the `IsOption` type class.
+--
+-- @since 0.1
 class Typeable v => IsOption v where
   -- | The value to use if the option was not supplied explicitly
   defaultValue :: v
@@ -56,6 +60,8 @@ class Typeable v => IsOption v where
   -- (the default implementation) will result in nothing being displayed, while
   -- @'Just' def@ will result in @def@ being advertised as the default in the
   -- help string.
+  --
+  -- @since 1.3
   showDefaultValue :: v -> Maybe String
   showDefaultValue _ = Nothing
   -- | A command-line option parser.
@@ -81,8 +87,6 @@ class Typeable v => IsOption v where
   -- So, when we build the complete parser for OptionSet, we turn a
   -- failing parser into an always-succeeding one that may return an empty
   -- OptionSet.)
-  --
-  -- @since 1.3
   optionCLParser :: Parser v
   optionCLParser = mkOptionCLParser mempty
 
@@ -92,9 +96,13 @@ data OptionValue = forall v . IsOption v => OptionValue v
 -- | A set of options. Only one option of each type can be kept.
 --
 -- If some option has not been explicitly set, the default value is used.
+--
+-- @since 0.1
 newtype OptionSet = OptionSet (Map TypeRep OptionValue)
 
--- | Later options override earlier ones
+-- | Later options override earlier ones.
+--
+-- @since 0.12.0.1
 instance Sem.Semigroup OptionSet where
   OptionSet a <> OptionSet b =
     OptionSet $ Map.unionWith (flip const) a b
@@ -104,12 +112,16 @@ instance Monoid OptionSet where
   mappend = (Sem.<>)
 #endif
 
--- | Set the option value
+-- | Set the option value.
+--
+-- @since 0.1
 setOption :: IsOption v => v -> OptionSet -> OptionSet
 setOption v (OptionSet s) =
   OptionSet $ Map.insert (typeOf v) (OptionValue v) s
 
--- | Query the option value
+-- | Query the option value.
+--
+-- @since 0.1
 lookupOption :: forall v . IsOption v => OptionSet -> v
 lookupOption (OptionSet s) =
   case Map.lookup (typeOf (undefined :: v)) s of
@@ -117,20 +129,26 @@ lookupOption (OptionSet s) =
     Just {} -> error "OptionSet: broken invariant (shouldn't happen)"
     Nothing -> defaultValue
 
--- | Change the option value
+-- | Change the option value.
+--
+-- @since 0.1
 changeOption :: forall v . IsOption v => (v -> v) -> OptionSet -> OptionSet
 changeOption f s = setOption (f $ lookupOption s) s
 
--- | Create a singleton 'OptionSet'
+-- | Create a singleton 'OptionSet'.
+--
+-- @since 0.8
 singleOption :: IsOption v => v -> OptionSet
 singleOption v = setOption v mempty
 
 -- | The purpose of this data type is to capture the dictionary
 -- corresponding to a particular option.
+--
+-- @since 0.1
 data OptionDescription where
   Option :: IsOption v => Proxy v -> OptionDescription
 
--- | Remove duplicated 'OptionDescription', preserving existing order otherwise
+-- | Remove duplicated 'OptionDescription', preserving existing order otherwise.
 --
 -- @since 1.4.1
 uniqueOptionDescriptions :: [OptionDescription] -> [OptionDescription]
@@ -141,7 +159,9 @@ uniqueOptionDescriptions = go S.empty
       | typeOf o `S.member` acc = go acc os
       | otherwise = Option o : go (S.insert (typeOf o) acc) os
 
--- | Command-line parser to use with flags
+-- | Command-line parser to use with flags.
+--
+-- @since 0.8
 flagCLParser
   :: forall v . IsOption v
   => Maybe Char -- ^ optional short flag
@@ -150,6 +170,8 @@ flagCLParser
 flagCLParser mbShort = mkFlagCLParser (foldMap short mbShort)
 
 -- | Command-line flag parser that takes additional option modifiers.
+--
+-- @since 0.11.1
 mkFlagCLParser
   :: forall v . IsOption v
   => Mod FlagFields v -- ^ option modifier
@@ -162,6 +184,8 @@ mkFlagCLParser mod v = flag' v
   )
 
 -- | Command-line option parser that takes additional option modifiers.
+--
+-- @since 0.11.1
 mkOptionCLParser :: forall v . IsOption v => Mod OptionFields v -> Parser v
 mkOptionCLParser mod =
   option parse
@@ -176,12 +200,16 @@ mkOptionCLParser mod =
 
 -- | Safe read function. Defined here for convenience to use for
 -- 'parseValue'.
+--
+-- @since 0.1
 safeRead :: Read a => String -> Maybe a
 safeRead s
   | [(x, "")] <- reads s = Just x
   | otherwise = Nothing
 
--- | Parse a 'Bool' case-insensitively
+-- | Parse a 'Bool' case-insensitively.
+--
+-- @since 1.0.1
 safeReadBool :: String -> Maybe Bool
 safeReadBool s =
   case (map toLower s) of

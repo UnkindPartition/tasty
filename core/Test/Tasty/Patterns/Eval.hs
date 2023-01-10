@@ -1,4 +1,5 @@
 {-# LANGUAGE RankNTypes, ViewPatterns #-}
+-- | @since 1.0
 module Test.Tasty.Patterns.Eval (Path, eval, withFields, asB) where
 
 import Prelude hiding (Ordering(..))
@@ -16,6 +17,7 @@ import Control.Applicative
 import Data.Traversable
 #endif
 
+-- | @since 1.2
 type Path = Seq.Seq String
 
 data Value
@@ -68,6 +70,7 @@ isNumeric v =
     VS b s -> b && isJust (parseN s)
     _ -> True
 
+-- | @since 1.0
 asB :: Value -> M Bool
 asB v = return $
   case v of
@@ -78,7 +81,9 @@ asB v = return $
 fromB :: Bool -> Value
 fromB = VN . fromEnum
 
--- | Evaluate an awk expression
+-- | Evaluate an awk expression.
+--
+-- @since 1.0
 eval :: Expr -> M Value
 eval e0 =
   case e0 of
@@ -156,6 +161,8 @@ match pat str = pat `isInfixOf` str
 -- | Run the @M@ monad with a given list of fields
 --
 -- The field list should not include @$0@; it's calculated automatically.
+--
+-- @since 1.0
 withFields :: Seq.Seq String -> M a -> Either String a
 withFields fields a = runReaderT a (whole Seq.<| fields)
   where whole = intercalate "." $ toList fields

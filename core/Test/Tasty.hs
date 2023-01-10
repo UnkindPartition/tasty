@@ -24,6 +24,8 @@
 -- Take a look at the <https://github.com/UnkindPartition/tasty#readme README>:
 -- it contains a comprehensive list of test providers, a bigger example,
 -- and a lot of other information.
+--
+-- @since 0.1
 
 module Test.Tasty
   (
@@ -71,6 +73,8 @@ import Test.Tasty.Ingredients.Basic
 -- | List of the default ingredients. This is what 'defaultMain' uses.
 --
 -- At the moment it consists of 'listingTests' and 'consoleTestReporter'.
+--
+-- @since 0.4.2
 defaultIngredients :: [Ingredient]
 defaultIngredients = [listingTests, consoleTestReporter]
 
@@ -96,25 +100,34 @@ defaultIngredients = [listingTests, consoleTestReporter]
 -- >      then putStrLn "Yea"
 -- >      else putStrLn "Nay"
 -- >    throwIO e)
-
+--
+-- @since 0.1
 defaultMain :: TestTree -> IO ()
 defaultMain = defaultMainWithIngredients defaultIngredients
 
--- | Locally adjust the option value for the given test subtree
+-- | Locally adjust the option value for the given test subtree.
+--
+-- @since 0.1
 adjustOption :: IsOption v => (v -> v) -> TestTree -> TestTree
 adjustOption f = PlusTestOptions $ \opts ->
   setOption (f $ lookupOption opts) opts
 
--- | Locally set the option value for the given test subtree
+-- | Locally set the option value for the given test subtree.
+--
+-- @since 0.1
 localOption :: IsOption v => v -> TestTree -> TestTree
 localOption v = PlusTestOptions (setOption v)
 
--- | Customize the test tree based on the run-time options
+-- | Customize the test tree based on the run-time options.
+--
+-- @since 0.6
 askOption :: IsOption v => (v -> TestTree) -> TestTree
 askOption f = AskOptions $ f . lookupOption
 
 -- | Acquire the resource to run this test (sub)tree and release it
--- afterwards
+-- afterwards.
+--
+-- @since 0.5
 withResource
   :: IO a -- ^ initialize the resource
   -> (a -> IO ()) -- ^ free the resource

@@ -30,6 +30,8 @@ import Test.Tasty.Patterns
 -- 'Test.Tasty.Ingredients.ingredientOptions', because the way test
 -- reporters are handled already involves parallelism. Other ingredients
 -- may also choose to include this option.
+--
+-- @since 0.1
 newtype NumThreads = NumThreads { getNumThreads :: Int }
   deriving (Eq, Ord, Num, Typeable)
 instance IsOption NumThreads where
@@ -44,7 +46,9 @@ instance IsOption NumThreads where
 onlyPositive :: NumThreads -> Bool
 onlyPositive (NumThreads x) = x > 0
 
--- | Timeout to be applied to individual tests
+-- | Timeout to be applied to individual tests.
+--
+-- @since 0.8
 data Timeout
   = Timeout Integer String
     -- ^ 'String' is the original representation of the timeout (such as
@@ -79,7 +83,9 @@ parseTimeout str =
         _ -> Nothing
     _ -> Nothing
 
--- | A shortcut for creating 'Timeout' values
+-- | A shortcut for creating 'Timeout' values.
+--
+-- @since 0.8
 mkTimeout
   :: Integer -- ^ microseconds
   -> Timeout
@@ -90,6 +96,8 @@ mkTimeout n =
 -- | The list of all core options, i.e. the options not specific to any
 -- provider or ingredient, but to tasty itself. Currently contains
 -- 'TestPattern' and 'Timeout'.
+--
+-- @since 0.1
 coreOptions :: [OptionDescription]
 coreOptions =
   [ Option (Proxy :: Proxy TestPattern)
