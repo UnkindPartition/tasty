@@ -63,9 +63,9 @@ failFormat :: ConsoleFormat
 failFormat = ConsoleFormat BoldIntensity   Vivid Red
 
 -- | Format used to display additional information on failures
-infoFailFormat :: ConsoleFormat
 --
 -- @since 1.3.1
+infoFailFormat :: ConsoleFormat
 infoFailFormat = ConsoleFormat NormalIntensity Dull  Red
 
 -- | Format used to display sucesses

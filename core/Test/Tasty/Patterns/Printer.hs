@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+-- | @since 1.4.2
 
 module Test.Tasty.Patterns.Printer
   ( printAwkExpr

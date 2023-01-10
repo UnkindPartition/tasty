@@ -1,9 +1,11 @@
 {-# LANGUAGE DeriveGeneric #-}
+-- | @since 1.0
 
 module Test.Tasty.Patterns.Types where
 
 import GHC.Generics
 
+-- | @since 1.0
 data Expr
   = IntLit !Int
   | NF -- ^ number of fields
@@ -31,4 +33,8 @@ data Expr
   | LengthFn (Maybe Expr)
   | MatchFn Expr String
   | SubstrFn Expr Expr (Maybe Expr)
-  deriving (Show, Eq, Generic)
+  deriving
+  ( Show
+  , Eq      -- ^ @since 1.1
+  , Generic -- ^ @since 1.4.2
+  )

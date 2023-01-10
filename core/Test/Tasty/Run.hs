@@ -48,7 +48,9 @@ import Test.Tasty.Runners.Reducers
 import Test.Tasty.Runners.Utils (timed, forceElements)
 import Test.Tasty.Providers.ConsoleFormat (noResultDetails)
 
--- | Current status of a test
+-- | Current status of a test.
+--
+-- @since 0.1
 data Status
   = NotStarted
     -- ^ test has not started running yet
@@ -56,12 +58,16 @@ data Status
     -- ^ test is being run
   | Done Result
     -- ^ test finished with a given result
-  deriving Show
+  deriving
+  ( Show -- ^ @since 1.2
+  )
 
 -- | Mapping from test numbers (starting from 0) to their status variables.
 --
 -- This is what an ingredient uses to analyse and display progress, and to
 -- detect when tests finish.
+--
+-- @since 0.1
 type StatusMap = IntMap.IntMap (TVar Status)
 
 data Resource r
@@ -228,11 +234,15 @@ type Tr = Traversal
         IO))
 
 -- | Exceptions related to dependencies between tests.
+--
+-- @since 1.2
 data DependencyException
   = DependencyLoop [[Path]]
     -- ^ Test dependencies form cycles. In other words, test A cannot start
     -- until test B finishes, and test B cannot start until test
     -- A finishes. Field lists detected cycles.
+    --
+    -- @since 1.5
   deriving (Typeable)
 
 instance Show DependencyException where
@@ -425,6 +435,8 @@ destroyResource restore (Finalizer doRelease stateVar _) = join . atomically $ d
 --
 -- The number of test running threads is determined by the 'NumThreads'
 -- option.
+--
+-- @since 0.10
 launchTestTree
   :: OptionSet
   -> TestTree

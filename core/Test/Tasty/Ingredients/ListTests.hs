@@ -15,7 +15,9 @@ import Test.Tasty.Options
 import Test.Tasty.Ingredients
 
 -- | This option, when set to 'True', specifies that we should run in the
--- «list tests» mode
+-- «list tests» mode.
+--
+-- @since 0.4
 newtype ListTests = ListTests Bool
   deriving (Eq, Ord, Typeable)
 instance IsOption ListTests where
@@ -25,7 +27,9 @@ instance IsOption ListTests where
   optionHelp = return "Do not run the tests; just print their names"
   optionCLParser = mkFlagCLParser (short 'l') (ListTests True)
 
--- | Obtain the list of all tests in the suite
+-- | Obtain the list of all tests in the suite.
+--
+-- @since 0.4
 testsNames :: OptionSet -> TestTree -> [TestName]
 testsNames {- opts -} {- tree -} =
   foldTestTree
@@ -34,7 +38,9 @@ testsNames {- opts -} {- tree -} =
       , foldGroup = \_opts groupName names -> map ((groupName ++ ".") ++) names
       }
 
--- | The ingredient that provides the test listing functionality
+-- | The ingredient that provides the test listing functionality.
+--
+-- @since 0.4
 listingTests :: Ingredient
 listingTests = TestManager [Option (Proxy :: Proxy ListTests)] $
   \opts tree ->

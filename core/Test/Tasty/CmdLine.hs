@@ -148,6 +148,8 @@ suiteOptionParser ins tree = optionParser $ suiteOptions ins tree
 -- The arguments to this function should be the same as for
 -- 'defaultMainWithIngredients'. If you don't use any custom ingredients,
 -- pass 'Test.Tasty.defaultIngredients'.
+--
+-- @since 1.2.2
 parseOptions :: [Ingredient] -> TestTree -> IO OptionSet
 parseOptions ins tree = do
   let (warnings, parser) = suiteOptionParser ins tree
@@ -166,6 +168,8 @@ parseOptions ins tree = do
 -- When the tests finish, this function calls 'System.Exit.exitWith' with the exit code
 -- that indicates whether any tests have failed. See 'Test.Tasty.defaultMain' for
 -- details.
+--
+-- @since 0.4
 defaultMainWithIngredients :: [Ingredient] -> TestTree -> IO ()
 defaultMainWithIngredients ins testTree = do
   installSignalHandlers

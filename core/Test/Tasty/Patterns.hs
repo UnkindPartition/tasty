@@ -24,9 +24,18 @@ import Options.Applicative hiding (Success)
 import Data.Monoid
 #endif
 
-newtype TestPattern = TestPattern (Maybe Expr)
-  deriving (Typeable, Show, Eq)
+-- | @since 1.0
+newtype TestPattern =
+  -- | @since 1.1
+  TestPattern
+    (Maybe Expr)
+  deriving
+  ( Typeable
+  , Show -- ^ @since 1.1
+  , Eq   -- ^ @since 1.1
+  )
 
+-- | @since 1.0
 noPattern :: TestPattern
 noPattern = TestPattern Nothing
 
@@ -37,23 +46,27 @@ instance IsOption TestPattern where
   optionHelp = return "Select only tests which satisfy a pattern or awk expression"
   optionCLParser = mkOptionCLParser (short 'p' <> metavar "PATTERN")
 
+-- | @since 1.2
 parseExpr :: String -> Maybe Expr
 parseExpr s
   | all (\c -> isAlphaNum c || c `elem` "._- ") s =
     Just $ ERE s
   | otherwise = parseAwkExpr s
 
+-- | @since 1.0
 parseTestPattern :: String -> Maybe TestPattern
 parseTestPattern s
   | null s = Just noPattern
   | otherwise = TestPattern . Just <$> parseExpr s
 
+-- | @since 1.2
 exprMatches :: Expr -> Path -> Bool
 exprMatches e fields =
   case withFields fields $ asB =<< eval e of
     Left msg -> error msg
     Right b -> b
 
+-- | @since 1.0
 testPatternMatches :: TestPattern -> Path -> Bool
 testPatternMatches pat fields =
   case pat of

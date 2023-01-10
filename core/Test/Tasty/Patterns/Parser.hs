@@ -1,6 +1,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 -- | See <http://pubs.opengroup.org/onlinepubs/9699919799/utilities/awk.html> for the
 -- full awk grammar.
+--
+-- @since 1.0
 module Test.Tasty.Patterns.Parser
   ( Parser
   , runParser
@@ -25,11 +27,17 @@ type Token = ReadP
 
 -- | A separate 'Parser' data type ensures that we don't forget to skip
 -- spaces.
+--
+-- @since 1.0
 newtype Parser a = Parser (ReadP a)
   deriving (Functor, Applicative, Alternative, Monad, MonadPlus)
 
+-- | @since 1.0
 data ParseResult a = Success a | Invalid | Ambiguous [a]
-  deriving (Eq, Show)
+  deriving
+  ( Show
+  , Eq -- ^ @since 1.4.2
+  )
 
 token :: Token a -> Parser a
 token a = Parser (a <* skipSpaces)
@@ -41,6 +49,8 @@ str :: String -> Parser ()
 str = void . token . string
 
 -- | Run a parser
+--
+-- @since 1.0
 runParser
   :: Parser a
   -> String -- ^ text to parse
@@ -168,11 +178,15 @@ expr4 = makeExprParser expr3
   , [ TernR  ((If <$ sym ':') <$ sym '?') ]
   ]
 
--- | The awk-like expression parser
+-- | The awk-like expression parser.
+--
+-- @since 1.0
 expr :: Parser Expr
 expr = expr4
 
--- | Parse an awk expression
+-- | Parse an awk expression.
+--
+-- @since 1.1
 parseAwkExpr :: String -> Maybe Expr
 parseAwkExpr s =
   case runParser expr s of
