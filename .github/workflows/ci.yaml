@@ -77,4 +77,5 @@ jobs:
         core-tests/resource-release-test.sh
 
     - name: Haddock
+      if: matrix.ghc != '8.0'
       run: cabal haddock all
