@@ -393,10 +393,6 @@ trivialFold = TreeFold
 --
 -- Thus, it is preferred to an explicit recursive traversal of the tree.
 --
--- Note: right now, the patterns are looked up only once, and won't be
--- affected by the subsequent option changes. This shouldn't be a problem
--- in practice; OTOH, this behaviour may be changed later.
---
 -- @since 0.7
 foldTestTree
   :: forall b . Monoid b
