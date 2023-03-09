@@ -1,6 +1,7 @@
 -- | Core types and definitions
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RankNTypes #-}
 module Test.Tasty.Core
   ( FailureReason(..)
@@ -422,23 +423,62 @@ foldTestTree
      -- ^ the tree to fold
   -> b
 foldTestTree (TreeFold fTest fGroup fResource fAfter) opts0 tree0 =
-  go mempty opts0 tree0
+  go (filterByPattern (evaluateOptions opts0 tree0))
   where
-    go :: (Seq.Seq TestName -> OptionSet -> TestTree -> b)
-    go path opts tree1 =
-      case tree1 of
-        SingleTest name test
-          | testPatternMatches pat (path Seq.|> name)
-            -> fTest opts name test
-          | otherwise -> mempty
-        TestGroup name trees ->
-          fGroup opts name $ foldMap (go (path Seq.|> name) opts) trees
-        PlusTestOptions f tree -> go path (f opts) tree
-        WithResource res0 tree -> fResource opts res0 $ \res -> go path opts (tree res)
-        AskOptions f -> go path opts (f opts)
-        After deptype dep tree -> fAfter opts deptype dep $ go path opts tree
-      where
-        pat = lookupOption opts :: TestPattern
+    go :: AnnTestTree OptionSet -> b
+    go = \case
+      AnnEmptyTestTree               -> mempty
+      AnnSingleTest opts name test   -> fTest opts name test
+      AnnTestGroup opts name trees   -> fGroup opts name (foldMap go trees)
+      AnnWithResource opts res0 tree -> fResource opts res0 $ \res -> go (tree res)
+      AnnAfter opts deptype dep tree -> fAfter opts deptype dep (go tree)
+
+-- | 'TestTree' with arbitrary annotations, e. g., evaluated 'OptionSet'.
+data AnnTestTree ann
+  = AnnEmptyTestTree
+  -- ^ Just an empty test tree (e. g., when everything has been filtered out).
+  | forall t . IsTest t => AnnSingleTest ann TestName t
+  -- ^ Annotated counterpart of 'SingleTest'.
+  | AnnTestGroup ann TestName [AnnTestTree ann]
+  -- ^ Annotated counterpart of 'TestGroup'.
+  | forall a . AnnWithResource ann (ResourceSpec a) (IO a -> AnnTestTree ann)
+  -- ^ Annotated counterpart of 'WithResource'.
+  | AnnAfter ann DependencyType Expr (AnnTestTree ann)
+  -- ^ Annotated counterpart of 'After'.
+
+-- | Annotate 'TestTree' with options, removing 'PlusTestOptions' and 'AskOptions' nodes.
+evaluateOptions :: OptionSet -> TestTree -> AnnTestTree OptionSet
+evaluateOptions opts = \case
+  SingleTest name test ->
+    AnnSingleTest opts name test
+  TestGroup name trees ->
+    AnnTestGroup opts name $ map (evaluateOptions opts) trees
+  PlusTestOptions f tree ->
+    evaluateOptions (f opts) tree
+  WithResource res0 tree ->
+    AnnWithResource opts res0 $ \res -> evaluateOptions opts (tree res)
+  AskOptions f ->
+    evaluateOptions opts (f opts)
+  After deptype dep tree ->
+    AnnAfter opts deptype dep $ evaluateOptions opts tree
+
+-- | Filter test tree by pattern, replacing leafs with 'AnnEmptyTestTree'.
+filterByPattern :: AnnTestTree OptionSet -> AnnTestTree OptionSet
+filterByPattern = go mempty
+  where
+    go :: Seq.Seq TestName -> AnnTestTree OptionSet -> AnnTestTree OptionSet
+    go path = \case
+      AnnEmptyTestTree -> AnnEmptyTestTree
+      t@(AnnSingleTest opts name _)
+        | testPatternMatches (lookupOption opts) (path Seq.|> name)
+          -> t
+        | otherwise -> AnnEmptyTestTree
+      AnnTestGroup opts name trees ->
+        AnnTestGroup opts name $ map (go (path Seq.|> name)) trees
+      AnnWithResource opts res0 tree ->
+        AnnWithResource opts res0 $ \res -> go path (tree res)
+      AnnAfter opts deptype dep tree ->
+        AnnAfter opts deptype dep (go path tree)
 
 -- | Get the list of options that are relevant for a given test tree
 treeOptions :: TestTree -> [OptionDescription]
