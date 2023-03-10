@@ -1,22 +1,40 @@
 -- | Core types and definitions
-{-# LANGUAGE GeneralizedNewtypeDeriving, FlexibleContexts,
-             ExistentialQuantification, RankNTypes, DeriveDataTypeable, NoMonomorphismRestriction,
-             DeriveGeneric #-}
-module Test.Tasty.Core where
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE RankNTypes #-}
+module Test.Tasty.Core
+  ( FailureReason(..)
+  , Outcome(..)
+  , Time
+  , Result(..)
+  , resultSuccessful
+  , exceptionResult
+  , Progress(..)
+  , IsTest(..)
+  , TestName
+  , ResourceSpec(..)
+  , ResourceError(..)
+  , DependencyType(..)
+  , TestTree(..)
+  , testGroup
+  , after
+  , after_
+  , TreeFold(..)
+  , trivialFold
+  , foldTestTree
+  , treeOptions
+  ) where
 
 import Control.Exception
-import Test.Tasty.Providers.ConsoleFormat
+import qualified Data.Map as Map
+import qualified Data.Sequence as Seq
+import Data.Tagged
+import Data.Typeable
+import GHC.Generics
 import Test.Tasty.Options
 import Test.Tasty.Patterns
 import Test.Tasty.Patterns.Types
-import Data.Foldable
-import qualified Data.Sequence as Seq
-import Data.Monoid
-import Data.Typeable
-import qualified Data.Map as Map
-import Data.Tagged
-import GHC.Generics
-import Prelude  -- Silence AMP and FTP import warnings
+import Test.Tasty.Providers.ConsoleFormat
 import Text.Printf
 
 -- | If a test failed, 'FailureReason' describes why.
