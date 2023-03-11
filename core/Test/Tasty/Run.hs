@@ -16,6 +16,7 @@ import Data.Int (Int64)
 import Data.Maybe
 import Data.List (intercalate)
 import Data.Graph (SCC(..), stronglyConnComp)
+import Data.Sequence (Seq, (|>), (<|))
 import Data.Typeable
 import Control.Monad (forever, guard, join, liftM)
 import Control.Monad.IO.Class (liftIO)
@@ -104,8 +105,8 @@ executeTest
     -- a parameter
   -> TVar Status -- ^ variable to write status to
   -> Timeout -- ^ optional timeout to apply
-  -> Seq.Seq Initializer -- ^ initializers (to be executed in this order)
-  -> Seq.Seq Finalizer -- ^ finalizers (to be executed in this order)
+  -> Seq Initializer -- ^ initializers (to be executed in this order)
+  -> Seq Finalizer -- ^ finalizers (to be executed in this order)
   -> IO ()
 executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
   resultOrExn <- try $ restore $ do
@@ -222,14 +223,14 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
     -- See also https://github.com/UnkindPartition/tasty/issues/33
     yieldProgress _ = return ()
 
-type InitFinPair = (Seq.Seq Initializer, Seq.Seq Finalizer)
+type InitFinPair = (Seq Initializer, Seq Finalizer)
 
 -- | Dependencies of a test
 type Deps = [(DependencyType, Expr)]
 
 -- | Traversal type used in 'createTestActions'
 type Tr = Traversal
-        (WriterT ([(InitFinPair -> IO (), (TVar Status, Path, Deps))], Seq.Seq Finalizer)
+        (WriterT ([(InitFinPair -> IO (), (TVar Status, Path, Deps))], Seq Finalizer)
         (ReaderT (Path, Deps)
         IO))
 
@@ -262,7 +263,7 @@ instance Exception DependencyException
 createTestActions
   :: OptionSet
   -> TestTree
-  -> IO ([(Action, TVar Status)], Seq.Seq Finalizer)
+  -> IO ([(Action, TVar Status)], Seq Finalizer)
 createTestActions opts0 tree = do
   let
     traversal :: Tr
@@ -272,7 +273,7 @@ createTestActions opts0 tree = do
           { foldSingle = runSingleTest
           , foldResource = addInitAndRelease
           , foldGroup = \_opts name (mconcat -> Traversal a) ->
-              Traversal $ mapWriterT (local (first (Seq.|> name))) a
+              Traversal $ mapWriterT (local (first (|> name))) a
           , foldAfter = \_opts deptype pat (Traversal a) ->
               Traversal $ mapWriterT (local (second ((deptype, pat) :))) a
           }
@@ -294,7 +295,7 @@ createTestActions opts0 tree = do
       statusVar <- liftIO $ atomically $ newTVar NotStarted
       (parentPath, deps) <- lift ask
       let
-        path = parentPath Seq.|> name
+        path = parentPath |> name
         act (inits, fins) =
           executeTest (run opts test) statusVar (lookupOption opts) inits fins
       tell ([(act, (statusVar, path, deps))], mempty)
@@ -307,19 +308,19 @@ createTestActions opts0 tree = do
       let
         ini = Initializer doInit initVar
         fin = Finalizer doRelease initVar finishVar
-        tests' = map (first (\f (x, y) -> f (x Seq.|> ini, fin Seq.<| y))) tests
-      return (tests', fins Seq.|> fin)
+        tests' = map (first (\f (x, y) -> f (x |> ini, fin <| y))) tests
+      return (tests', fins |> fin)
     wrap
       :: (Path ->
           Deps ->
-          IO ([(InitFinPair -> IO (), (TVar Status, Path, Deps))], Seq.Seq Finalizer))
+          IO ([(InitFinPair -> IO (), (TVar Status, Path, Deps))], Seq Finalizer))
       -> Tr
     wrap = Traversal . WriterT . fmap ((,) ()) . ReaderT . uncurry
     unwrap
       :: Path
       -> Deps
       -> Tr
-      -> IO ([(InitFinPair -> IO (), (TVar Status, Path, Deps))], Seq.Seq Finalizer)
+      -> IO ([(InitFinPair -> IO (), (TVar Status, Path, Deps))], Seq Finalizer)
     unwrap path deps = flip runReaderT (path, deps) . execWriterT . getTraversal
 
 -- | Take care of the dependencies.
