@@ -236,7 +236,7 @@ type Tr = Traversal
 -- | Exceptions related to dependencies between tests.
 --
 -- @since 1.2
-data DependencyException
+newtype DependencyException
   = DependencyLoop [[Path]]
     -- ^ Test dependencies form cycles. In other words, test A cannot start
     -- until test B finishes, and test B cannot start until test
