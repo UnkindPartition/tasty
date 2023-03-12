@@ -23,6 +23,7 @@ module Test.Tasty.Core
   , TreeFold(..)
   , trivialFold
   , foldTestTree
+  , foldTestTree0
   , treeOptions
   ) where
 
@@ -422,12 +423,27 @@ foldTestTree
   -> TestTree
      -- ^ the tree to fold
   -> b
-foldTestTree (TreeFold fTest fGroup fResource fAfter) opts0 tree0 =
+foldTestTree = foldTestTree0 mempty
+
+-- | Like 'foldTestTree', but with a custom (non-Monoid) empty value. Unlike
+-- 'foldTestTree', it is not part of the public API.
+foldTestTree0
+  :: forall b
+   . b
+     -- ^ "empty" value
+  -> TreeFold b
+     -- ^ the algebra (i.e. how to fold a tree)
+  -> OptionSet
+     -- ^ initial options
+  -> TestTree
+     -- ^ the tree to fold
+  -> b
+foldTestTree0 empty (TreeFold fTest fGroup fResource fAfter) opts0 tree0 =
   go (filterByPattern (evaluateOptions opts0 tree0))
   where
     go :: AnnTestTree OptionSet -> b
     go = \case
-      AnnEmptyTestTree               -> mempty
+      AnnEmptyTestTree               -> empty
       AnnSingleTest opts name test   -> fTest opts name test
       AnnTestGroup opts name trees   -> fGroup opts name (map go trees)
       AnnWithResource opts res0 tree -> fResource opts res0 $ \res -> go (tree res)

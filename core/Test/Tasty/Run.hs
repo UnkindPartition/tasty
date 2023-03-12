@@ -1,7 +1,7 @@
 -- | Running tests
 {-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes,
              FlexibleContexts, CPP, DeriveDataTypeable, LambdaCase,
-             ViewPatterns #-}
+             RecordWildCards #-}
 module Test.Tasty.Run
   ( Status(..)
   , StatusMap
@@ -20,9 +20,8 @@ import Data.Sequence (Seq, (|>), (<|))
 import Data.Typeable
 import Control.Monad (forever, guard, join, liftM)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Reader (ReaderT(..), local, ask)
-import Control.Monad.Trans.Writer (WriterT(..), execWriterT, mapWriterT, tell)
+import Control.Monad.Trans.Writer (execWriterT, tell)
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Concurrent.Async
@@ -223,16 +222,11 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
     -- See also https://github.com/UnkindPartition/tasty/issues/33
     yieldProgress _ = return ()
 
-type InitFinPair = (Seq Initializer, Seq Finalizer)
-
 -- | Dependencies of a test
-type Deps = [(DependencyType, Expr)]
+type Dep = (DependencyType, Expr)
 
 -- | Traversal type used in 'createTestActions'
-type Tr = Traversal
-        (WriterT ([(InitFinPair -> IO (), (TVar Status, Path, Deps))], Seq Finalizer)
-        (ReaderT (Path, Deps)
-        IO))
+type Tr = ReaderT (Path, [Dep]) IO (TestActionTree UnresolvedAction)
 
 -- | Exceptions related to dependencies between tests.
 --
@@ -258,89 +252,134 @@ instance Show DependencyException where
 
 instance Exception DependencyException
 
+-- | An action with meta information
+data TestAction act = TestAction
+  { testAction :: act
+    -- ^ Some action, typically 'UnresolvedAction', 'ResolvedAction', or 'Action'.
+  , testPath :: Path
+    -- ^ Path pointing to this action (a series of group names + a test name)
+  , testDeps :: [Dep]
+    -- ^ Dependencies introduced by AWK-like patterns
+  , testStatus :: TVar Status
+    -- ^ Status var that can be used to monitor test progress
+  }
+
+-- | A test that still needs to be given its resource initializers and finalizers
+type UnresolvedAction = Seq Initializer -> Seq Finalizer -> IO ()
+
+-- | A test that, unlike 'UnresolvedAction', has been given its initializers and
+-- finalizers.
+type ResolvedAction = IO ()
+
+-- | Simplified version of 'TestTree' that only includes the tests to be run (as
+-- a 'TestAction') and the resources needed to run them (as 'Initializer's and
+-- 'Finalizer's).
+data TestActionTree act
+  = TResource Initializer Finalizer (TestActionTree act)
+  | TGroup [TestActionTree act]
+  | TAction (TestAction act)
+
+-- | Collect initializers and finalizers introduced by 'TResource' and apply them
+-- to each action.
+resolveTestActions :: TestActionTree UnresolvedAction -> TestActionTree ResolvedAction
+resolveTestActions = go Seq.empty Seq.empty
+ where
+  go inits fins = \case
+    TResource ini fin tree ->
+      TResource ini fin $ go (inits |> ini) (fin <| fins) tree
+    TGroup trees ->
+      TGroup $ map (go inits fins) trees
+    TAction (TestAction {..})->
+      TAction $ TestAction { testAction = testAction inits fins, .. }
+
 -- | Turn a test tree into a list of actions to run tests coupled with
--- variables to watch them.
+-- variables to watch them. Additionally, a collection of finalizers is
+-- returned that can be used to clean up resources in case of unexpected
+-- events.
 createTestActions
   :: OptionSet
   -> TestTree
-  -> IO ([(Action, TVar Status)], Seq Finalizer)
+  -> IO ([TestAction Action], Seq Finalizer)
 createTestActions opts0 tree = do
+  -- Folding the test tree reduces it to a 'TestActionTree', which is a simplified
+  -- version of 'TestTree' that only includes the tests to be run, resources needed
+  -- to run them, and meta information needed to watch test progress and calculate
+  -- dependencies in 'resolveDeps'.
+  unresolvedTestTree :: TestActionTree UnresolvedAction <-
+    flip runReaderT (mempty :: (Path, [Dep])) $
+      foldTestTree0 (pure (TGroup [])) (TreeFold { .. }) opts0 tree
+
   let
-    traversal :: Tr
-    traversal =
-      foldTestTree
-        (trivialFold :: TreeFold Tr)
-          { foldSingle = runSingleTest
-          , foldResource = addInitAndRelease
-          , foldGroup = \_opts name (mconcat -> Traversal a) ->
-              Traversal $ mapWriterT (local (first (|> name))) a
-          , foldAfter = \_opts deptype pat (Traversal a) ->
-              Traversal $ mapWriterT (local (second ((deptype, pat) :))) a
-          }
-        opts0 tree
-  (tests, fins) <- unwrap (mempty :: Path) (mempty :: Deps) traversal
-  let
-    mb_tests :: Either [[Path]] [(Action, TVar Status)]
-    mb_tests = resolveDeps $ map
-      (\(act, testInfo) ->
-        (act (Seq.empty, Seq.empty), testInfo))
-      tests
-  case mb_tests of
-    Right tests' -> return (tests', fins)
-    Left cycles -> throwIO (DependencyLoop cycles)
+    finalizers :: Seq Finalizer
+    finalizers = collectFinalizers unresolvedTestTree
+
+    tests :: [TestAction ResolvedAction]
+    tests = collectTests (resolveTestActions unresolvedTestTree)
+
+  case resolveDeps tests of
+    Right tests' -> return (tests', finalizers)
+    Left cycles  -> throwIO (DependencyLoop cycles)
 
   where
-    runSingleTest :: IsTest t => OptionSet -> TestName -> t -> Tr
-    runSingleTest opts name test = Traversal $ do
-      statusVar <- liftIO $ atomically $ newTVar NotStarted
-      (parentPath, deps) <- lift ask
+    -- * Functions used in 'TreeFold'
+    foldSingle :: IsTest t => OptionSet -> TestName -> t -> Tr
+    foldSingle opts name test = do
+      testStatus <- liftIO $ newTVarIO NotStarted
+      (parentPath, testDeps) <- ask
       let
-        path = parentPath |> name
-        act (inits, fins) =
-          executeTest (run opts test) statusVar (lookupOption opts) inits fins
-      tell ([(act, (statusVar, path, deps))], mempty)
-    addInitAndRelease :: OptionSet -> ResourceSpec a -> (IO a -> Tr) -> Tr
-    addInitAndRelease _opts (ResourceSpec doInit doRelease) a = wrap $ \path deps -> do
-      initVar <- atomically $ newTVar NotCreated
-      (tests, fins) <- unwrap path deps $ a (getResource initVar)
-      let ntests = length tests
-      finishVar <- atomically $ newTVar ntests
+        testPath = parentPath |> name
+        testAction = executeTest (run opts test) testStatus (lookupOption opts)
+      pure $ TAction (TestAction {..})
+
+    foldResource :: OptionSet -> ResourceSpec a -> (IO a -> Tr) -> Tr
+    foldResource _opts (ResourceSpec doInit doRelease) a = do
+      initVar <- liftIO $ newTVarIO NotCreated
+      testTree <- a (getResource initVar)
+      let ntests = length (collectTests testTree) -- TODO: Store size of collection
+      finishVar <- liftIO $ newTVarIO ntests      --       in data type?
       let
         ini = Initializer doInit initVar
         fin = Finalizer doRelease initVar finishVar
-        tests' = map (first (\f (x, y) -> f (x |> ini, fin <| y))) tests
-      return (tests', fins |> fin)
-    wrap
-      :: (Path ->
-          Deps ->
-          IO ([(InitFinPair -> IO (), (TVar Status, Path, Deps))], Seq Finalizer))
-      -> Tr
-    wrap = Traversal . WriterT . fmap ((,) ()) . ReaderT . uncurry
-    unwrap
-      :: Path
-      -> Deps
-      -> Tr
-      -> IO ([(InitFinPair -> IO (), (TVar Status, Path, Deps))], Seq Finalizer)
-    unwrap path deps = flip runReaderT (path, deps) . execWriterT . getTraversal
+      pure $ TResource ini fin testTree
+
+    foldAfter :: OptionSet -> DependencyType -> Expr -> Tr -> Tr
+    foldAfter _opts depType pat = local (second ((depType, pat):))
+
+    foldGroup :: OptionSet -> TestName -> [Tr] -> Tr
+    foldGroup _opts name trees = TGroup <$> local (first (|> name)) (sequence trees)
+
+    -- * Utility functions
+    collectTests :: TestActionTree act -> [TestAction act]
+    collectTests = \case
+      TResource _ _ t -> collectTests t
+      TGroup trees -> concatMap collectTests trees
+      TAction action -> [action]
+
+    collectFinalizers :: TestActionTree act -> Seq Finalizer
+    collectFinalizers = \case
+      TResource _ fin t -> collectFinalizers t |> fin
+      TGroup trees      -> mconcat (map collectFinalizers trees)
+      TAction _         -> mempty
 
 -- | Take care of the dependencies.
 --
 -- Return 'Left' if there is a dependency cycle, containing the detected cycles.
 resolveDeps
-  :: [(IO (), (TVar Status, Path, Deps))]
-  -> Either [[Path]] [(Action, TVar Status)]
+  :: [TestAction ResolvedAction]
+  -> Either [[Path]] [TestAction Action]
 resolveDeps tests = checkCycles $ do
-  (run_test, (statusVar, path0, deps)) <- tests
+  TestAction { testAction=run_test, .. } <- tests
+
   let
     -- Note: Duplicate dependencies may arise if the same test name matches
     -- multiple patterns. It's not clear that removing them is worth the
     -- trouble; might consider this in the future.
     deps' :: [(DependencyType, TVar Status, Path)]
     deps' = do
-      (deptype, depexpr) <- deps
-      (_, (statusVar1, path, _)) <- tests
-      guard $ exprMatches depexpr path
-      return (deptype, statusVar1, path)
+      (deptype, depexpr) <- testDeps
+      TestAction { testStatus = testStatus1, testPath = testPath1 } <- tests
+      guard $ exprMatches depexpr testPath1
+      return (deptype, testStatus1, testPath1)
 
     getStatus :: STM ActionStatus
     getStatus = foldr
@@ -359,7 +398,7 @@ resolveDeps tests = checkCycles $ do
     action = Action
       { actionStatus = getStatus
       , actionRun = run_test
-      , actionSkip = writeTVar statusVar $ Done $ Result
+      , actionSkip = writeTVar testStatus $ Done $ Result
           -- See Note [Skipped tests]
           { resultOutcome = Failure TestDepFailed
           , resultDescription = ""
@@ -368,7 +407,7 @@ resolveDeps tests = checkCycles $ do
           , resultDetailsPrinter = noResultDetails
           }
       }
-  return ((action, statusVar), (path0, dep_paths))
+  return (TestAction { testAction = action, .. }, (testPath, dep_paths))
 
 checkCycles :: Ord b => [(a, (b, [b]))] -> Either [[b]] [a]
 checkCycles tests = do
@@ -459,8 +498,8 @@ launchTestTree opts tree k0 = do
   (testActions, fins) <- createTestActions opts tree
   let NumThreads numTheads = lookupOption opts
   (t,k1) <- timed $ do
-     abortTests <- runInParallel numTheads (fst <$> testActions)
-     (do let smap = IntMap.fromList $ zip [0..] (snd <$> testActions)
+     abortTests <- runInParallel numTheads (testAction <$> testActions)
+     (do let smap = IntMap.fromList $ zip [0..] (testStatus <$> testActions)
          k0 smap)
       `finallyRestore` \restore -> do
          -- Tell all running tests to wrap up.
