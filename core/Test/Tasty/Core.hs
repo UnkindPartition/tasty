@@ -369,7 +369,7 @@ after deptype s =
 -- @since 0.7
 data TreeFold b = TreeFold
   { foldSingle :: forall t . IsTest t => OptionSet -> TestName -> t -> b
-  , foldGroup :: OptionSet -> TestName -> b -> b
+  , foldGroup :: OptionSet -> TestName -> [b] -> b
   -- ^ @since 1.4
   , foldResource :: forall a . OptionSet -> ResourceSpec a -> (IO a -> b) -> b
   , foldAfter :: OptionSet -> DependencyType -> Expr -> b -> b
@@ -392,7 +392,7 @@ data TreeFold b = TreeFold
 trivialFold :: Monoid b => TreeFold b
 trivialFold = TreeFold
   { foldSingle = \_ _ _ -> mempty
-  , foldGroup = \_ _ b -> b
+  , foldGroup = \_ _ bs -> mconcat bs
   , foldResource = \_ _ f -> f $ throwIO NotRunningTests
   , foldAfter = \_ _ _ b -> b
   }
@@ -429,7 +429,7 @@ foldTestTree (TreeFold fTest fGroup fResource fAfter) opts0 tree0 =
     go = \case
       AnnEmptyTestTree               -> mempty
       AnnSingleTest opts name test   -> fTest opts name test
-      AnnTestGroup opts name trees   -> fGroup opts name (foldMap go trees)
+      AnnTestGroup opts name trees   -> fGroup opts name (map go trees)
       AnnWithResource opts res0 tree -> fResource opts res0 $ \res -> go (tree res)
       AnnAfter opts deptype dep tree -> fAfter opts deptype dep (go tree)
 

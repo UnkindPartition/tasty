@@ -1,7 +1,7 @@
 -- | Running tests
 {-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes,
-             FlexibleContexts, BangPatterns, CPP, DeriveDataTypeable,
-             LambdaCase #-}
+             FlexibleContexts, CPP, DeriveDataTypeable, LambdaCase,
+             ViewPatterns #-}
 module Test.Tasty.Run
   ( Status(..)
   , StatusMap
@@ -271,7 +271,7 @@ createTestActions opts0 tree = do
         (trivialFold :: TreeFold Tr)
           { foldSingle = runSingleTest
           , foldResource = addInitAndRelease
-          , foldGroup = \_opts name (Traversal a) ->
+          , foldGroup = \_opts name (mconcat -> Traversal a) ->
               Traversal $ mapWriterT (local (first (Seq.|> name))) a
           , foldAfter = \_opts deptype pat (Traversal a) ->
               Traversal $ mapWriterT (local (second ((deptype, pat) :))) a

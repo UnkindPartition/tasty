@@ -158,12 +158,12 @@ buildTestOutput opts tree =
 
       return $ PrintTest name printTestName printTestResult
 
-    runGroup :: OptionSet -> TestName -> Ap (Reader Level) TestOutput -> Ap (Reader Level) TestOutput
+    runGroup :: OptionSet -> TestName -> [Ap (Reader Level) TestOutput] -> Ap (Reader Level) TestOutput
     runGroup _opts name grp = Ap $ do
       level <- ask
       let
         printHeading = printf "%s%s\n" (indent level) name
-        printBody = runReader (getApp grp) (level + 1)
+        printBody = runReader (getApp (mconcat grp)) (level + 1)
       return $ PrintHeading name printHeading printBody
 
   in
@@ -677,7 +677,7 @@ computeAlignment opts =
   foldTestTree
     trivialFold
       { foldSingle = \_ name _ level -> Maximum (stringWidth name + level)
-      , foldGroup = \_opts _ m -> m . (+ indentSize)
+      , foldGroup = \_opts _ m -> mconcat m . (+ indentSize)
       }
     opts
   where
