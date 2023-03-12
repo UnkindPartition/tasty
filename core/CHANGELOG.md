@@ -7,6 +7,7 @@ Unreleased
 _YYYY-MM-DD_
 
 * Dependency loop error now lists all test cases that formed a cycle
+* `foldGroup` now takes `[b]` instead of `b` as its last argument to allow for custom fold strategies. This is a backwards incompatible change, but you can get the old behavior by applying `mconcat`.
 
 Version 1.4.3
 ---------------

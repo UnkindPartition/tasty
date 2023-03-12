@@ -67,7 +67,7 @@ getTestNames =
   foldTestTree
     trivialFold
       { foldSingle = \_ name _ -> [name]
-      , foldGroup = \_opts n l -> map ((n ++ ".") ++) l
+      , foldGroup = \_opts n l -> map ((n ++ ".") ++) (concat l)
       }
 
 -- the tree being tested
