@@ -33,6 +33,7 @@ module Test.Tasty
     TestName
   , TestTree
   , testGroup
+  , sequentialTestGroup
   -- * Running tests
   , defaultMain
   , defaultMainWithIngredients

@@ -11,6 +11,7 @@ import Resources
 import Timeouts
 import Dependencies
 import AWK
+import SequentialTestGroup (testSequentialTestGroup)
 
 main :: IO ()
 main = do
@@ -23,6 +24,7 @@ mainGroup = do
     [ testResources
     , testTimeouts
     , testDependencies
+    , testSequentialTestGroup
     , patternTests
     , awkTests_
     , optionMessagesTests
