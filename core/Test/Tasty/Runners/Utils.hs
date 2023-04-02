@@ -18,9 +18,13 @@ import GHC.Clock (getMonotonicTime)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 #endif
 
--- Install handlers only on UNIX
 #ifdef VERSION_unix
+#include "HsUnixConfig.h"
+#ifdef HAVE_SIGNAL_H
 #define INSTALL_HANDLERS 1
+#else
+#define INSTALL_HANDLERS 0
+#endif
 #else
 #define INSTALL_HANDLERS 0
 #endif
@@ -69,8 +73,7 @@ forceElements = foldr seq ()
 -- functions. You only need to call it explicitly if you call
 -- 'Test.Tasty.Runners.tryIngredients' yourself.
 --
--- This function does nothing on non-UNIX systems or when compiled with GHC
--- older than 7.6.
+-- This function does nothing when POSIX signals are not supported.
 --
 -- @since 1.2.1
 installSignalHandlers :: IO ()
