@@ -79,3 +79,46 @@ jobs:
     - name: Haddock
       if: matrix.ghc != '8.0'
       run: cabal haddock all
+
+  build-wasi:
+    runs-on: ubuntu-latest
+    env:
+      GHC_WASM_META_REV: 5ad5e045f52609eab12c7e09ed9b110980807957
+      FLAVOUR: '9.6'
+    steps:
+    - name: setup-ghc-wasm32-wasi
+      run: |
+        cd $(mktemp -d)
+        curl -L https://gitlab.haskell.org/ghc/ghc-wasm-meta/-/archive/$GHC_WASM_META_REV/ghc-wasm-meta-master.tar.gz | tar xz --strip-components=1
+        ./setup.sh
+        ~/.ghc-wasm/add_to_github_path.sh
+    - uses: actions/checkout@v3
+
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ~/.ghc-wasm/.cabal/store
+          dist-newstyle
+        key: build-wasi-${{ runner.os }}-wasm-meta-${{ env.GHC_WASM_META_REV }}-flavour-${{ env.FLAVOUR }}-${{ github.sha }}
+        restore-keys: |
+          build-wasi-${{ runner.os }}-wasm-meta-${{ env.GHC_WASM_META_REV }}-flavour-${{ env.FLAVOUR }}-
+
+    - name: Build
+      run: |
+        wasm32-wasi-cabal build all
+
+        TEST_WRAPPERS=$(mktemp -d)
+        echo $TEST_WRAPPERS >> $GITHUB_PATH
+        wasm32-wasi-cabal install ./core-tests
+        for test in tasty-core-tests exit-status-test resource-release-test failing-pattern-test; do
+          echo '#!/usr/bin/env bash' > $TEST_WRAPPERS/$test
+          echo "wasmtime --mapdir /::/ --env PWD=\"\$PWD\" ~/.ghc-wasm/.cabal/bin/$test.wasm -- \"\$@\"" \
+            >> $TEST_WRAPPERS/$test
+          chmod +x $TEST_WRAPPERS/$test
+        done
+
+    - name: Test
+      run: |
+        (cd core-tests && tasty-core-tests)
+        core-tests/exit-status-tests.sh
+        core-tests/failing-pattern-test.sh
