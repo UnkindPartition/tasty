@@ -271,13 +271,35 @@ type UnresolvedAction = Seq Initializer -> Seq Finalizer -> IO ()
 -- finalizers.
 type ResolvedAction = IO ()
 
+-- | Number of 'TAction' leafs in a 'TestActionTree'. Used to prevent repeated
+-- size calculations.
+type Size = Int
+
 -- | Simplified version of 'TestTree' that only includes the tests to be run (as
 -- a 'TestAction') and the resources needed to run them (as 'Initializer's and
 -- 'Finalizer's).
 data TestActionTree act
   = TResource Initializer Finalizer (TestActionTree act)
-  | TGroup [TestActionTree act]
+  | TGroup Size [TestActionTree act]
+  -- ^ Note the 'Size' field of this constructor: it stores how many 'TAction's
+  -- are present in the tree. Functions using constructing this constructor
+  -- should take care, or use 'tGroup' instead. If this constructor is ever
+  -- exported, we should probably move it to its own module and expose only a
+  -- smart constructor using pattern synonyms. For now, this seems more trouble
+  -- than it's worth, given the number of types it needs defined in this module.
   | TAction (TestAction act)
+
+-- | Smart constructor for 'TGroup'. Fills in 'Size' field by summing the size
+-- of the given test trees.
+tGroup :: [TestActionTree act] -> TestActionTree act
+tGroup trees = TGroup (sum (map testActionTreeSize trees)) trees
+
+-- | Size of a 'TestActionTree', i.e. the number of 'TAction's it contains.
+testActionTreeSize :: TestActionTree act -> Int
+testActionTreeSize = \case
+  TResource _ _ tree -> testActionTreeSize tree
+  TGroup size _ -> size
+  TAction _ -> 1
 
 -- | Collect initializers and finalizers introduced by 'TResource' and apply them
 -- to each action.
@@ -287,8 +309,8 @@ resolveTestActions = go Seq.empty Seq.empty
   go inits fins = \case
     TResource ini fin tree ->
       TResource ini fin $ go (inits |> ini) (fin <| fins) tree
-    TGroup trees ->
-      TGroup $ map (go inits fins) trees
+    TGroup size trees ->
+      TGroup size $ map (go inits fins) trees
     TAction (TestAction {..})->
       TAction $ TestAction { testAction = testAction inits fins, .. }
 
@@ -307,7 +329,7 @@ createTestActions opts0 tree = do
   -- dependencies in 'resolveDeps'.
   unresolvedTestTree :: TestActionTree UnresolvedAction <-
     flip runReaderT (mempty :: (Path, [Dep])) $
-      foldTestTree0 (pure (TGroup [])) (TreeFold { .. }) opts0 tree
+      foldTestTree0 (pure (tGroup [])) (TreeFold { .. }) opts0 tree
 
   let
     finalizers :: Seq Finalizer
@@ -335,8 +357,7 @@ createTestActions opts0 tree = do
     foldResource _opts (ResourceSpec doInit doRelease) a = do
       initVar <- liftIO $ newTVarIO NotCreated
       testTree <- a (getResource initVar)
-      let ntests = length (collectTests testTree) -- TODO: Store size of collection
-      finishVar <- liftIO $ newTVarIO ntests      --       in data type?
+      finishVar <- liftIO $ newTVarIO (testActionTreeSize testTree)
       let
         ini = Initializer doInit initVar
         fin = Finalizer doRelease initVar finishVar
@@ -346,19 +367,19 @@ createTestActions opts0 tree = do
     foldAfter _opts depType pat = local (second ((depType, pat):))
 
     foldGroup :: OptionSet -> TestName -> [Tr] -> Tr
-    foldGroup _opts name trees = TGroup <$> local (first (|> name)) (sequence trees)
+    foldGroup _opts name trees = tGroup <$> local (first (|> name)) (sequence trees)
 
     -- * Utility functions
     collectTests :: TestActionTree act -> [TestAction act]
     collectTests = \case
       TResource _ _ t -> collectTests t
-      TGroup trees -> concatMap collectTests trees
-      TAction action -> [action]
+      TGroup _ trees  -> concatMap collectTests trees
+      TAction action  -> [action]
 
     collectFinalizers :: TestActionTree act -> Seq Finalizer
     collectFinalizers = \case
       TResource _ fin t -> collectFinalizers t |> fin
-      TGroup trees      -> mconcat (map collectFinalizers trees)
+      TGroup _ trees    -> mconcat (map collectFinalizers trees)
       TAction _         -> mempty
 
 -- | Take care of the dependencies.
