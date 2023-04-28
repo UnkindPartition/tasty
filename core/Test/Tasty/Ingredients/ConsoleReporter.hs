@@ -706,18 +706,20 @@ stringWidth = length
 
 -- (Potentially) colorful output
 ok, fail, skipped, infoOk, infoFail :: (?colors :: Bool) => String -> IO ()
-fail     = output failFormat
-ok       = output okFormat
-skipped  = output skippedFormat
-infoOk   = output infoOkFormat
-infoFail = output infoFailFormat
+fail     = output FormatFail
+ok       = output FormatOk
+skipped  = output FormatSkipped
+infoOk   = output FormatInfoOk
+infoFail = output FormatInfoFail
 
 output
   :: (?colors :: Bool)
-  => ConsoleFormat
+  => ConsoleFormatType
   -> String
   -> IO ()
-output format = withConsoleFormat format . putStr
+output formatType str = do
+  format <- getFormat formatType
+  withConsoleFormat format (putStr str)
 
 -- | Run action with console configured for a specific output format
 --
