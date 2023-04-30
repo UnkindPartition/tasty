@@ -108,10 +108,11 @@ executeTest
     -- a parameter
   -> TVar Status -- ^ variable to write status to
   -> Timeout -- ^ optional timeout to apply
+  -> HideProgress -- ^ hide progress option
   -> Seq Initializer -- ^ initializers (to be executed in this order)
   -> Seq Finalizer -- ^ finalizers (to be executed in this order)
   -> IO ()
-executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
+executeTest action statusVar timeoutOpt hideProgressOpt inits fins = mask $ \restore -> do
   resultOrExn <- try . restore $ do
     -- N.B. this can (re-)throw an exception. It's okay. By design, the
     -- actual test will not be run, then. We still run all the
@@ -223,6 +224,8 @@ executeTest action statusVar timeoutOpt inits fins = mask $ \restore -> do
 
             tell $ First mbExcn
 
+    yieldProgress _newP | getHideProgress hideProgressOpt =
+      pure ()
     yieldProgress newP | newP == emptyProgress =
       -- This could be changed to `Maybe Progress` to lets more easily indicate
       -- when progress should try to be printed ?
@@ -395,7 +398,7 @@ createTestActions opts0 tree = do
       (parentPath, testDeps) <- ask
       let
         testPath = parentPath |> name
-        testAction = executeTest (run opts test) testStatus (lookupOption opts)
+        testAction = executeTest (run opts test) testStatus (lookupOption opts) (lookupOption opts)
       pure $ TAction (TestAction {..})
 
     foldResource :: OptionSet -> ResourceSpec a -> (IO a -> Tr) -> Tr
