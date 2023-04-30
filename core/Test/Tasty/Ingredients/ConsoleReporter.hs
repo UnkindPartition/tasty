@@ -148,8 +148,7 @@ buildTestOutput opts tree =
           hFlush stdout
 
         printTestProgress progress
-          | getHideProgress (lookupOption opts ) ||
-            progress == emptyProgress = pure ()
+          | progress == emptyProgress = pure ()
 
           | otherwise = do
               let
