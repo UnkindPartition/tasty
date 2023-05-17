@@ -194,9 +194,14 @@ mkOptionCLParser mod =
     <> mod
     )
   where
+    name :: String
     name = untag (optionName :: Tagged v String)
-    parse = str >>=
-      maybe (readerError $ "Could not parse " ++ name) pure <$> parseValue
+
+    parse :: ReadM v
+    parse = do
+      s <- str
+      let err = "Could not parse: " ++ s ++ " is not a valid " ++ name
+      maybe (readerError err) pure (parseValue s)
 
 -- | Safe read function. Defined here for convenience to use for
 -- 'parseValue'.
