@@ -709,7 +709,9 @@ ok, fail, skipped, infoOk, infoFail :: (?colors :: Bool) => String -> IO ()
 fail     = output failFormat
 ok       = output okFormat
 skipped  = output skippedFormat
-infoOk   = output infoOkFormat
+-- Just default foreground color for 'infoOk'; do not apply 'infoOkFormat',
+-- because terminal's background could be white itself. See #298.
+infoOk   = putStr
 infoFail = output infoFailFormat
 
 output
