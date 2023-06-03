@@ -153,9 +153,9 @@ buildTestOutput opts tree =
           | otherwise = do
               let
                 msg = case (cleanupProgressText $ progressText progress, 100 * progressPercent progress) of
-                        ("",  pct) -> printf "%.0f%%" pct
+                        ("",  pct) -> printf "%.0f%% " pct
                         (txt, 0.0) -> printf "%s" txt
-                        (txt, pct) -> printf "%s: %.0f%%" txt pct
+                        (txt, pct) -> printf "%s: %.0f%% " txt pct
               setCursorColumn resultPosition
               infoOk msg
               hFlush stdout
