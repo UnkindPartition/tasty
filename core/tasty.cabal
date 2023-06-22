@@ -68,7 +68,7 @@ library
     ansi-terminal        >= 0.9
 
   -- No reason to depend on unbounded-delays on 64-bit architecture
-  if(!arch(x86_64) && !arch(aarch64))
+  if(!arch(x86_64) && !arch(aarch64) && !arch(riscv64))
     build-depends:
       unbounded-delays >= 0.1
 
