@@ -83,7 +83,7 @@ jobs:
   build-wasi:
     runs-on: ubuntu-latest
     env:
-      GHC_WASM_META_REV: 5ad5e045f52609eab12c7e09ed9b110980807957
+      GHC_WASM_META_REV: bd9533e34df53694a4c7e4102fced1fdc0596024
       FLAVOUR: '9.6'
     steps:
     - name: setup-ghc-wasm32-wasi
