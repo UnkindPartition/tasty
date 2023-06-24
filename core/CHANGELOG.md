@@ -9,6 +9,7 @@ _YYYY-MM-DD_
 * Dependency loop error now lists all test cases that formed a cycle
 * `foldGroup` now takes `[b]` instead of `b` as its last argument to allow for custom fold strategies. This is a backwards incompatible change, but you can get the old behavior by applying `mconcat`.
 * Dependencies can now be defined pattern-free with `sequentialTestGroup`. (#343)
+* Added `--min-duration-to-report` flag that specifies the time a test must take before `tasty` outputs timing information ([#341](https://github.com/UnkindPartition/tasty/issues/341))
 
 Version 1.4.3
 ---------------
