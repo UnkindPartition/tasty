@@ -154,6 +154,7 @@ automatically collect them into a single `TestTree`.
 
 * [tasty-th](https://hackage.haskell.org/package/tasty-th)
 * [tasty-discover](https://hackage.haskell.org/package/tasty-discover)
+* [tasty-autocollect](https://hackage.haskell.org/package/tasty-autocollect)
 
 ### Other packages
 
