@@ -1,5 +1,5 @@
 -- vim:fdm=marker
-{-# LANGUAGE BangPatterns, ImplicitParams, MultiParamTypeClasses, DeriveDataTypeable, FlexibleContexts, CApiFFI #-}
+{-# LANGUAGE BangPatterns, ImplicitParams, MultiParamTypeClasses, DeriveDataTypeable, FlexibleContexts, CApiFFI, NamedFieldPuns #-}
 -- | Console reporter ingredient.
 --
 -- @since 0.11.3
@@ -8,6 +8,7 @@ module Test.Tasty.Ingredients.ConsoleReporter
   , consoleTestReporterWithHook
   , Quiet(..)
   , HideSuccesses(..)
+  , MinDurationToReport(..)
   , AnsiTricks(..)
   -- * Internals
   -- | The following functions and datatypes are internals that are exposed to
@@ -121,6 +122,8 @@ buildTestOutput opts tree =
     -- Do not retain the reference to the tree more than necessary
     !alignment = computeAlignment opts tree
 
+    MinDurationToReport{minDurationMicros} = lookupOption opts
+
     runSingleTest
       :: (IsTest t, ?colors :: Bool)
       => OptionSet -> TestName -> t -> Ap (Reader Level) TestOutput
@@ -145,8 +148,7 @@ buildTestOutput opts tree =
                 _ -> fail
             time = resultTime result
           printFn (resultShortDescription result)
-          -- print time only if it's significant
-          when (time >= 0.01) $
+          when (floor (time * 1e6) >= minDurationMicros) $
             printFn (printf " (%.2fs)" time)
           printFn "\n"
 
@@ -443,6 +445,7 @@ consoleTestReporterOptions :: [OptionDescription]
 consoleTestReporterOptions =
   [ Option (Proxy :: Proxy Quiet)
   , Option (Proxy :: Proxy HideSuccesses)
+  , Option (Proxy :: Proxy MinDurationToReport)
   , Option (Proxy :: Proxy UseColor)
   , Option (Proxy :: Proxy AnsiTricks)
   ]
@@ -526,6 +529,23 @@ instance IsOption HideSuccesses where
   optionName = return "hide-successes"
   optionHelp = return "Do not print tests that passed successfully"
   optionCLParser = mkFlagCLParser mempty (HideSuccesses True)
+
+-- | The minimum amount of time a test can take before tasty
+-- prints timing information.
+--
+-- @since 1.5
+newtype MinDurationToReport = MinDurationToReport { minDurationMicros :: Integer }
+  deriving (Eq, Ord, Typeable)
+instance IsOption MinDurationToReport where
+  defaultValue = MinDurationToReport 10000
+  parseValue = fmap MinDurationToReport . parseDuration
+  optionName = return "min-duration-to-report"
+  optionHelp =
+    return . unwords $
+      [ "The minimum amount of time a test can take before tasty prints timing information"
+      , "(suffixes: ms,s,m,h; default: s)"
+      ]
+  optionCLParser = mkOptionCLParser (metavar "DURATION")
 
 -- | When to use color on the output
 --

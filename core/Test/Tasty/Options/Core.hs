@@ -6,6 +6,8 @@ module Test.Tasty.Options.Core
   , Timeout(..)
   , mkTimeout
   , coreOptions
+  -- * Helpers
+  , parseDuration
   )
   where
 
@@ -61,14 +63,16 @@ instance IsOption Timeout where
   defaultValue = NoTimeout
   parseValue str =
     Timeout
-      <$> parseTimeout str
+      <$> parseDuration str
       <*> pure str
   optionName = return "timeout"
   optionHelp = return "Timeout for individual tests (suffixes: ms,s,m,h; default: s)"
   optionCLParser = mkOptionCLParser (short 't' <> metavar "DURATION")
 
-parseTimeout :: String -> Maybe Integer
-parseTimeout str =
+-- | Parses a suffixed duration (e.g. "10s") to an Integer representing
+-- number of microseconds.
+parseDuration :: String -> Maybe Integer
+parseDuration str =
   -- it sucks that there's no more direct way to convert to a number of
   -- microseconds
   (round :: Micro -> Integer) . (* 10^6) <$>

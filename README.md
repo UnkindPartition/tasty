@@ -212,6 +212,10 @@ Available options:
   -q,--quiet               Do not produce any output; indicate success only by
                            the exit code
   --hide-successes         Do not print tests that passed successfully
+  --min-duration-to-report DURATION
+                           The minimum amount of time a test can take before
+                           tasty prints timing information (suffixes: ms,s,m,h;
+                           default: s)
   --color never|always|auto
                            When to use colored output (default: auto)
   --ansi-tricks ARG        Enable various ANSI terminal tricks. Can be set to
