@@ -146,15 +146,19 @@ Some ingredients that can enhance your test suite are:
 * [tasty-stats](https://hackage.haskell.org/package/tasty-stats) adds the
   possibility to collect statistics of the test suite in a CSV file.
 
+### Test discovery
+
+`tasty` by itself forces you to explicitly write out the `TestTree` yourself.
+The packages listed below allow you to write tests at the top-level, and will
+automatically collect them into a single `TestTree`.
+
+* [tasty-th](https://hackage.haskell.org/package/tasty-th)
+* [tasty-discover](https://hackage.haskell.org/package/tasty-discover)
+
 ### Other packages
 
-* [tasty-th](https://hackage.haskell.org/package/tasty-th) automatically
-discovers tests based on the function names and generate the boilerplate code for
-you
 * [tasty-hunit-adapter](https://hackage.haskell.org/package/tasty-hunit-adapter)
   converts existing HUnit test suites into tasty test suites
-* [tasty-discover](https://hackage.haskell.org/package/tasty-discover) automatically discovers
-your tests.
 * [tasty-expected-failure](https://hackage.haskell.org/package/tasty-expected-failure) provides
 test markers for when you expect failures or wish to ignore tests.
 * [tasty-bench](https://hackage.haskell.org/package/tasty-bench) covers performance
