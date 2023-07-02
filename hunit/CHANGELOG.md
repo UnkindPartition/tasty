@@ -1,6 +1,11 @@
 Changes
 =======
 
+Unreleased
+---------------
+
+Provide an explicit implementation of `displayException` in `instance Exception HUnitFailure` ([#330](https://github.com/UnkindPartition/tasty/issues/330)).
+
 Version 0.10.0.3
 ----------------
 
