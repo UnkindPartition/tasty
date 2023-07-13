@@ -76,20 +76,28 @@ import Data.Foldable (foldMap)
 --
 -- @since 0.12
 data TestOutput
-  = PrintTest
-      {- test name           -} String
-      {- print test name     -} (IO ())
-      {- print test progress -} (Progress -> IO ())
-      {- print test result   -} (Result -> IO ())
-      -- ^ Name of a test, an action that prints the test name, and an action
-      -- that renders the result of the action.
-      --
-      -- @since 1.5
-  | PrintHeading String (IO ()) TestOutput
-      -- ^ Name of a test group, an action that prints the heading of a test
-      -- group and the 'TestOutput' for that test group.
-  | Skip -- ^ Inactive test (e.g. not matching the current pattern)
-  | Seq TestOutput TestOutput -- ^ Two sets of 'TestOutput' on the same level
+  = -- | Printing a test.
+    PrintTest
+      String
+        -- ^ Name of the test.
+      (IO ())
+        -- ^ Action that prints the test name.
+      (Progress -> IO ())
+        -- ^ Action that prints the progress of the test.  /Since: 1.5/
+      (Result -> IO ())
+        -- ^ Action that renders the result of the test.
+  | -- | Printing a test group.
+    PrintHeading
+      String
+        -- ^ Name of the test group
+      (IO ())
+        -- ^ Action that prints the heading of a test group.
+      TestOutput
+        -- ^ The 'TestOutput' for that test group.
+  | -- | Inactive test (e.g. not matching the current pattern).
+    Skip
+  | -- | Two sets of 'TestOutput' on the same level.
+    Seq TestOutput TestOutput
 
 -- The monoid laws should hold observationally w.r.t. the semantics defined
 -- in this module.
