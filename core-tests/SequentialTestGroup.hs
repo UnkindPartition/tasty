@@ -89,6 +89,7 @@ filterTestTree pattern =
       , sequentialTestGroup "E" AllSucceed
         [ emptyTest "F"
         , emptyTest "G"
+        , testGroup "XX" []
         , emptyTest "H"
         ]
     ]

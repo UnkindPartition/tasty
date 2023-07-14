@@ -563,6 +563,9 @@ filterByPattern = snd . go (Any False)
         | otherwise 
         -> (Any False, AnnEmptyTestTree)
 
+      AnnTestGroup (opts, _) name [] ->
+        (forceMatch, AnnTestGroup opts name [])
+
       AnnTestGroup (opts, _) name trees ->
         case lookupOption opts of
           Parallel ->
