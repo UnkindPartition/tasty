@@ -11,7 +11,8 @@ _YYYY-MM-DD_
 * Dependencies can now be defined pattern-free with `sequentialTestGroup` ([#343](https://github.com/UnkindPartition/tasty/issues/343)).
 * Added `--min-duration-to-report` flag that specifies the time a test must take before `tasty` outputs timing information ([#341](https://github.com/UnkindPartition/tasty/issues/341)).
 * When a test failed with an exception, print it using `displayException` instead of `show` ([#330](https://github.com/UnkindPartition/tasty/issues/330)).
-* `PrintTest` constructor has extra field used to report progress.
+* `PrintTest` constructor now has an extra field used to report progress.
+  Supply `const (pure ())` as this extra field value if you want to skip progress reporting.
 * Progress reporting is no longer ignored.
 
 Version 1.4.3

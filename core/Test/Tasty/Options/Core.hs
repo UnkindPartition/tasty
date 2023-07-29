@@ -98,7 +98,10 @@ mkTimeout n =
   Timeout n $
     showFixed True (fromInteger n / (10^6) :: Micro) ++ "s"
 
--- | Hide progress information.
+-- | Hide progress information. If progress disabled, the test launcher
+-- 'Test.Tasty.Runners.launchTestTree' completely ignores callbacks to update progress.
+-- If enabled, it's up to individual 'Test.Tasty.Ingredients.TestReporter's
+-- how to execute, some might not be able to render progress anyways.
 --
 -- @since 1.5
 newtype HideProgress = HideProgress { getHideProgress :: Bool }

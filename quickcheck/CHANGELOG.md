@@ -4,7 +4,7 @@ Changes
 Version 0.10.3
 --------------
 
-* Print quickcheck progress using tasty progress reporting.
+* Print Quickcheck progress using Tasty progress reporting.
 
 
 Version 0.10.2

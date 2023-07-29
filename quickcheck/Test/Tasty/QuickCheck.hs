@@ -54,6 +54,7 @@ import qualified Data.Char as Char
 import Data.Typeable
 import Data.List
 import Text.Printf
+import Text.Read (readMaybe)
 import Test.QuickCheck.Random (mkQCGen)
 import Options.Applicative (metavar)
 import System.Random (getStdRandom, randomR)
@@ -241,13 +242,16 @@ quickCheck yieldProgress args prop = do
   -- stderr and the overall status (which we don't need) to stdout
   tm <- QC.newTerminal
           (const $ pure ())
-          (\progressText -> yieldProgress emptyProgress { progressText = parseProgress progressText })
+          (\progressText -> yieldProgress emptyProgress { progressPercent = parseProgress progressText })
   QC.withState args $ \ s ->
     QC.test s { QC.terminal = tm } prop
   where
-    parseProgress :: String -> String
-    parseProgress = takeWhile Char.isDigit
-                  . dropWhile (not . Char.isDigit)
+    -- QuickCheck outputs something like "(15461 tests)\b\b\b\b\b\b\b\b\b\b\b\b\b"
+    parseProgress :: String -> Float
+    parseProgress = maybe 0 (\n -> fromIntegral (n :: Int) / fromIntegral (QC.maxSuccess args))
+                  . readMaybe
+                  . takeWhile Char.isDigit
+                  . drop 1
 
 successful :: QC.Result -> Bool
 successful r =
