@@ -134,6 +134,7 @@ buildTestOutput opts tree =
     !alignment = computeAlignment opts tree
 
     MinDurationToReport{minDurationMicros} = lookupOption opts
+    AnsiTricks{getAnsiTricks} = lookupOption opts
 
     runSingleTest
       :: (IsTest t, ?colors :: Bool)
@@ -142,7 +143,8 @@ buildTestOutput opts tree =
       level <- ask
 
       let
-        postNamePadding = alignment - indentSize * level - stringWidth name
+        indentedNameWidth = indentSize * level + stringWidth name
+        postNamePadding = alignment - indentedNameWidth
 
         testNamePadded = printf "%s%s: %s"
           (indent level)
@@ -156,6 +158,10 @@ buildTestOutput opts tree =
           hFlush stdout
 
         printTestProgress progress
+          -- We cannot display progress properly if a terminal
+          -- does not support manipulations with cursor position.
+          | not getAnsiTricks = pure ()
+
           | progress == emptyProgress = pure ()
 
           | otherwise = do
@@ -166,6 +172,9 @@ buildTestOutput opts tree =
                         (txt, pct) -> printf "%s: %.0f%% " txt pct
               setCursorColumn resultPosition
               infoOk msg
+              -- A new progress message may be shorter than the previous one
+              -- so we must clean until the end of the line
+              clearFromCursorToLineEnd
               hFlush stdout
 
         printTestResult result = do
@@ -180,8 +189,9 @@ buildTestOutput opts tree =
                 _ -> fail
             time = resultTime result
 
-          setCursorColumn resultPosition
-          clearFromCursorToLineEnd
+          when getAnsiTricks $ do
+            setCursorColumn resultPosition
+            clearFromCursorToLineEnd
 
           printFn (resultShortDescription result)
           when (floor (time * 1e6) >= minDurationMicros) $
@@ -547,7 +557,11 @@ consoleTestReporterWithHook hook = TestReporter consoleTestReporterOptions $
             ?colors = useColor whenColor isTermColor
 
           let
-            toutput = applyHook hook $ buildTestOutput opts tree
+            -- 'buildTestOutput' is a pure function and cannot query 'hSupportsANSI' itself.
+            -- We also would rather not pass @isTerm@ as an extra argument,
+            -- since it's a breaking change, thus resorting to tweaking @opts@.
+            opts' = changeOption (\(AnsiTricks x) -> AnsiTricks (x && isTerm)) opts
+            toutput = applyHook hook $ buildTestOutput opts' tree
 
           case () of { _
             | hideSuccesses && isTerm && ansiTricks ->
