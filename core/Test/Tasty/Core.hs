@@ -8,6 +8,8 @@ module Test.Tasty.Core
   , Outcome(..)
   , Time
   , Result(..)
+  , attachExtraData
+  , lookupExtraData
   , resultSuccessful
   , exceptionResult
   , Progress(..)
@@ -33,12 +35,14 @@ module Test.Tasty.Core
 import Control.Exception
 import qualified Data.Map as Map
 import Data.Bifunctor (Bifunctor(second, bimap))
+import Data.Foldable (asum)
 import Data.List (mapAccumR)
 import Data.Monoid (Any (getAny, Any))
 import Data.Sequence ((|>))
 import qualified Data.Sequence as Seq
 import Data.Tagged
 import Data.Typeable
+import Data.Dynamic
 import GHC.Generics
 import Options.Applicative (internal)
 import Test.Tasty.Options
@@ -120,10 +124,26 @@ data Result = Result
     -- Usually this is set to 'noResultDetails', which does nothing.
     --
     -- @since 1.3.1
+  , resultExtraData :: [Dynamic]
+    -- ^ Any extra data attached to result of test evaluation
+    --
+    -- @since NEXTVERSION
   }
   deriving
   ( Show -- ^ @since 1.2
   )
+
+-- | Lookup values of given type o
+--
+-- @since NEXTVERSION
+lookupExtraData :: Typeable a => Result -> Maybe a
+lookupExtraData = asum . map fromDynamic . resultExtraData
+
+-- | Attach value of arbitrary type to result of execution
+--
+-- @since NEXTVERSION
+attachExtraData :: Typeable a => a -> Result -> Result
+attachExtraData a r = r { resultExtraData = toDyn a : resultExtraData r }
 
 {- Note [Skipped tests]
    ~~~~~~~~~~~~~~~~~~~~
@@ -164,6 +184,7 @@ exceptionResult e = Result
   , resultShortDescription = "FAIL"
   , resultTime = 0
   , resultDetailsPrinter = noResultDetails
+  , resultExtraData = []
   }
 
 -- | Test progress information.
