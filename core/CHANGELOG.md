@@ -14,6 +14,7 @@ _YYYY-MM-DD_
 * `PrintTest` constructor now has an extra field used to report progress.
   Supply `const (pure ())` as this extra field value if you want to skip progress reporting.
 * Progress reporting is no longer ignored.
+* The `-p`/`--pattern` option can be specified multiple times; only tests that match all patterns are run.
 
 Version 1.4.3
 ---------------

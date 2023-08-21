@@ -69,6 +69,7 @@ jobs:
         core-tests/exit-status-tests.sh
         # Prevent Git for Windows from replacing slashes with backslashes in patterns
         MSYS_NO_PATHCONV=1 core-tests/failing-pattern-test.sh
+        core-tests/multiple-pattern-test.sh
 
     - name: Test resource-release-test.sh
       if: runner.os != 'Windows'

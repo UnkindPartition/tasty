@@ -50,3 +50,9 @@ executable failing-pattern-test
   build-depends:       base <= 5, tasty, tasty-hunit, random >= 1.2, mtl
   default-extensions:  ScopedTypeVariables
   ghc-options:         -Wall -fno-warn-type-defaults
+
+executable multiple-pattern-test
+  import:              commons
+  main-is:             multiple-pattern-test.hs
+  build-depends:       base < 5, tasty, tasty-hunit
+  ghc-options:         -Wall -fno-warn-type-defaults

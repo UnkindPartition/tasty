@@ -1,6 +1,6 @@
 -- | Test patterns
 
-{-# LANGUAGE CPP, DeriveDataTypeable #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, TypeApplications #-}
 
 module Test.Tasty.Patterns
   ( TestPattern(..)
@@ -18,6 +18,9 @@ import Test.Tasty.Patterns.Parser
 import Test.Tasty.Patterns.Eval
 
 import Data.Char
+import Data.Coerce (coerce)
+import Data.List.NonEmpty (nonEmpty)
+import Data.Maybe (catMaybes)
 import Data.Typeable
 import Options.Applicative hiding (Success)
 #if !MIN_VERSION_base(4,11,0)
@@ -39,12 +42,16 @@ newtype TestPattern =
 noPattern :: TestPattern
 noPattern = TestPattern Nothing
 
+-- | Since tasty-1.5, this option can be specified multiple times on the
+-- command line. Only the tests matching all given patterns will be selected.
 instance IsOption TestPattern where
   defaultValue = noPattern
   parseValue = parseTestPattern
   optionName = return "pattern"
   optionHelp = return "Select only tests which satisfy a pattern or awk expression"
-  optionCLParser = mkOptionCLParser (short 'p' <> metavar "PATTERN")
+  optionCLParser =
+    fmap (TestPattern . fmap (foldr1 And) . nonEmpty . catMaybes . coerce @[TestPattern]) . some $
+      mkOptionCLParser (short 'p' <> metavar "PATTERN")
 
 -- | @since 1.2
 parseExpr :: String -> Maybe Expr
