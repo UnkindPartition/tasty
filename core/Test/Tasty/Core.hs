@@ -3,11 +3,15 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Test.Tasty.Core
   ( FailureReason(..)
   , Outcome(..)
   , Time
   , Result(..)
+  , SomeExtraData(..)
   , attachExtraData
   , lookupExtraData
   , resultSuccessful
@@ -35,14 +39,12 @@ module Test.Tasty.Core
 import Control.Exception
 import qualified Data.Map as Map
 import Data.Bifunctor (Bifunctor(second, bimap))
-import Data.Foldable (asum)
 import Data.List (mapAccumR)
 import Data.Monoid (Any (getAny, Any))
 import Data.Sequence ((|>))
 import qualified Data.Sequence as Seq
 import Data.Tagged
 import Data.Typeable
-import Data.Dynamic
 import GHC.Generics
 import Options.Applicative (internal)
 import Test.Tasty.Options
@@ -124,7 +126,7 @@ data Result = Result
     -- Usually this is set to 'noResultDetails', which does nothing.
     --
     -- @since 1.3.1
-  , resultExtraData :: [Dynamic]
+  , resultExtraData :: Map.Map TypeRep SomeExtraData
     -- ^ Any extra data attached to result of test evaluation
     --
     -- @since NEXTVERSION
@@ -133,17 +135,28 @@ data Result = Result
   ( Show -- ^ @since 1.2
   )
 
+-- | @Dynamic@-like wrapper for data of arbitrary type but it carries
+--   additional type class dictionaries.
+data SomeExtraData where
+  SomeExtraData :: (Typeable a, Show a, Read a, Eq a) => a -> SomeExtraData
+
+deriving instance Show SomeExtraData
+
+
 -- | Lookup values of given type o
 --
 -- @since NEXTVERSION
-lookupExtraData :: Typeable a => Result -> Maybe a
-lookupExtraData = asum . map fromDynamic . resultExtraData
+lookupExtraData :: forall a. Typeable a => Result -> Maybe a
+lookupExtraData r = do
+  SomeExtraData a <- typeOf (undefined :: a) `Map.lookup` resultExtraData r
+  cast a
 
 -- | Attach value of arbitrary type to result of execution
 --
 -- @since NEXTVERSION
-attachExtraData :: Typeable a => a -> Result -> Result
-attachExtraData a r = r { resultExtraData = toDyn a : resultExtraData r }
+attachExtraData :: (Typeable a, Show a, Read a, Eq a) => a -> Result -> Result
+attachExtraData a r =
+  r { resultExtraData = Map.insert (typeOf a) (SomeExtraData a) (resultExtraData r) }
 
 {- Note [Skipped tests]
    ~~~~~~~~~~~~~~~~~~~~
@@ -184,7 +197,7 @@ exceptionResult e = Result
   , resultShortDescription = "FAIL"
   , resultTime = 0
   , resultDetailsPrinter = noResultDetails
-  , resultExtraData = []
+  , resultExtraData = mempty
   }
 
 -- | Test progress information.

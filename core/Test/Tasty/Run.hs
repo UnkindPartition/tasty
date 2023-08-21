@@ -194,7 +194,7 @@ executeTest action statusVar timeoutOpt hideProgressOpt inits fins = mask $ \res
             , resultShortDescription = "TIMEOUT"
             , resultTime = fromIntegral t
             , resultDetailsPrinter = noResultDetails
-            , resultExtraData = []
+            , resultExtraData = mempty
             }
       -- If compiled with unbounded-delays then t' :: Integer, otherwise t' :: Int
       let t' = fromInteger (min (max 0 t) (toInteger (maxBound :: Int64)))
@@ -491,7 +491,7 @@ resolveDeps tests = maybeCheckCycles $ do
           , resultShortDescription = "SKIP"
           , resultTime = 0
           , resultDetailsPrinter = noResultDetails
-          , resultExtraData = []
+          , resultExtraData = mempty
           }
       }
   return (TestAction { testAction = action, .. }, (testPath, dep_paths))
