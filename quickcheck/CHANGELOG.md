@@ -5,7 +5,7 @@ Version 0.10.3
 --------------
 
 * Print Quickcheck progress using Tasty progress reporting.
-
+  ([#311](https://github.com/UnkindPartition/tasty/pull/311)).
 
 Version 0.10.2
 --------------
