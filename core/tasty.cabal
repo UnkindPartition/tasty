@@ -59,29 +59,29 @@ library
     Test.Tasty.Ingredients.IncludingOptions
 
   build-depends:
-    base                 >= 4.9 && < 5,
-    stm                  >= 2.3,
-    containers,
-    transformers         >= 0.5,
-    tagged               >= 0.5,
-    optparse-applicative >= 0.14,
-    ansi-terminal        >= 0.9
+    base                 >= 4.9  && < 5,
+    stm                  >= 2.3  && < 2.6,
+    containers                      < 0.7,
+    transformers         >= 0.5  && < 0.7,
+    tagged               >= 0.5  && < 0.9,
+    optparse-applicative >= 0.14 && < 0.19,
+    ansi-terminal        >= 0.9  && < 1.1
 
   -- No reason to depend on unbounded-delays on 64-bit architecture
   if(!arch(x86_64) && !arch(aarch64))
     build-depends:
-      unbounded-delays >= 0.1
+      unbounded-delays >= 0.1 && < 0.2
 
   if(!impl(ghc >= 8.0))
-    build-depends: semigroups
+    build-depends: semigroups < 0.21
 
   if(!impl(ghc >= 8.4))
-    build-depends: time >= 1.4
+    build-depends: time >= 1.4 && < 1.13
 
   if !os(windows) && !impl(ghcjs)
     cpp-options: -DUSE_WCWIDTH
     if flag(unix)
-      build-depends: unix
+      build-depends: unix < 2.9
 
   -- hs-source-dirs:
   default-language:    Haskell2010
