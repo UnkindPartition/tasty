@@ -4,6 +4,7 @@ Cabal-Version:       >= 1.10
 Category:            Testing
 Synopsis:            SmallCheck support for the Tasty test framework.
 Description:         SmallCheck support for the Tasty test framework.
+                     .
 License:             MIT
 License-File:        LICENSE
 Author:              Roman Cheplyaka <roma@ro-che.info>
@@ -21,11 +22,11 @@ Source-repository head
 Library
         Exposed-Modules:        Test.Tasty.SmallCheck
 
-        Build-Depends:          tasty >= 0.8,
-                                smallcheck >= 1.0,
+        Build-Depends:          tasty >= 0.8 && < 1.6,
+                                smallcheck >= 1.0 && < 1.3,
                                 base >= 4.8 && < 5,
-                                tagged,
-                                optparse-applicative
+                                tagged < 0.9,
+                                optparse-applicative < 0.19
         ghc-options: -Wall -fno-warn-orphans
         default-language: Haskell2010
         default-extensions: CPP
