@@ -1,20 +1,39 @@
 Changes
 =======
 
-Unreleased
+Version 1.5
 ---------------
 
-_YYYY-MM-DD_
+_2023-09-10_
 
-* Dependency loop error now lists all test cases that formed a cycle ([#340](https://github.com/UnkindPartition/tasty/issues/340)).
-* `foldGroup` now takes `[b]` instead of `b` as its last argument to allow for custom fold strategies. This is a backwards incompatible change, but you can get the old behavior by applying `mconcat` ([#364](https://github.com/UnkindPartition/tasty/issues/364)).
-* Dependencies can now be defined pattern-free with `sequentialTestGroup` ([#343](https://github.com/UnkindPartition/tasty/issues/343)).
-* Added `--min-duration-to-report` flag that specifies the time a test must take before `tasty` outputs timing information ([#341](https://github.com/UnkindPartition/tasty/issues/341)).
-* When a test failed with an exception, print it using `displayException` instead of `show` ([#330](https://github.com/UnkindPartition/tasty/issues/330)).
-* `PrintTest` constructor now has an extra field used to report progress.
-  Supply `const (pure ())` as this extra field value if you want to skip progress reporting.
 * Progress reporting is no longer ignored.
-* The `-p`/`--pattern` option can be specified multiple times; only tests that match all patterns are run.
+  `PrintTest` constructor of `TestOutput` now has an extra field used to report progress.
+  Supply `const (pure ())` as this extra field value if you want to skip progress reporting
+  ([#311](https://github.com/UnkindPartition/tasty/pull/311)).
+* `foldGroup` now takes `[b]` instead of `b` as its last argument to allow
+  for custom fold strategies. This is a backwards incompatible change,
+  but you can get the old behavior by applying `mconcat`
+  ([#364](https://github.com/UnkindPartition/tasty/issues/364)).
+* Dependency loop error now lists all test cases that formed a cycle
+  ([#340](https://github.com/UnkindPartition/tasty/issues/340)).
+* Dependencies can now be defined pattern-free with `sequentialTestGroup`
+  ([#343](https://github.com/UnkindPartition/tasty/issues/343)).
+* Added `--min-duration-to-report` flag that specifies the time a test
+  must take before `tasty` outputs timing information
+  ([#341](https://github.com/UnkindPartition/tasty/issues/341)).
+* When a test failed with an exception, print it using `displayException`
+  instead of `show`
+  ([#330](https://github.com/UnkindPartition/tasty/issues/330)).
+* The `-p` / `--pattern` option can be specified multiple times;
+  only tests that match all patterns are run
+  ([#380](https://github.com/UnkindPartition/tasty/pull/380)).
+* Fix color scheme to make info messages visible in terminals with white background
+  ([#369](https://github.com/UnkindPartition/tasty/pull/369)).
+* When parsing of a command-line option failed, report received option
+  ([#368](https://github.com/UnkindPartition/tasty/pull/368)).
+* Support WASM
+  ([#365](https://github.com/UnkindPartition/tasty/pull/365)).
+* Tested with GHC 8.0 - 9.8.
 
 Version 1.4.3
 ---------------
