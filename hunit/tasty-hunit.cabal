@@ -24,7 +24,7 @@ cabal-version:       >=1.10
 
 Source-repository head
   type:     git
-  location: git://github.com/UnkindPartition/tasty.git
+  location: https://github.com/UnkindPartition/tasty.git
   subdir:   hunit
 
 library

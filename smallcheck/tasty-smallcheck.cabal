@@ -16,7 +16,7 @@ extra-source-files:  CHANGELOG.md
 
 Source-repository head
   type:     git
-  location: git://github.com/UnkindPartition/tasty.git
+  location: https://github.com/UnkindPartition/tasty.git
   subdir:   smallcheck
 
 Library
