@@ -19,7 +19,7 @@ extra-source-files:  CHANGELOG.md, README.md
 
 Source-repository head
   type:     git
-  location: git://github.com/UnkindPartition/tasty.git
+  location: https://github.com/UnkindPartition/tasty.git
   subdir:   core
 
 flag unix
