@@ -16,13 +16,18 @@ newtype TestCaseSteps = TestCaseSteps ((String -> IO ()) -> Assertion)
   deriving Typeable
 
 instance IsTest TestCaseSteps where
-  run _ (TestCaseSteps assertionFn) _ = do
+  run _ (TestCaseSteps assertionFn) yieldProgress = do
     ref <- newIORef []
 
     let
       stepFn :: String -> IO ()
       stepFn msg = do
         tme <- getTime
+        -- The number of steps is not fixed, so we can't 
+        -- provide the progress percentage.
+        -- We also don't provide the timings here, only
+        -- at the end.
+        yieldProgress (Progress msg 0)
         atomicModifyIORef ref (\l -> ((tme,msg):l, ()))
 
     hunitResult <- (Right <$> assertionFn stepFn) `catch`

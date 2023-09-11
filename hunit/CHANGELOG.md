@@ -1,6 +1,12 @@
 Changes
 =======
 
+Unreleased
+--------------
+
+* Teach `testCaseSteps` to log progress
+  ([#387](https://github.com/UnkindPartition/tasty/pull/387)).
+
 Version 0.10.1
 ---------------
 
