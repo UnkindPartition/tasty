@@ -749,35 +749,19 @@ formatDesc n desc =
       then paddedDesc
       else chomped
 
-data Maximum a
-  = Maximum a
-  | MinusInfinity
-
-instance Ord a => Sem.Semigroup (Maximum a) where
-  Maximum a <> Maximum b = Maximum (a `max` b)
-  MinusInfinity <> a = a
-  a <> MinusInfinity = a
-instance Ord a => Monoid (Maximum a) where
-  mempty = MinusInfinity
-#if !MIN_VERSION_base(4,11,0)
-  mappend = (Sem.<>)
-#endif
-
 -- | Compute the amount of space needed to align \"OK\"s and \"FAIL\"s
 computeAlignment :: OptionSet -> TestTree -> Int
 computeAlignment opts =
-  fromMonoid .
-  foldTestTree
-    trivialFold
-      { foldSingle = \_ name _ level -> Maximum (stringWidth name + level)
-      , foldGroup = \_opts _ m -> mconcat m . (+ indentSize)
+  max 0 .
+  foldTestTree0
+    minBound
+    TreeFold
+      { foldSingle = \_ name _ -> stringWidth name
+      , foldGroup = \_ _ m -> if null m then minBound else maximum m + indentSize
+      , foldResource = \_ _ f -> f $ throwIO NotRunningTests
+      , foldAfter = \_ _ _ b -> b
       }
     opts
-  where
-    fromMonoid m =
-      case m 0 of
-        MinusInfinity -> 0
-        Maximum x -> x
 
 -- | Compute the length/width of the string as it would appear in a monospace
 --   terminal. This takes into account that even in a “mono”space font, not
