@@ -50,6 +50,7 @@ import Test.Tasty.Runners.Reducers
 import Test.Tasty.Runners.Utils
 import Text.Printf
 import qualified Data.IntMap as IntMap
+import qualified Data.IntSet as IntSet
 import Data.Char
 #ifdef USE_WCWIDTH
 import Foreign.C.Types (CInt(..), CWchar(..))
@@ -433,8 +434,8 @@ statusMapResult lookahead0 smap
   where
     f :: Int
       -> TVar Status
-      -> (IntMap.IntMap () -> Int -> STM (IO Bool))
-      -> (IntMap.IntMap () -> Int -> STM (IO Bool))
+      -> (IntSet.IntSet -> Int -> STM (IO Bool))
+      -> (IntSet.IntSet -> Int -> STM (IO Bool))
     -- ok_tests is a set of tests that completed successfully
     -- lookahead is the number of unfinished tests that we are allowed to
     -- look at
@@ -447,23 +448,23 @@ statusMapResult lookahead0 smap
           case this_status of
             Done r ->
               if resultSuccessful r
-                then k (IntMap.insert key () ok_tests) lookahead
+                then k (IntSet.insert key ok_tests) lookahead
                 else return $ return False
             _ -> k ok_tests (lookahead-1)
 
     -- next_iter is called when we end the current iteration,
     -- either because we reached the end of the test tree
     -- or because we exhausted the lookahead
-    next_iter :: IntMap.IntMap () -> STM (IO Bool)
+    next_iter :: IntSet.IntSet -> STM (IO Bool)
     next_iter ok_tests =
       -- If we made no progress at all, wait until at least some tests
       -- complete.
       -- Otherwise, reduce the set of tests we are looking at.
-      if IntMap.null ok_tests
+      if IntSet.null ok_tests
         then retry
-        else return $ statusMapResult lookahead0 (IntMap.difference smap ok_tests)
+        else return $ statusMapResult lookahead0 (IntMap.withoutKeys smap ok_tests)
 
-    finish :: IntMap.IntMap () -> Int -> STM (IO Bool)
+    finish :: IntSet.IntSet -> Int -> STM (IO Bool)
     finish ok_tests _ = next_iter ok_tests
 
 -- }}}
