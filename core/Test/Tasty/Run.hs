@@ -9,7 +9,7 @@ module Test.Tasty.Run
   , DependencyException(..)
   ) where
 
-import qualified Data.IntMap as IntMap
+import qualified Data.IntMap.Strict as IntMap
 import qualified Data.Sequence as Seq
 import qualified Data.Foldable as F
 import Data.Int (Int64)
@@ -607,7 +607,7 @@ launchTestTree opts tree k0 = do
   let NumThreads numTheads = lookupOption opts
   (t,k1) <- timed $ do
      abortTests <- runInParallel numTheads (testAction <$> testActions)
-     (do let smap = IntMap.fromList $ zip [0..] (testStatus <$> testActions)
+     (do let smap = IntMap.fromDistinctAscList $ zip [0..] (testStatus <$> testActions)
          k0 smap)
       `finallyRestore` \restore -> do
          -- Tell all running tests to wrap up.
