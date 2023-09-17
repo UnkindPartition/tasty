@@ -122,7 +122,7 @@ executeTest action statusVar timeoutOpt hideProgressOpt inits fins = mask $ \res
     -- There's no point to transform these exceptions to something like
     -- EitherT, because an async exception (cancellation) can strike
     -- anyway.
-    initResources
+    initResources inits
 
     let
       cursorMischiefManaged = do
@@ -145,7 +145,7 @@ executeTest action statusVar timeoutOpt hideProgressOpt inits fins = mask $ \res
         return r
 
   -- no matter what, try to run each finalizer
-  mbExn <- destroyResources restore
+  mbExn <- destroyResources fins restore
 
   atomically . writeTVar statusVar . Done $
     case resultOrExn <* maybe (Right ()) Left mbExn of
@@ -153,36 +153,6 @@ executeTest action statusVar timeoutOpt hideProgressOpt inits fins = mask $ \res
       Right (Timed t r) -> r { resultTime = t }
 
   where
-    initResources :: IO ()
-    initResources =
-      F.forM_ inits $ \(Initializer doInit initVar) -> do
-        join $ atomically $ do
-          resStatus <- readTVar initVar
-          case resStatus of
-            NotCreated -> do
-              -- signal to others that we're taking care of the resource
-              -- initialization
-              writeTVar initVar BeingCreated
-              return $
-                (do
-                  res <- doInit
-                  atomically $ writeTVar initVar $ Created res
-                 ) `E.catch` \exn -> do
-                  atomically $ writeTVar initVar $ FailedToCreate exn
-                  throwIO exn
-            BeingCreated -> retry
-            Created {} -> return $ return ()
-            FailedToCreate exn -> return $ throwIO exn
-            -- If the resource is destroyed or being destroyed
-            -- while we're starting a test, the test suite is probably
-            -- shutting down. We are about to be killed.
-            -- (In fact we are probably killed already, so these cases are
-            -- unlikely to occur.)
-            -- In any case, the most sensible thing to do is to go to
-            -- sleep, awaiting our fate.
-            Destroyed      -> return $ sleepIndefinitely
-            BeingDestroyed -> return $ sleepIndefinitely
-
     applyTimeout :: Timeout -> IO Result -> IO Result
     applyTimeout NoTimeout a = a
     applyTimeout (Timeout t tstr) a = do
@@ -200,31 +170,6 @@ executeTest action statusVar timeoutOpt hideProgressOpt inits fins = mask $ \res
       let t' = fromInteger (min (max 0 t) (toInteger (maxBound :: Int64)))
       fromMaybe timeoutResult <$> timeout t' a
 
-    -- destroyResources should not be interrupted by an exception
-    -- Here's how we ensure this:
-    --
-    -- * the finalizer is wrapped in 'try'
-    -- * async exceptions are masked by the caller
-    -- * we don't use any interruptible operations here (outside of 'try')
-    destroyResources :: (forall a . IO a -> IO a) -> IO (Maybe SomeException)
-    destroyResources restore = do
-      -- remember the first exception that occurred
-      liftM getFirst . execWriterT . getTraversal $
-        flip F.foldMap fins $ \fin@(Finalizer _ _ finishVar) ->
-          Traversal $ do
-            iAmLast <- liftIO $ atomically $ do
-              nUsers <- readTVar finishVar
-              let nUsers' = nUsers - 1
-              writeTVar finishVar nUsers'
-              return $ nUsers' == 0
-
-            mbExcn <- liftIO $
-              if iAmLast
-              then destroyResource restore fin
-              else return Nothing
-
-            tell $ First mbExcn
-
     yieldProgress _newP | getHideProgress hideProgressOpt =
       pure ()
     yieldProgress newP | newP == emptyProgress =
@@ -235,6 +180,61 @@ executeTest action statusVar timeoutOpt hideProgressOpt inits fins = mask $ \res
       . atomically
       . writeTVar statusVar
       $ Executing newP
+
+initResources :: Seq Initializer -> IO ()
+initResources inits =
+  F.forM_ inits $ \(Initializer doInit initVar) -> do
+    join $ atomically $ do
+      resStatus <- readTVar initVar
+      case resStatus of
+        NotCreated -> do
+          -- signal to others that we're taking care of the resource
+          -- initialization
+          writeTVar initVar BeingCreated
+          return $
+            (do
+              res <- doInit
+              atomically $ writeTVar initVar $ Created res
+             ) `E.catch` \exn -> do
+              atomically $ writeTVar initVar $ FailedToCreate exn
+              throwIO exn
+        BeingCreated -> retry
+        Created {} -> return $ return ()
+        FailedToCreate exn -> return $ throwIO exn
+        -- If the resource is destroyed or being destroyed
+        -- while we're starting a test, the test suite is probably
+        -- shutting down. We are about to be killed.
+        -- (In fact we are probably killed already, so these cases are
+        -- unlikely to occur.)
+        -- In any case, the most sensible thing to do is to go to
+        -- sleep, awaiting our fate.
+        Destroyed      -> return sleepIndefinitely
+        BeingDestroyed -> return sleepIndefinitely
+
+-- destroyResources should not be interrupted by an exception
+-- Here's how we ensure this:
+--
+-- * the finalizer is wrapped in 'try'
+-- * async exceptions are masked by the caller
+-- * we don't use any interruptible operations here (outside of 'try')
+destroyResources :: Seq Finalizer -> (forall a . IO a -> IO a) -> IO (Maybe SomeException)
+destroyResources fins restore = do
+  -- remember the first exception that occurred
+  liftM getFirst . execWriterT . getTraversal $
+    flip F.foldMap fins $ \fin@(Finalizer _ _ finishVar) ->
+      Traversal $ do
+        iAmLast <- liftIO $ atomically $ do
+          nUsers <- readTVar finishVar
+          let nUsers' = nUsers - 1
+          writeTVar finishVar nUsers'
+          return $ nUsers' == 0
+
+        mbExcn <- liftIO $
+          if iAmLast
+          then destroyResource restore fin
+          else return Nothing
+
+        tell $ First mbExcn
 
 -- | Traversal type used in 'createTestActions'
 type Tr = ReaderT (Path, Seq Dependency) IO (TestActionTree UnresolvedAction)
