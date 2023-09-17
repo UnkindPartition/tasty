@@ -107,7 +107,7 @@ data Result = Result
     -- @FAIL@.
     --
     -- @since 0.10
-  , resultTime :: Time
+  , resultTime :: !Time
     -- ^ How long it took to run the test, in seconds.
   , resultDetailsPrinter :: ResultDetailsPrinter
     -- ^ An action that prints additional information about a test.

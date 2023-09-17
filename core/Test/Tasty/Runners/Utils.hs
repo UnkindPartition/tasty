@@ -110,10 +110,24 @@ instance Exception SignalException
 -- @since 1.2.2
 timed :: IO a -> IO (Time, a)
 timed t = do
-  start <- getTime
-  !r    <- t
-  end   <- getTime
-  return (end-start, r)
+  Timed d r <- timed' t
+  return (d, r)
+
+timed' :: IO a -> IO (Timed a)
+timed' t = do
+  !start <- getTime
+  !r     <- t
+  !end   <- getTime
+  return $ Timed (end - start) r
+-- With a bit of luck inlining 'timed'' might help
+-- to trigger worker-wrapper transformation and eliminate
+-- allocation of 'Timed' constructor.
+{-# INLINE timed' #-}
+
+-- | 'timed'' forces @a@ internally, so no point not to put a bang here.
+-- And we also do not want to allocate thunks for a difference of two
+-- 'Double's.
+data Timed a = Timed !Time !a
 
 #if MIN_VERSION_base(4,11,0)
 -- | Get monotonic time.

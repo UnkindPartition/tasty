@@ -50,7 +50,7 @@ import Test.Tasty.Patterns.Types
 import Test.Tasty.Options
 import Test.Tasty.Options.Core
 import Test.Tasty.Runners.Reducers
-import Test.Tasty.Runners.Utils (timed, forceElements)
+import Test.Tasty.Runners.Utils (timed', Timed(..), forceElements)
 import Test.Tasty.Providers.ConsoleFormat (noResultDetails)
 
 -- | Current status of a test.
@@ -134,7 +134,7 @@ executeTest action statusVar timeoutOpt hideProgressOpt inits fins = mask $ \res
     -- handler doesn't interfere with our timeout.
     withAsync cursorMischiefManaged $ \asy -> do
       labelThread (asyncThreadId asy) "tasty_test_execution_thread"
-      timed $ applyTimeout timeoutOpt $ do
+      timed' $ applyTimeout timeoutOpt $ do
         r <- wait asy
         -- Not only wait for the result to be returned, but make sure to
         -- evalute it inside applyTimeout; see #280.
@@ -150,7 +150,7 @@ executeTest action statusVar timeoutOpt hideProgressOpt inits fins = mask $ \res
   atomically . writeTVar statusVar . Done $
     case resultOrExn <* maybe (Right ()) Left mbExn of
       Left ex -> exceptionResult ex
-      Right (t,r) -> r { resultTime = t }
+      Right (Timed t r) -> r { resultTime = t }
 
   where
     initResources :: IO ()
@@ -636,7 +636,7 @@ launchTestTree opts' tree' k0 = do
   let (opts, tree) = applyTopLevelPlusTestOptions opts' tree'
   (testActions, fins) <- createTestActions opts tree
   let NumThreads numThreads = lookupOption opts
-  (t,k1) <- timed $ do
+  Timed t k1 <- timed' $ do
      abortTests <- runInParallel numThreads (testAction <$> testActions)
      (do let smap = IntMap.fromDistinctAscList $ zip [0..] (testStatus <$> testActions)
          k0 smap)
