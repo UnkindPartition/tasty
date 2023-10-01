@@ -152,8 +152,6 @@ buildTestOutput opts tree =
           name
           (replicate postNamePadding ' ')
 
-        resultPosition = length testNamePadded
-
         printTestName = do
           putStr testNamePadded
           hFlush stdout
@@ -171,11 +169,12 @@ buildTestOutput opts tree =
                         ("",  pct) -> printf "%.0f%% " pct
                         (txt, 0.0) -> printf "%s" txt
                         (txt, pct) -> printf "%s: %.0f%% " txt pct
-              setCursorColumn resultPosition
-              infoOk msg
+              putChar '\r'
               -- A new progress message may be shorter than the previous one
-              -- so we must clean until the end of the line
-              clearFromCursorToLineEnd
+              -- so we must clean whole line and print anew.
+              clearLine
+              putStr testNamePadded
+              infoOk msg
               hFlush stdout
 
         printTestResult result = do
@@ -191,8 +190,9 @@ buildTestOutput opts tree =
             time = resultTime result
 
           when getAnsiTricks $ do
-            setCursorColumn resultPosition
-            clearFromCursorToLineEnd
+            putChar '\r'
+            clearLine
+            putStr testNamePadded
 
           printFn (resultShortDescription result)
           when (floor (time * 1e6) >= minDurationMicros) $
