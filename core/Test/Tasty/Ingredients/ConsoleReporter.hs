@@ -295,8 +295,9 @@ consoleOutput toutput smap =
       , Any True)
     foldHeading _name printHeading (printBody, Any nonempty) =
       ( Traversal $ do
-          when nonempty $ printHeading
-          getTraversal printBody
+          when nonempty $ do
+            printHeading :: IO ()
+            getTraversal printBody
       , Any nonempty
       )
 
