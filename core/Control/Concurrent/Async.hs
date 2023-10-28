@@ -48,7 +48,7 @@ import Control.Concurrent
 import Control.Monad
 import Data.IORef
 import Data.Typeable
-import GHC.Conc
+import GHC.Conc (ThreadId(..))
 import GHC.Exts
 import GHC.IO hiding (onException)
 
