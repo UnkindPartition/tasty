@@ -10,7 +10,7 @@ if os(wasi)
   source-repository-package
     type: git
     location: https://github.com/amesgen/splitmix
-    tag: 9c307e1bb4a84ef838b90e739990a616411e2d81
+    tag: 83b906c4bcdc2720546f1779a16eb65e8e12ecba
   package splitmix
     tests: False
     benchmarks: False
