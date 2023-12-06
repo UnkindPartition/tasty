@@ -169,10 +169,9 @@ buildTestOutput opts tree =
                         ("",  pct) -> printf "%.0f%% " pct
                         (txt, 0.0) -> printf "%s" txt
                         (txt, pct) -> printf "%s: %.0f%% " txt pct
-              putChar '\r'
               -- A new progress message may be shorter than the previous one
               -- so we must clean whole line and print anew.
-              clearLine
+              putChar '\r'
               putStr testNamePadded
               infoOk msg
               hFlush stdout
@@ -191,7 +190,6 @@ buildTestOutput opts tree =
 
           when getAnsiTricks $ do
             putChar '\r'
-            clearLine
             putStr testNamePadded
 
           printFn (resultShortDescription result)
