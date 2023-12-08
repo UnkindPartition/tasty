@@ -540,7 +540,7 @@ annotatePath = go mempty
     go :: Seq.Seq TestName -> AnnTestTree OptionSet -> AnnTestTree (OptionSet, Path)
     go path = \case
       AnnEmptyTestTree -> AnnEmptyTestTree
-      AnnSingleTest opts name tree -> 
+      AnnSingleTest opts name tree ->
         AnnSingleTest (opts, path |> name) name tree
       AnnTestGroup opts name trees ->
         let newPath = path |> name in
@@ -554,7 +554,15 @@ annotatePath = go mempty
 filterByPattern :: AnnTestTree (OptionSet, Path) -> AnnTestTree OptionSet
 filterByPattern = snd . go (Any False)
   where
-    go 
+    mkGroup opts name xs = case filter isNonEmpty xs of
+      [] -> AnnEmptyTestTree
+      ys -> AnnTestGroup opts name ys
+
+    isNonEmpty = \case
+      AnnEmptyTestTree -> False
+      _                -> True
+
+    go
       :: ForceTestMatch
       -> AnnTestTree (OptionSet, Path)
       -> (TestMatched, AnnTestTree OptionSet)
@@ -565,22 +573,22 @@ filterByPattern = snd . go (Any False)
       AnnSingleTest (opts, path) name tree
         | getAny forceMatch || testPatternMatches (lookupOption opts) path
         -> (Any True, AnnSingleTest opts name tree)
-        | otherwise 
+        | otherwise
         -> (Any False, AnnEmptyTestTree)
 
-      AnnTestGroup (opts, _) name [] ->
-        (forceMatch, AnnTestGroup opts name [])
+      AnnTestGroup _ _ [] ->
+        (forceMatch, AnnEmptyTestTree)
 
       AnnTestGroup (opts, _) name trees ->
         case lookupOption opts of
           Parallel ->
             bimap
               mconcat
-              (AnnTestGroup opts name)
+              (mkGroup opts name)
               (unzip (map (go forceMatch) trees))
           Sequential _ ->
             second
-              (AnnTestGroup opts name)
+              (mkGroup opts name)
               (mapAccumR go forceMatch trees)
 
       AnnWithResource (opts, _) res0 tree ->
