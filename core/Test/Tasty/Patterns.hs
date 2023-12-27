@@ -48,7 +48,15 @@ instance IsOption TestPattern where
   defaultValue = noPattern
   parseValue = parseTestPattern
   optionName = return "pattern"
-  optionHelp = return "Select only tests which satisfy a pattern or awk expression"
+#if !defined(mingw32_HOST_OS)
+  optionHelp = return "Select only tests which satisfy a pattern or awk expression."
+#else
+  optionHelp = return
+    $ unwords [ "Select only tests which satisfy a pattern or awk expression."
+              , "Consider using `MSYS_NO_PATHCONV=1` or `MSYS2_ARG_CONV_EXCL=*`"
+              , "to prevent pattern mangling."
+              ]
+#endif
   optionCLParser =
     fmap (TestPattern . fmap (foldr1 And) . nonEmpty . catMaybes . coerce @[TestPattern]) . some $
       mkOptionCLParser (short 'p' <> metavar "PATTERN")
