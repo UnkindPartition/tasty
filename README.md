@@ -820,9 +820,12 @@ Use `sequentialTestGroup` to mitigate these problems.
 
 3. **Q**: Patterns with slashes do not work on Windows. How can I fix it?
 
-   **A**: If you are running Git for Windows terminal, it has a habit of converting slashes
-   to backslashes. Set `MSYS_NO_PATHCONV=1` to prevent this behaviour, or follow other
-   suggestions from [Known Issues](https://github.com/git-for-windows/build-extra/blob/main/ReleaseNotes.md#known-issues).
+   **A**: If you are running Git for Windows terminal, it has a habit of
+   converting slashes to backslashes. Set `MSYS_NO_PATHCONV=1` when running the
+   Git for Windows terminal and `MSYS2_ARG_CONV_EXCL=*` when running a MinGW
+   bash directly to prevent this behaviour, or follow other suggestions from
+   [Known
+   Issues](https://github.com/git-for-windows/build-extra/blob/main/ReleaseNotes.md#known-issues).
 
 ## Press
 
