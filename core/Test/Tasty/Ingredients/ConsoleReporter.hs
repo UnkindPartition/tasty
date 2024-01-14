@@ -541,21 +541,17 @@ consoleTestReporterWithHook hook = TestReporter consoleTestReporterOptions $
     then do
       b <- statusMapResult numThreads smap
       return $ \_time -> return b
-    else
-
-      do
+    else do
       isTerm <- hSupportsANSI stdout
       isTermColor <- hSupportsANSIColor stdout
-
+      let colors = useColor whenColor isTermColor
       (\k -> if isTerm
         then (do hideCursor; k) `finally` showCursor
         else k) $ do
 
-          hSetBuffering stdout LineBuffering
+          _ <- hSetBuffering stdout LineBuffering
 
-          let
-            ?colors = useColor whenColor isTermColor
-
+          let ?colors = colors
           let
             -- 'buildTestOutput' is a pure function and cannot query 'hSupportsANSI' itself.
             -- We also would rather not pass @isTerm@ as an extra argument,
@@ -563,7 +559,7 @@ consoleTestReporterWithHook hook = TestReporter consoleTestReporterOptions $
             opts' = changeOption (\(AnsiTricks x) -> AnsiTricks (x && isTerm)) opts
             toutput = applyHook hook $ buildTestOutput opts' tree
 
-          case () of { _
+          _ <- case () of { _
             | hideSuccesses && isTerm && ansiTricks ->
                 consoleOutputHidingSuccesses toutput smap
             | hideSuccesses ->
@@ -572,8 +568,9 @@ consoleTestReporterWithHook hook = TestReporter consoleTestReporterOptions $
           }
 
           return $ \time -> do
+            let ?colors = colors
             stats <- computeStatistics smap
-            printStatistics stats time
+            _ <- printStatistics stats time
             return $ statFailures stats == 0
 
 -- | Do not print test results (see README for details).
