@@ -65,7 +65,7 @@ library
     transformers         >= 0.5  && < 0.7,
     tagged               >= 0.5  && < 0.9,
     optparse-applicative >= 0.14 && < 0.19,
-    ansi-terminal        >= 0.9  && < 1.1
+    ansi-terminal        >= 0.9  && < 1.2
 
   -- No reason to depend on unbounded-delays on 64-bit architecture
   if(!arch(x86_64) && !arch(aarch64))
