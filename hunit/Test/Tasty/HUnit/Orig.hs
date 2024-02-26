@@ -76,7 +76,7 @@ assertEqual preface expected actual =
 infix  1 @?, @=?, @?=
 
 -- | Asserts that the specified actual value is equal to the expected value
---   (with the expected value on the left-hand side).
+--   (with the /expected/ value on the left-hand side).
 (@=?)
   :: (Eq a, Show a, HasCallStack)
   => a -- ^ The expected value
@@ -85,7 +85,7 @@ infix  1 @?, @=?, @?=
 expected @=? actual = assertEqual "" expected actual
 
 -- | Asserts that the specified actual value is equal to the expected value
---   (with the actual value on the left-hand side).
+--   (with the /actual/ value on the left-hand side).
 (@?=)
   :: (Eq a, Show a, HasCallStack)
   => a -- ^ The actual value
