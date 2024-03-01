@@ -31,7 +31,7 @@ instance IsTest TestCaseSteps where
         atomicModifyIORef ref (\l -> ((tme,msg):l, ()))
 
     hunitResult <- (Right <$> assertionFn stepFn) `catch`
-        \(SomeException ex) -> return $ Left (displayException ex)
+      \(SomeException ex) -> return $ Left (displayException ex)
 
     endTime <- getTime
 
