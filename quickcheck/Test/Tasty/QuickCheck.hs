@@ -50,16 +50,16 @@ import Test.QuickCheck hiding -- for re-export
   , verboseCheckAll
   )
 
+import Control.Applicative
 import qualified Data.Char as Char
 import Data.Typeable
 import Data.List
 import Text.Printf
 import Text.Read (readMaybe)
-import Test.QuickCheck.Random (mkQCGen)
+import Test.QuickCheck.Random (QCGen, mkQCGen)
 import Options.Applicative (metavar)
 import System.Random (getStdRandom, randomR)
 #if !MIN_VERSION_base(4,9,0)
-import Control.Applicative
 import Data.Monoid
 #endif
 
@@ -82,7 +82,10 @@ testProperties name = testGroup name . map (uncurry testProperty)
 newtype QuickCheckTests = QuickCheckTests Int
   deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
 
-newtype QuickCheckReplay = QuickCheckReplay (Maybe Int)
+-- | Replay seed. The @Left int@ form is kept for legacy purposes.
+-- The form @Right (qcgen, intSize)@ holds both the seed and the size
+-- to run QuickCheck tests.
+newtype QuickCheckReplay = QuickCheckReplay (Maybe (Either Int (QCGen, Int)))
   deriving (Typeable)
 
 -- | If a test case fails unexpectedly, show the replay token
@@ -119,10 +122,12 @@ instance IsOption QuickCheckTests where
 
 instance IsOption QuickCheckReplay where
   defaultValue = QuickCheckReplay Nothing
-  -- Reads a replay int seed
-  parseValue v = QuickCheckReplay . Just <$> safeRead v
+  -- Reads either a replay Int seed or a (QCGen, Int) seed
+  parseValue v = do
+    QuickCheckReplay . Just <$>
+      ((Left <$> safeRead v) <|> (Right <$> safeRead v))
   optionName = return "quickcheck-replay"
-  optionHelp = return "Random seed to use for replaying a previous test run (use same --quickcheck-max-size)"
+  optionHelp = return "Random seed to use for replaying a previous test run"
   optionCLParser = mkOptionCLParser $ metavar "SEED"
 
 instance IsOption QuickCheckShowReplay where
@@ -168,30 +173,37 @@ instance IsOption QuickCheckMaxShrinks where
 -- This is a low-level function that was originally added for tasty-hspec
 -- but may be used by others.
 --
+-- The returned Int is kept only for backward compatibility purposes. It
+-- has no use in tast-quickcheck.
+--
 -- @since 0.9.1
 optionSetToArgs :: OptionSet -> IO (Int, QC.Args)
 optionSetToArgs opts = do
-  replaySeed <- case mReplay of
-    Nothing -> getStdRandom (randomR (1,999999))
-    Just seed -> return seed
+  (intSeed, replaySeed) <- case mReplay of
+    Nothing -> do
+      intSeed <- getStdRandom (randomR (1,999999))
+      return (intSeed, (mkQCGen intSeed, 0))
+    Just (Left intSeed) -> return (intSeed, (mkQCGen intSeed, 0))
+    -- The intSeed is not used when the new form of replay seed is used.
+    Just (Right replaySeed) -> return (0, replaySeed)
 
   let args = QC.stdArgs
         { QC.chatty          = False
         , QC.maxSuccess      = nTests
         , QC.maxSize         = maxSize
-        , QC.replay          = Just (mkQCGen replaySeed, 0)
+        , QC.replay          = Just replaySeed
         , QC.maxDiscardRatio = maxRatio
         , QC.maxShrinks      = maxShrinks
         }
 
-  return (replaySeed, args)
+  return (intSeed, args)
 
   where
-    QuickCheckTests      nTests     = lookupOption opts
-    QuickCheckReplay     mReplay    = lookupOption opts
-    QuickCheckMaxSize    maxSize    = lookupOption opts
-    QuickCheckMaxRatio   maxRatio   = lookupOption opts
-    QuickCheckMaxShrinks maxShrinks = lookupOption opts
+    QuickCheckTests        nTests        = lookupOption opts
+    QuickCheckReplay       mReplay       = lookupOption opts
+    QuickCheckMaxSize      maxSize       = lookupOption opts
+    QuickCheckMaxRatio     maxRatio      = lookupOption opts
+    QuickCheckMaxShrinks   maxShrinks    = lookupOption opts
 
 instance IsTest QC where
   testOptions = return
@@ -205,12 +217,10 @@ instance IsTest QC where
     ]
 
   run opts (QC prop) yieldProgress = do
-    (replaySeed, args) <- optionSetToArgs opts
+    (_, args) <- optionSetToArgs opts
     let
       QuickCheckShowReplay showReplay = lookupOption opts
       QuickCheckVerbose    verbose    = lookupOption opts
-      maxSize = QC.maxSize args
-      replayMsg = makeReplayMsg replaySeed maxSize
 
     -- Quickcheck already catches exceptions, no need to do it here.
     r <- quickCheck yieldProgress
@@ -224,6 +234,8 @@ instance IsTest QC where
             else qcOutput ++ "\n"
         testSuccessful = successful r
         putReplayInDesc = (not testSuccessful) || showReplay
+    Just seedSz <- return $ replayFromResult r <|> QC.replay args
+    let replayMsg = makeReplayMsg seedSz
     return $
       (if testSuccessful then testPassed else testFailed)
       (qcOutputNl ++
@@ -259,9 +271,12 @@ successful r =
     QC.Success {} -> True
     _ -> False
 
-makeReplayMsg :: Int -> Int -> String
-makeReplayMsg seed size = let
-    sizeStr = if (size /= defaultMaxSize)
-                 then printf " --quickcheck-max-size=%d" size
-                 else ""
-  in printf "Use --quickcheck-replay=%d%s to reproduce." seed sizeStr
+makeReplayMsg :: (QCGen, Int) -> String
+makeReplayMsg seedSz =
+  printf "Use --quickcheck-replay=\"%s\" to reproduce." (show seedSz)
+
+replayFromResult :: QC.Result -> Maybe (QCGen, Int)
+replayFromResult r =
+  case r of
+    Failure{} -> Just (QC.usedSeed r, QC.usedSize r)
+    _ -> Nothing
