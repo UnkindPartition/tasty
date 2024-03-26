@@ -174,7 +174,7 @@ instance IsOption QuickCheckMaxShrinks where
 -- but may be used by others.
 --
 -- The returned Int is kept only for backward compatibility purposes. It
--- has no use in tast-quickcheck.
+-- has no use in @tasty-quickcheck@.
 --
 -- @since 0.9.1
 optionSetToArgs :: OptionSet -> IO (Int, QC.Args)
