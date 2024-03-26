@@ -6,6 +6,7 @@ import Test.Tasty.Runners as Tasty
 import Test.Tasty.QuickCheck
 import Test.Tasty.HUnit
 import Data.Maybe
+import Test.QuickCheck.Random (QCGen)
 import Text.Regex.PCRE.Light.Char8
 import Text.Printf
 
@@ -67,6 +68,29 @@ main =
           resultDescription =~ "Failed"
           resultDescription =~ "Use .* to reproduce"
 
+      , testCase "Replay unexpected failure" $ do
+          Result{..} <- runMaxSized 3 $ \x -> x /= (2 :: Int)
+          case resultOutcome of
+            Tasty.Failure {} -> return ()
+            _ -> assertFailure $ show resultOutcome
+          resultDescription =~ "Failed"
+          resultDescription =~ "Use --quickcheck-replay=.* to reproduce."
+          let firstResultDescription = resultDescription
+          Just seedSz <- return (parseSeed resultDescription)
+
+          Result{..} <- runReplayWithSeed seedSz $ \x -> x /= (2 :: Int)
+          case resultOutcome of
+            Tasty.Failure {} -> return ()
+            _ -> assertFailure $ show resultOutcome
+
+          resultDescription =~ "Failed"
+          -- Compare the last lines reporting the replay seed.
+          let lastLine = concat . take 1 . reverse . lines
+          lastLine resultDescription =~ "Use --quickcheck-replay=.* to reproduce."
+          lastLine resultDescription @?= lastLine firstResultDescription
+          -- Exactly one test is executed
+          resultDescription =~ "Falsified \\(after 1 test\\)"
+
       , testCase "Gave up" $ do
           Result{..} <- run' $ \x -> x > x ==> x > (x :: Int)
           case resultOutcome of
@@ -98,3 +122,24 @@ runReplay p =
     (singleOption $ QuickCheckShowReplay True)
     (QC $ property p)
     (const $ return ())
+
+runMaxSized :: Testable p => Int -> p -> IO Result
+runMaxSized sz p =
+  run
+    (singleOption $ QuickCheckMaxSize sz)
+    (QC $ property p)
+    (const $ return ())
+
+runReplayWithSeed :: Testable p => (QCGen, Int) -> p -> IO Result
+runReplayWithSeed seedSz p =
+  run
+    (singleOption $ QuickCheckReplay $ Just (Right seedSz))
+    (QC $ property p)
+    (const $ return ())
+
+-- | Reads a seed from a message like
+--
+-- > "Use --quickcheck-single-replay=\"(SMGen 2909028190965759779 12330386376379709109,0)\" to reproduce."
+--
+parseSeed :: String -> Maybe (QCGen, Int)
+parseSeed = safeRead . takeWhile (/= '\"') . drop 1 . dropWhile (/='\"')
