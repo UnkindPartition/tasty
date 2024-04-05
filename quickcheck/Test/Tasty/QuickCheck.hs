@@ -82,10 +82,15 @@ testProperties name = testGroup name . map (uncurry testProperty)
 newtype QuickCheckTests = QuickCheckTests Int
   deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
 
--- | Replay seed. The @Left int@ form is kept for legacy purposes.
--- The form @Right (qcgen, intSize)@ holds both the seed and the size
--- to run QuickCheck tests.
-newtype QuickCheckReplay = QuickCheckReplay (Maybe (Either Int (QCGen, Int)))
+-- | Replay seed
+data QuickCheckReplay
+    = -- | No seed
+      QuickCheckReplayNone
+    | -- | Legacy integer seed
+      QuickCheckReplayLegacy Int
+    | -- | @(qcgen, intSize)@ holds both the seed and the size
+      -- to run QuickCheck tests
+      QuickCheckReplay (QCGen, Int)
   deriving (Typeable)
 
 -- | If a test case fails unexpectedly, show the replay token
@@ -121,11 +126,10 @@ instance IsOption QuickCheckTests where
   optionCLParser = mkOptionCLParser $ metavar "NUMBER"
 
 instance IsOption QuickCheckReplay where
-  defaultValue = QuickCheckReplay Nothing
+  defaultValue = QuickCheckReplayNone
   -- Reads either a replay Int seed or a (QCGen, Int) seed
-  parseValue v = do
-    QuickCheckReplay . Just <$>
-      ((Left <$> safeRead v) <|> (Right <$> safeRead v))
+  parseValue v =
+    (QuickCheckReplayLegacy <$> safeRead v) <|> (QuickCheckReplay <$> safeRead v)
   optionName = return "quickcheck-replay"
   optionHelp = return "Random seed to use for replaying a previous test run"
   optionCLParser = mkOptionCLParser $ metavar "SEED"
@@ -179,13 +183,13 @@ instance IsOption QuickCheckMaxShrinks where
 -- @since 0.9.1
 optionSetToArgs :: OptionSet -> IO (Int, QC.Args)
 optionSetToArgs opts = do
-  (intSeed, replaySeed) <- case mReplay of
-    Nothing -> do
+  (intSeed, replaySeed) <- case quickCheckReplay of
+    QuickCheckReplayNone -> do
       intSeed <- getStdRandom (randomR (1,999999))
       return (intSeed, (mkQCGen intSeed, 0))
-    Just (Left intSeed) -> return (intSeed, (mkQCGen intSeed, 0))
+    QuickCheckReplayLegacy intSeed -> return (intSeed, (mkQCGen intSeed, 0))
     -- The intSeed is not used when the new form of replay seed is used.
-    Just (Right replaySeed) -> return (0, replaySeed)
+    QuickCheckReplay replaySeed -> return (0, replaySeed)
 
   let args = QC.stdArgs
         { QC.chatty          = False
@@ -200,7 +204,7 @@ optionSetToArgs opts = do
 
   where
     QuickCheckTests        nTests        = lookupOption opts
-    QuickCheckReplay       mReplay       = lookupOption opts
+    quickCheckReplay                     = lookupOption opts
     QuickCheckMaxSize      maxSize       = lookupOption opts
     QuickCheckMaxRatio     maxRatio      = lookupOption opts
     QuickCheckMaxShrinks   maxShrinks    = lookupOption opts
