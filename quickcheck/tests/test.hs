@@ -133,7 +133,7 @@ runMaxSized sz p =
 runReplayWithSeed :: Testable p => (QCGen, Int) -> p -> IO Result
 runReplayWithSeed seedSz p =
   run
-    (singleOption $ QuickCheckReplay $ Just (Right seedSz))
+    (singleOption $ QuickCheckReplay seedSz)
     (QC $ property p)
     (const $ return ())
 
