@@ -36,6 +36,10 @@ import Prelude  -- Silence AMP and FTP import warnings
 import Data.Traversable (mapAccumM)
 #endif
 
+#if MIN_VERSION_base(4,18,0)
+import Debug.Trace(traceEventIO)
+#endif
+
 #ifdef MIN_VERSION_unbounded_delays
 import Control.Concurrent.Timeout (timeout)
 #else
@@ -398,7 +402,15 @@ createTestActions opts0 tree = do
       (parentPath, testDeps) <- ask
       let
         testPath = parentPath |> name
-        testAction = executeTest (run opts test) testStatus (lookupOption opts) (lookupOption opts)
+        testAction = \initializers finalizers -> do
+#if MIN_VERSION_base(4,18,0)
+          let eventName = "Test.Tasty.run " <> show testPath
+          traceEventIO ("START " <> eventName)
+#endif
+          executeTest (run opts test) testStatus (lookupOption opts) (lookupOption opts) initializers finalizers
+#if MIN_VERSION_base(4,18,0)
+            `finally` traceEventIO ("END " <> eventName)
+#endif
       pure $ TAction (TestAction {..})
 
     foldResource :: OptionSet -> ResourceSpec a -> (IO a -> Tr) -> Tr
@@ -436,7 +448,7 @@ createTestActions opts0 tree = do
       TGroup _ trees    -> mconcat (map collectFinalizers trees)
       TAction _         -> mempty
 
-    goSeqGroup 
+    goSeqGroup
       :: DependencyType
       -> Seq Dependency
       -> Tr
