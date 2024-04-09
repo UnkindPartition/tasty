@@ -7,11 +7,16 @@ Next Version
 * Produce seeds that run a single failing tests instead of reproducing
   all the earlier successes ([#410](https://github.com/UnkindPartition/tasty/pull/410)).
 
-  Seeds are now strings, instead of single integers, e.g.
+  Seeds are now pairs instead of single integers, e.g.
   `--quickcheck-replay="(SMGen 2909028190965759779 12330386376379709109,0)"`
 
   Single integer seeds are still accepted as input, but they do run through
   earlier successes.
+
+  The `QuickCheckReplay` type used as a tasty option has three data constructors
+  now. `QuickCheckReplayNone` is the default value and provides no seed.
+  `QuickCheckReplayLegacy` takes an integer as before. The `QuickCheckReplay`
+  data constructor takes the new seed form.
 
 Version 0.10.3
 --------------
