@@ -85,11 +85,17 @@ newtype QuickCheckTests = QuickCheckTests Int
 -- | Replay seed
 data QuickCheckReplay
     = -- | No seed
+      --
+      -- @since 0.11
       QuickCheckReplayNone
     | -- | Legacy integer seed
+      --
+      -- @since 0.11
       QuickCheckReplayLegacy Int
     | -- | @(qcgen, intSize)@ holds both the seed and the size
       -- to run QuickCheck tests
+      --
+      -- @since 0.11
       QuickCheckReplay (QCGen, Int)
   deriving (Typeable)
 

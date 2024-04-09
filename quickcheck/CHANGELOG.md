@@ -4,6 +4,9 @@ Changes
 Next Version
 ------------
 
+Version 0.11
+--------------
+
 * Produce seeds that run a single failing tests instead of reproducing
   all the earlier successes ([#410](https://github.com/UnkindPartition/tasty/pull/410)).
 
