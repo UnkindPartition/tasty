@@ -1,6 +1,23 @@
 Changes
 =======
 
+Unreleased
+--------------
+
+_YYYY-MM-DD_
+
+* Performance improvements
+  ([#389](https://github.com/UnkindPartition/tasty/pull/389),
+   [#390](https://github.com/UnkindPartition/tasty/pull/390)).
+* Progress reporting in Emacs: use `\r` instead of ANSI escape sequences
+  ([#393](https://github.com/UnkindPartition/tasty/pull/393)).
+* Console reporter: fix unintended change to `foldHeading`
+  ([#396](https://github.com/UnkindPartition/tasty/pull/396)).
+* Prune empty test subtrees from `TestTree`
+  ([#403](https://github.com/UnkindPartition/tasty/pull/403)).
+* Add `instance Eq Timeout` and `instance Ord Timeout`
+  ([#415](https://github.com/UnkindPartition/tasty/pull/415)).
+
 Version 1.5
 ---------------
 
