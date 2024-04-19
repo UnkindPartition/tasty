@@ -58,7 +58,18 @@ data Timeout
     -- @\"0.5m\"@), so that we can print it back. 'Integer' is the number of
     -- microseconds.
   | NoTimeout
-  deriving (Show, Typeable)
+  deriving
+  ( Eq
+  -- ^ Auto-derived instance, just to allow storing in a 'Map' and such.
+  --
+  -- @since 1.5.1
+  , Ord
+  -- ^ Auto-derived instance, just to allow storing in a 'Map' and such.
+  --
+  -- @since 1.5.1
+  , Show
+  , Typeable
+  )
 
 instance IsOption Timeout where
   defaultValue = NoTimeout
