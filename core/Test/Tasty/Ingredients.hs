@@ -92,6 +92,8 @@ data Ingredient
 --
 -- For a 'TestReporter', this function automatically starts running the
 -- tests in the background.
+--
+-- This function is not publicly exposed.
 tryIngredient :: Ingredient -> OptionSet -> TestTree -> Maybe (IO Bool)
 tryIngredient (TestReporter _ report) opts testTree = do -- Maybe monad
   reportFn <- report opts testTree
@@ -106,8 +108,10 @@ tryIngredient (TestManager _ manage) opts testTree =
 --
 -- @since 0.4
 tryIngredients :: [Ingredient] -> OptionSet -> TestTree -> Maybe (IO Bool)
-tryIngredients ins opts tree =
+tryIngredients ins opts' tree' =
   msum $ map (\i -> tryIngredient i opts tree) ins
+  where
+    (opts, tree) = applyTopLevelPlusTestOptions opts' tree'
 
 -- | Return the options which are relevant for the given ingredient.
 --

@@ -6,6 +6,7 @@ module Test.Tasty.Run
   ( Status(..)
   , StatusMap
   , launchTestTree
+  , applyTopLevelPlusTestOptions
   , DependencyException(..)
   ) where
 
@@ -576,6 +577,31 @@ destroyResource restore (Finalizer doRelease stateVar _) = join . atomically $ d
     FailedToCreate {} -> return $ return Nothing
     Destroyed         -> return $ return Nothing
 
+-- While tasty allows to configure 'OptionSet' at any level of test tree,
+-- it often has any effect only on options of test providers (class IsTest).
+-- But test runners and reporters typically only look into the OptionSet
+-- they were given as an argument. This is not unreasonable: e. g., if an option
+-- is a log filename you cannot expect to change it in the middle of the run.
+-- It is however too restrictive: there is no way to use 'defaultMain' but hardcode
+-- a global option, without passing it via command line.
+--
+-- 'applyTopLevelPlusTestOptions' allows for a compromise: unwrap top-level
+-- 'PlusTestOptions' from the 'TestTree' and apply them to the 'OptionSet'
+-- from command line. This way a user can wrap their tests in
+-- 'adjustOption' / 'localOption' forcing, for instance, 'NumThreads' to 1.
+--
+-- This function is not publicly exposed.
+applyTopLevelPlusTestOptions
+  :: OptionSet
+  -- ^ Raw options, typically from the command-line arguments.
+  -> TestTree
+  -- ^ Raw test tree.
+  -> (OptionSet, TestTree)
+  -- ^ Extended options and test tree stripped of outer layers of 'PlusTestOptions'.
+applyTopLevelPlusTestOptions opts (PlusTestOptions f tree) =
+  applyTopLevelPlusTestOptions (f opts) tree
+applyTopLevelPlusTestOptions opts tree = (opts, tree)
+
 -- | Start running the tests (in background, in parallel) and pass control
 -- to the callback.
 --
@@ -602,11 +628,16 @@ launchTestTree
     -- all resource initializers and finalizers, which is why it is more
     -- accurate than what could be measured from inside the first callback.
   -> IO a
-launchTestTree opts tree k0 = do
+launchTestTree opts' tree' k0 = do
+  -- Normally 'applyTopLevelPlusTestOptions' has been already applied by
+  -- 'Test.Tasty.Ingredients.tryIngredients', but 'launchTestTree' is exposed
+  -- publicly, so in principle clients could use it outside of 'tryIngredients'.
+  -- Thus running 'applyTopLevelPlusTestOptions' again, just to be sure.
+  let (opts, tree) = applyTopLevelPlusTestOptions opts' tree'
   (testActions, fins) <- createTestActions opts tree
-  let NumThreads numTheads = lookupOption opts
+  let NumThreads numThreads = lookupOption opts
   (t,k1) <- timed $ do
-     abortTests <- runInParallel numTheads (testAction <$> testActions)
+     abortTests <- runInParallel numThreads (testAction <$> testActions)
      (do let smap = IntMap.fromDistinctAscList $ zip [0..] (testStatus <$> testActions)
          k0 smap)
       `finallyRestore` \restore -> do
