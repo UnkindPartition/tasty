@@ -17,6 +17,8 @@ _YYYY-MM-DD_
   ([#403](https://github.com/UnkindPartition/tasty/pull/403)).
 * Add `instance Eq Timeout` and `instance Ord Timeout`
   ([#415](https://github.com/UnkindPartition/tasty/pull/415)).
+* Add ability to supply options for launchers and reporters at the top-level of test tree
+  ([#417](https://github.com/UnkindPartition/tasty/pull/417)).
 
 Version 1.5
 ---------------

@@ -56,3 +56,9 @@ executable multiple-pattern-test
   main-is:             multiple-pattern-test.hs
   build-depends:       base < 5, tasty, tasty-hunit
   ghc-options:         -Wall -fno-warn-type-defaults
+
+executable top-level-options
+  import:              commons
+  main-is:             top-level-options.hs
+  build-depends:       base < 5, tasty, tasty-hunit
+  ghc-options:         -Wall -fno-warn-type-defaults
