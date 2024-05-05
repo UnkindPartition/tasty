@@ -53,6 +53,7 @@ import Test.QuickCheck hiding -- for re-export
 import Control.Applicative
 import qualified Data.Char as Char
 import Data.Typeable
+import Data.IORef (newIORef, readIORef, writeIORef)
 import Data.List
 import Text.Printf
 import Text.Read (readMaybe)
@@ -62,6 +63,9 @@ import System.Random (getStdRandom, randomR)
 #if !MIN_VERSION_base(4,9,0)
 import Data.Monoid
 #endif
+import GHC.IO.Unsafe (unsafePerformIO)
+import Data.Functor (($>))
+import Test.QuickCheck.Property (mapResult, maybeNumTests)
 
 newtype QC = QC QC.Property
   deriving Typeable
@@ -259,14 +263,21 @@ quickCheck :: (Progress -> IO ())
            -> QC.Args
            -> QC.Property
            -> IO QC.Result
-quickCheck yieldProgress args prop = do
+quickCheck yieldProgress args@(QC.Args {QC.maxSuccess = argMaxSuccess}) prop = do
   -- Here we rely on the fact that QuickCheck currently prints its progress to
   -- stderr and the overall status (which we don't need) to stdout
+  maxSuccess <- newIORef $ fromIntegral argMaxSuccess
+  let setMaxTests r = case maybeNumTests r of
+        Just n -> unsafePerformIO $ writeIORef maxSuccess (fromIntegral n) $> r
+        Nothing -> r
   tm <- QC.newTerminal
           (const $ pure ())
-          (\progressText -> yieldProgress emptyProgress { progressPercent = parseProgress progressText })
+          $ \progressText -> do
+            ms <- readIORef maxSuccess
+            yieldProgress emptyProgress { progressPercent = 100 * parseProgress progressText / ms }
   QC.withState args $ \ s ->
-    QC.test s { QC.terminal = tm } prop
+    QC.test s { QC.terminal = tm } $ mapResult setMaxTests prop
+
   where
     -- QuickCheck outputs something like "(15461 tests)\b\b\b\b\b\b\b\b\b\b\b\b\b"
     parseProgress :: String -> Float
