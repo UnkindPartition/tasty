@@ -258,7 +258,7 @@ quickCheck :: (Progress -> IO ())
            -> IO QC.Result
 quickCheck yieldProgress args
   = (.) (QC.quickCheckWithResult args)
-  $ QCP.callback 
+  $ QCP.callback
   $ QCP.PostTest QCP.NotCounterexample
   $ \QC.MkState {QC.maxSuccessTests, QC.numSuccessTests} _ ->
     yieldProgress $ emptyProgress {progressPercent = fromIntegral numSuccessTests / fromIntegral maxSuccessTests}
