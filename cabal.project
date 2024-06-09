@@ -14,3 +14,5 @@ if os(wasi)
   package splitmix
     tests: False
     benchmarks: False
+  constraints:
+    hashable -arch-native
