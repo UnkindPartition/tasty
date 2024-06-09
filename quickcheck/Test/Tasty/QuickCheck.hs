@@ -24,9 +24,8 @@ import Test.Tasty ( testGroup )
 import Test.Tasty.Providers
 import Test.Tasty.Options
 import qualified Test.QuickCheck as QC
-import qualified Test.QuickCheck.Test as QC
+import qualified Test.QuickCheck.Property as QCP
 import qualified Test.QuickCheck.State as QC
-import qualified Test.QuickCheck.Text as QC
 import Test.Tasty.Runners (formatMessage, emptyProgress)
 import Test.QuickCheck hiding -- for re-export
   ( quickCheck
@@ -51,21 +50,15 @@ import Test.QuickCheck hiding -- for re-export
   )
 
 import Control.Applicative
-import qualified Data.Char as Char
 import Data.Typeable
-import Data.IORef (newIORef, readIORef, writeIORef)
 import Data.List
 import Text.Printf
-import Text.Read (readMaybe)
 import Test.QuickCheck.Random (QCGen, mkQCGen)
 import Options.Applicative (metavar)
 import System.Random (getStdRandom, randomR)
 #if !MIN_VERSION_base(4,9,0)
 import Data.Monoid
 #endif
-import GHC.IO.Unsafe (unsafePerformIO)
-import Data.Functor (($>))
-import Test.QuickCheck.Property (mapResult, maybeNumTests)
 
 newtype QC = QC QC.Property
   deriving Typeable
@@ -263,28 +256,12 @@ quickCheck :: (Progress -> IO ())
            -> QC.Args
            -> QC.Property
            -> IO QC.Result
-quickCheck yieldProgress args@(QC.Args {QC.maxSuccess = argMaxSuccess}) prop = do
-  -- Here we rely on the fact that QuickCheck currently prints its progress to
-  -- stderr and the overall status (which we don't need) to stdout
-  maxSuccess <- newIORef $ fromIntegral argMaxSuccess
-  let setMaxTests r = case maybeNumTests r of
-        Just n -> unsafePerformIO $ writeIORef maxSuccess (fromIntegral n) $> r
-        Nothing -> r
-  tm <- QC.newTerminal
-          (const $ pure ())
-          $ \progressText -> do
-            ms <- readIORef maxSuccess
-            yieldProgress emptyProgress { progressPercent = 100 * parseProgress progressText / ms }
-  QC.withState args $ \ s ->
-    QC.test s { QC.terminal = tm } $ mapResult setMaxTests prop
-
-  where
-    -- QuickCheck outputs something like "(15461 tests)\b\b\b\b\b\b\b\b\b\b\b\b\b"
-    parseProgress :: String -> Float
-    parseProgress = maybe 0 (\n -> fromIntegral (n :: Int) / fromIntegral (QC.maxSuccess args))
-                  . readMaybe
-                  . takeWhile Char.isDigit
-                  . drop 1
+quickCheck yieldProgress args
+  = (.) (QC.quickCheckWithResult args)
+  $ QCP.callback 
+  $ QCP.PostTest QCP.NotCounterexample
+  $ \QC.MkState {QC.maxSuccessTests, QC.numSuccessTests} _ ->
+    yieldProgress $ emptyProgress {progressPercent = fromIntegral numSuccessTests / fromIntegral maxSuccessTests}
 
 successful :: QC.Result -> Bool
 successful r =
