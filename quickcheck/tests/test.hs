@@ -109,7 +109,7 @@ main =
           resultDescription =~ "Failed.*expected failure"
           resultDescription =~ "Use .* to reproduce"
 
-      -- ???????? not sure how to test intermediate results
+      -- Run the test suite manually and check that progress does not go beyond 100%
       , testProperty "Percent Complete" $ withMaxSuccess 1000 $ \(_ :: Int) -> ioProperty $ threadDelay 10000
 
       ]
