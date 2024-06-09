@@ -1,4 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+import Control.Concurrent (threadDelay)
 import Test.Tasty
 import Test.Tasty.Options
 import Test.Tasty.Providers as Tasty
@@ -106,6 +108,9 @@ main =
             _ -> assertFailure $ show resultOutcome
           resultDescription =~ "Failed.*expected failure"
           resultDescription =~ "Use .* to reproduce"
+
+      -- Run the test suite manually and check that progress does not go beyond 100%
+      , testProperty "Percent Complete" $ withMaxSuccess 1000 $ \(_ :: Int) -> ioProperty $ threadDelay 10000
 
       ]
 
