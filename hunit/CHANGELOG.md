@@ -1,7 +1,7 @@
 Changes
 =======
 
-Unreleased
+Version 0.10.2
 --------------
 
 * Teach `testCaseSteps` to log progress

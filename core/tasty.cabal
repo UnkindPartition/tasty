@@ -1,6 +1,6 @@
 cabal-version:       >=1.10
 name:                tasty
-version:             1.5
+version:             1.5.1
 synopsis:            Modern and extensible testing framework
 description:         Tasty is a modern testing framework for Haskell.
                      It lets you combine your unit tests, golden
