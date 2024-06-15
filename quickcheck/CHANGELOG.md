@@ -1,12 +1,11 @@
 Changes
 =======
 
-Next Version
-------------
-
 Version 0.11
 --------------
 
+* Fix issues with QuickCheck progress reporting in the presence of `withMaxSuccess`
+  ([#419](https://github.com/UnkindPartition/tasty/pull/419)).
 * Produce seeds that run a single failing tests instead of reproducing
   all the earlier successes ([#410](https://github.com/UnkindPartition/tasty/pull/410)).
 
@@ -24,7 +23,7 @@ Version 0.11
 Version 0.10.3
 --------------
 
-* Print Quickcheck progress using Tasty progress reporting.
+* Print QuickCheck progress using Tasty progress reporting.
   ([#311](https://github.com/UnkindPartition/tasty/pull/311)).
 
 Version 0.10.2

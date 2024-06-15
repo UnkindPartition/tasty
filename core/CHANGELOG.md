@@ -1,10 +1,10 @@
 Changes
 =======
 
-Unreleased
+Version 1.5.1
 --------------
 
-_YYYY-MM-DD_
+_2024-06-22_
 
 * Performance improvements
   ([#389](https://github.com/UnkindPartition/tasty/pull/389),
