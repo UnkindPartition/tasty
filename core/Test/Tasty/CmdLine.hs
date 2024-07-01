@@ -5,6 +5,7 @@ module Test.Tasty.CmdLine
   , suiteOptionParser
   , parseOptions
   , defaultMainWithIngredients
+  , defaultMainWithIngredientsAndOptions
   ) where
 
 import Control.Arrow
@@ -171,11 +172,24 @@ parseOptions ins tree = do
 --
 -- @since 0.4
 defaultMainWithIngredients :: [Ingredient] -> TestTree -> IO ()
-defaultMainWithIngredients ins testTree = do
-  installSignalHandlers
-  opts <- parseOptions ins testTree
+defaultMainWithIngredients ins = do
+  defaultMainWithIngredientsAndOptions ins mempty
 
-  case tryIngredients ins opts testTree of
+-- | Parse the command line arguments and run the tests using the provided
+-- ingredient list and option set.
+--
+-- When the tests finish, this function calls 'System.Exit.exitWith' with the exit code
+-- that indicates whether any tests have failed. See 'Test.Tasty.defaultMain' for
+-- details.
+--
+-- @since 1.5.1
+defaultMainWithIngredientsAndOptions :: [Ingredient] -> OptionSet -> TestTree -> IO ()
+defaultMainWithIngredientsAndOptions ins opts testTree = do
+  installSignalHandlers
+  parsedOpts <- parseOptions ins testTree
+  let opts' = opts <> parsedOpts
+
+  case tryIngredients ins opts' testTree of
     Nothing -> do
       hPutStrLn stderr
         "No ingredients agreed to run. Something is wrong either with your ingredient set or the options."
