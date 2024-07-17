@@ -1,6 +1,11 @@
 Changes
 =======
 
+Version 0.11.1
+--------------
+
+* Add timeouts for individual tests within a property.
+
 Version 0.11
 --------------
 
