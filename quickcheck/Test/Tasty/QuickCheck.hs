@@ -10,6 +10,7 @@ module Test.Tasty.QuickCheck
   , QuickCheckMaxRatio(..)
   , QuickCheckVerbose(..)
   , QuickCheckMaxShrinks(..)
+  , QuickCheckTimeout(..)
     -- * Re-export of Test.QuickCheck
   , module Test.QuickCheck
     -- * Internal
@@ -20,7 +21,7 @@ module Test.Tasty.QuickCheck
   , optionSetToArgs
   ) where
 
-import Test.Tasty ( testGroup )
+import Test.Tasty ( testGroup, Timeout(..) )
 import Test.Tasty.Providers
 import Test.Tasty.Options
 import qualified Test.QuickCheck as QC
@@ -118,6 +119,12 @@ newtype QuickCheckVerbose = QuickCheckVerbose Bool
 newtype QuickCheckMaxShrinks = QuickCheckMaxShrinks Int
   deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
 
+-- | Timeout for individual tests within a property.
+--
+-- @since 0.11.1
+newtype QuickCheckTimeout = QuickCheckTimeout Timeout
+  deriving (Eq, Ord, Typeable)
+
 instance IsOption QuickCheckTests where
   defaultValue = 100
   parseValue =
@@ -175,6 +182,13 @@ instance IsOption QuickCheckMaxShrinks where
   optionHelp = return "Number of shrinks allowed before QuickCheck will fail a test"
   optionCLParser = mkOptionCLParser $ metavar "NUMBER"
 
+instance IsOption QuickCheckTimeout where
+  defaultValue = QuickCheckTimeout defaultValue
+  parseValue = fmap QuickCheckTimeout . parseValue
+  optionName = return "quickcheck-timeout"
+  optionHelp = return "Timeout for individual tests within a QuickCheck property (suffixes: ms,s,m,h; default: s)"
+  optionCLParser = mkOptionCLParser $ metavar "DURATION"
+
 -- | Convert tasty options into QuickCheck options.
 --
 -- This is a low-level function that was originally added for tasty-hspec
@@ -221,6 +235,7 @@ instance IsTest QC where
     , Option (Proxy :: Proxy QuickCheckMaxRatio)
     , Option (Proxy :: Proxy QuickCheckVerbose)
     , Option (Proxy :: Proxy QuickCheckMaxShrinks)
+    , Option (Proxy :: Proxy QuickCheckTimeout)
     ]
 
   run opts (QC prop) yieldProgress = do
@@ -228,11 +243,16 @@ instance IsTest QC where
     let
       QuickCheckShowReplay showReplay = lookupOption opts
       QuickCheckVerbose    verbose    = lookupOption opts
+      QuickCheckTimeout    timeout    = lookupOption opts
+      applyTimeout = case timeout of
+        Timeout micros _
+          | micros <= toInteger (maxBound :: Int) -> QC.within (fromInteger micros)
+        _ -> id
 
     -- Quickcheck already catches exceptions, no need to do it here.
     r <- quickCheck yieldProgress
                     args
-                    (if verbose then QC.verbose prop else prop)
+                    (applyTimeout $ if verbose then QC.verbose prop else prop)
 
     qcOutput <- formatMessage $ QC.output r
     let qcOutputNl =
