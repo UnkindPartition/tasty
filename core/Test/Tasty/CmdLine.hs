@@ -5,6 +5,7 @@ module Test.Tasty.CmdLine
   , suiteOptionParser
   , parseOptions
   , defaultMainWithIngredients
+  , defaultMainWithIngredientsAndOptions
   ) where
 
 import Control.Arrow
@@ -36,7 +37,14 @@ import Test.Tasty.Runners.Reducers
 --
 -- @since 1.3
 optionParser :: [OptionDescription] -> ([String], Parser OptionSet)
-optionParser = second getApp . foldMap toSet where
+optionParser = optionParserWithInitialSet mempty
+
+-- |
+--
+-- @since x.y
+--
+optionParserWithInitialSet :: OptionSet -> [OptionDescription] -> ([String], Parser OptionSet)
+optionParserWithInitialSet _ = second getApp . foldMap toSet where
   toSet :: OptionDescription -> ([String], Ap Parser OptionSet)
   toSet (Option p) = second
     (\parser -> Ap $ (singleOption <$> parser) <|> pure mempty)
@@ -139,6 +147,12 @@ numOptPs (BindP p1 _p2) = numOptPs p1
 suiteOptionParser :: [Ingredient] -> TestTree -> ([String], Parser OptionSet)
 suiteOptionParser ins tree = optionParser $ suiteOptions ins tree
 
+-- |
+--
+-- @since x.y
+suiteOptionParserWithInitial :: OptionSet -> [Ingredient] -> TestTree -> ([String], Parser OptionSet)
+suiteOptionParserWithInitial ini ins tree = optionParserWithInitialSet ini $ suiteOptions ins tree
+
 -- | Parse the command-line and environment options passed to tasty.
 --
 -- Useful if you need to get the options before 'Test.Tasty.defaultMain' is called.
@@ -151,8 +165,15 @@ suiteOptionParser ins tree = optionParser $ suiteOptions ins tree
 --
 -- @since 1.2.2
 parseOptions :: [Ingredient] -> TestTree -> IO OptionSet
-parseOptions ins tree = do
-  let (warnings, parser) = suiteOptionParser ins tree
+parseOptions = parseOptionsWithInitial mempty
+
+-- |
+--
+-- @since x.y
+--
+parseOptionsWithInitial :: OptionSet -> [Ingredient] -> TestTree -> IO OptionSet
+parseOptionsWithInitial ini ins tree = do
+  let (warnings, parser) = suiteOptionParserWithInitial ini ins tree
   mapM_ (hPutStrLn stderr) warnings
   cmdlineOpts <- execParser $
     info (helper <*> parser)
@@ -171,9 +192,15 @@ parseOptions ins tree = do
 --
 -- @since 0.4
 defaultMainWithIngredients :: [Ingredient] -> TestTree -> IO ()
-defaultMainWithIngredients ins testTree = do
+defaultMainWithIngredients = defaultMainWithIngredientsAndOptions mempty
+
+-- |
+--
+-- @since x.y
+defaultMainWithIngredientsAndOptions :: OptionSet -> [Ingredient] -> TestTree -> IO ()
+defaultMainWithIngredientsAndOptions initial ins testTree = do
   installSignalHandlers
-  opts <- parseOptions ins testTree
+  opts <- parseOptionsWithInitial initial ins testTree
 
   case tryIngredients ins opts testTree of
     Nothing -> do

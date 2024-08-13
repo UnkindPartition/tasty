@@ -36,7 +36,9 @@ module Test.Tasty
   , sequentialTestGroup
   -- * Running tests
   , defaultMain
+  , defaultMainWithOptions
   , defaultMainWithIngredients
+  , defaultMainWithIngredientsAndOptions
   , defaultIngredients
   , includingOptions
   -- * Adjusting and querying options
@@ -105,6 +107,12 @@ defaultIngredients = [listingTests, consoleTestReporter]
 -- @since 0.1
 defaultMain :: TestTree -> IO ()
 defaultMain = defaultMainWithIngredients defaultIngredients
+
+-- |
+--
+-- @since x.y
+defaultMainWithOptions :: OptionSet -> TestTree -> IO ()
+defaultMainWithOptions opts = defaultMainWithIngredientsAndOptions opts defaultIngredients
 
 -- | Locally adjust the option value for the given test subtree.
 --
