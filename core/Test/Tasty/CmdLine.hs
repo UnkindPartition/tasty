@@ -44,11 +44,11 @@ optionParser = optionParserWithInitialSet mempty
 -- @since x.y
 --
 optionParserWithInitialSet :: OptionSet -> [OptionDescription] -> ([String], Parser OptionSet)
-optionParserWithInitialSet _ = second getApp . foldMap toSet where
+optionParserWithInitialSet initial = second (fmap (\o -> initial <> o) . getApp) . foldMap toSet where
   toSet :: OptionDescription -> ([String], Ap Parser OptionSet)
   toSet (Option p) = second
     (\parser -> Ap $ (singleOption <$> parser) <|> pure mempty)
-    (finalizeCLParser p optionCLParser)
+    (finalizeCLParser p initial optionCLParser)
 
 -- Do two things:
 --
@@ -59,11 +59,14 @@ optionParserWithInitialSet _ = second getApp . foldMap toSet where
 --    (a) if the 'Parser' defines multiple options and, (b) if the 'Parser'
 --    assigns a default value outside of 'defaultValue'.
 finalizeCLParser :: forall proxy v . IsOption v
-                 => proxy v -> Parser v -> ([String], Parser v)
-finalizeCLParser _ p = (warnings, setCLParserShowDefaultValue mbDef p)
+                 => proxy v -> OptionSet -> Parser v -> ([String], Parser v)
+finalizeCLParser _ initial p = (warnings, setCLParserShowDefaultValue mbDef p)
   where
+    theDef :: v
+    theDef = lookupOption initial
+
     mbDef :: Maybe String
-    mbDef = showDefaultValue (defaultValue :: v)
+    mbDef = showDefaultValue theDef
 
     warnings :: [String]
     warnings = catMaybes [multipleOptPsWarning, badDefaultWarning]

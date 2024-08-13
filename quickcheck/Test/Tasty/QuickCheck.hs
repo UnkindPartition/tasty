@@ -127,6 +127,7 @@ newtype QuickCheckTimeout = QuickCheckTimeout Timeout
 
 instance IsOption QuickCheckTests where
   defaultValue = 100
+  showDefaultValue (QuickCheckTests n) = Just (show n)
   parseValue =
     -- We allow numeric underscores for readability; see
     -- https://github.com/UnkindPartition/tasty/issues/263
