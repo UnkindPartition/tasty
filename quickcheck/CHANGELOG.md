@@ -5,6 +5,7 @@ Version 0.11.1
 --------------
 
 * Add timeouts for individual tests within a property.
+* Define `showDefaultValue` for `QuickCheckTests`, `QuickCheckMaxSize` and `QuickCheckMaxRatio`.
 
 Version 0.11
 --------------

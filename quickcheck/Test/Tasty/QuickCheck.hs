@@ -127,6 +127,7 @@ newtype QuickCheckTimeout = QuickCheckTimeout Timeout
 
 instance IsOption QuickCheckTests where
   defaultValue = 100
+  showDefaultValue (QuickCheckTests n) = Just (show n)
   parseValue =
     -- We allow numeric underscores for readability; see
     -- https://github.com/UnkindPartition/tasty/issues/263
@@ -156,6 +157,7 @@ defaultMaxSize = QC.maxSize QC.stdArgs
 
 instance IsOption QuickCheckMaxSize where
   defaultValue = fromIntegral defaultMaxSize
+  showDefaultValue (QuickCheckMaxSize n) = Just (show n)
   parseValue = fmap QuickCheckMaxSize . safeRead
   optionName = return "quickcheck-max-size"
   optionHelp = return "Size of the biggest test cases quickcheck generates"
@@ -163,6 +165,7 @@ instance IsOption QuickCheckMaxSize where
 
 instance IsOption QuickCheckMaxRatio where
   defaultValue = fromIntegral $ QC.maxDiscardRatio QC.stdArgs
+  showDefaultValue (QuickCheckMaxRatio n) = Just (show n)
   parseValue = fmap QuickCheckMaxRatio . safeRead
   optionName = return "quickcheck-max-ratio"
   optionHelp = return "Maximum number of discared tests per successful test before giving up"
