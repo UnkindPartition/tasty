@@ -113,12 +113,12 @@ The following providers exist:
 * [tasty-program](https://hackage.haskell.org/package/tasty-program) — run
   external program and test whether it terminates successfully
 * [tasty-wai](https://hackage.haskell.org/package/tasty-wai) —
-  for testing [wai](https://hackage.haskell.org/package/wai) endpoints.
+  for testing [wai](https://hackage.haskell.org/package/wai) endpoints
 * [tasty-inspection-testing](https://hackage.haskell.org/package/tasty-inspection-testing) —
   for compile-time testing of code properties
   (based on [inspection-testing](http://hackage.haskell.org/package/inspection-testing))
 * [tasty-flaky](https://hackage.haskell.org/package/tasty-flaky) — add delay and
-  retry logic to any test that is known to fail intermittently.
+  retry logic to any test that is known to fail intermittently
 
 [tasty-golden]: https://hackage.haskell.org/package/tasty-golden
 
