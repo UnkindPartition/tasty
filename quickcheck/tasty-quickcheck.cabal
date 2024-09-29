@@ -59,3 +59,19 @@ test-suite test
   ghc-options: -Wall
   if (!impl(ghc >= 8.0) || os(windows))
     buildable: False
+
+test-suite options-example
+  default-language:
+    Haskell2010
+  default-extensions: CPP
+  type:
+    exitcode-stdio-1.0
+  hs-source-dirs:
+    tests
+  main-is:
+    options-example.hs
+  build-depends:
+      base >= 4.7 && < 5
+    , tasty >= 1.5
+    , tasty-quickcheck
+  ghc-options: -Wall
