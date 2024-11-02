@@ -1,6 +1,19 @@
 Changes
 =======
 
+Version 1.5.2
+--------------
+
+_2024-11-03_
+
+* Partially revert [#393](https://github.com/UnkindPartition/tasty/pull/393)
+  to fix progress reporting outside of Emacs.
+* Do not depend on `unbounded-delays` on `ppc64`, `s390x` and `riscv64`
+  ([#371](https://github.com/UnkindPartition/tasty/pull/371),
+   [#422](https://github.com/UnkindPartition/tasty/pull/422),
+   [#423](https://github.com/UnkindPartition/tasty/pull/423)).
+
+
 Version 1.5.1
 --------------
 
