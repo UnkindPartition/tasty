@@ -14,9 +14,6 @@ build-type:          Simple
 
 common commons
   default-language:    Haskell2010
-  if !os(wasi)
-    -- WASM backend does not yet support the threaded runtime
-    ghc-options:       -threaded -with-rtsopts=-N
 
 executable tasty-core-tests
   import:              commons
@@ -62,3 +59,9 @@ executable top-level-options
   main-is:             top-level-options.hs
   build-depends:       base < 5, tasty, tasty-hunit
   ghc-options:         -Wall -fno-warn-type-defaults
+
+executable huge-test-tree
+  import:              commons
+  main-is:             huge-test-tree.hs
+  build-depends:       base < 5, tasty
+  ghc-options:         -Wall -fno-warn-type-defaults -rtsopts "-with-rtsopts=-M2G"
