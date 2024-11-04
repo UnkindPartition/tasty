@@ -110,8 +110,11 @@ main =
           resultDescription =~ "Use .* to reproduce"
 
       -- Run the test suite manually and check that progress does not go beyond 100%
-      , testProperty "Percent Complete" $ withMaxSuccess 1000 $ \(_ :: Int) -> ioProperty $ threadDelay 10000
-
+      , testProperty "Percent Complete"  $
+          withMaxSuccess 1000 $ \(_ :: Int) -> ioProperty $ threadDelay 10000
+      , testProperty "Number of shrinks" $
+          expectFailure $ withMaxSize 1000 $ \(Large (x :: Int)) ->
+            ioProperty $ threadDelay 100000 >> pure (x <= 100)
       ]
 
 run' :: Testable p => p -> IO Result
