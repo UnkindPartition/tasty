@@ -283,8 +283,21 @@ quickCheck yieldProgress args
   = (.) (QC.quickCheckWithResult args)
   $ QCP.callback
   $ QCP.PostTest QCP.NotCounterexample
-  $ \QC.MkState {QC.maxSuccessTests, QC.numSuccessTests} _ ->
-    yieldProgress $ emptyProgress {progressPercent = fromIntegral numSuccessTests / fromIntegral maxSuccessTests}
+  $ \st@QC.MkState {QC.maxSuccessTests, QC.numSuccessTests} _ ->
+    yieldProgress $
+      if QC.numTotTryShrinks st > 0 then
+        emptyProgress {
+            progressText = showShrinkCount st
+          }
+      else
+        emptyProgress {
+            progressPercent = fromIntegral numSuccessTests / fromIntegral maxSuccessTests
+          }
+
+-- Based on 'QuickCheck.Test.failureSummaryAndReason'.
+showShrinkCount :: QC.State -> String
+showShrinkCount st = show (QC.numSuccessShrinks st) ++ " shrink" ++ plural
+  where plural = if QC.numSuccessShrinks st == 1 then "" else "s"
 
 successful :: QC.Result -> Bool
 successful r =
