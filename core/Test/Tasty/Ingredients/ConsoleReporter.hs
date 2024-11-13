@@ -135,7 +135,6 @@ buildTestOutput opts tree =
     !alignment = computeAlignment opts tree
 
     MinDurationToReport{minDurationMicros} = lookupOption opts
-    AnsiTricks{getAnsiTricks} = lookupOption opts
 
     runSingleTest
       :: (IsTest t, ?colors :: Bool)
@@ -153,7 +152,7 @@ buildTestOutput opts tree =
           (replicate postNamePadding ' ')
 
         printTestName = do
-          putStr testNamePadded
+          withoutLineWrap $ putStr testNamePadded
           hFlush stdout
 
         printTestProgress progress
@@ -173,8 +172,9 @@ buildTestOutput opts tree =
               -- A new progress message may be shorter than the previous one
               -- so we must clean whole line and print anew.
               clearLine
-              putStr testNamePadded
-              infoOk msg
+              withoutLineWrap $ do
+                putStr testNamePadded
+                infoOk msg
               hFlush stdout
 
         printTestResult result = do
@@ -189,10 +189,11 @@ buildTestOutput opts tree =
                 _ -> fail
             time = resultTime result
 
-          when getAnsiTricks $ do
-            putChar '\r'
-            clearLine
-            putStr testNamePadded
+          withoutLineWrap $ do
+            when getAnsiTricks $ do
+              putChar '\r'
+              clearLine
+              putStr testNamePadded
 
           printFn (resultShortDescription result)
           when (floor (time * 1e6) >= minDurationMicros) $
@@ -211,7 +212,7 @@ buildTestOutput opts tree =
     runGroup _opts name grp = Ap $ do
       level <- ask
       let
-        printHeading = printf "%s%s\n" (indent level) name
+        printHeading = withoutLineWrap $ printf "%s%s\n" (indent level) name
         printBody = runReader (getApp (mconcat grp)) (level + 1)
       return $ PrintHeading name printHeading printBody
 
@@ -223,6 +224,18 @@ buildTestOutput opts tree =
           , foldGroup = runGroup
           }
           opts tree
+  where
+    AnsiTricks{getAnsiTricks} = lookupOption opts
+    -- We must ensure these lines don't wrap, otherwise the wrong
+    -- line will be cleared later or the test tree printing will
+    -- itself wrap.
+    withoutLineWrap :: IO () -> IO ()
+#if MIN_VERSION_ansi_terminal(1,1,2)
+    withoutLineWrap m | getAnsiTricks =
+      bracket disableLineWrap (\_ -> enableLineWrap) (\_ -> m)
+#endif
+    withoutLineWrap m = m
+
 
 -- | Make sure the progress text does not contain any newlines or line feeds,
 -- lest our ANSI magic breaks. Since the progress text is expected to be short,
