@@ -232,7 +232,7 @@ buildTestOutput opts tree =
     withoutLineWrap :: IO () -> IO ()
 #if MIN_VERSION_ansi_terminal(1,1,2)
     withoutLineWrap m | getAnsiTricks =
-      bracket disableLineWrap (\_ -> enableLineWrap) (\_ -> m)
+      bracket_ disableLineWrap enableLineWrap m
 #endif
     withoutLineWrap m = m
 
