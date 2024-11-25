@@ -563,7 +563,9 @@ consoleTestReporterWithHook hook = TestReporter consoleTestReporterOptions $
       isTermColor <- hSupportsANSIColor stdout
 
       (\k -> if isTerm
-        then (do hideCursor; k) `finally` showCursor
+        -- When killing with Ctrl+C 'showCursor' can fail
+        -- to restore terminal cursor if not flushed explicitly
+        then (do hideCursor; k) `finally` (do showCursor; hFlush stdout)
         else k) $ do
 
           hSetBuffering stdout LineBuffering
