@@ -7,10 +7,9 @@ import Test.Tasty.Providers as Tasty
 import Test.Tasty.Runners as Tasty
 import Test.Tasty.QuickCheck
 import Test.Tasty.HUnit
-import Data.Maybe
 import Test.QuickCheck.Random (QCGen)
-import Text.Regex.PCRE.Light.Char8
 import Text.Printf
+import qualified Text.Regex.TDFA as Regex
 
 (=~), (!~)
   :: String -- ^ text
@@ -21,20 +20,11 @@ text =~ regexStr =
     msg = printf "Expected /%s/, got %s" regexStr (show text)
     -- NB show above the intentional -- to add quotes around the string and
     -- escape newlines etc.
-  in assertBool msg $ match' text regexStr
+  in assertBool msg $ text Regex.=~ regexStr
 text !~ regexStr =
   let
     msg = printf "Did not expect /%s/, got %s" regexStr (show text)
-  in assertBool msg $ not $ match' text regexStr
-
--- note: the order of arguments is reversed relative to match from
--- pcre-light, but consistent with =~ and !~
-match' :: String -> String -> Bool
-match' text regexStr =
-  let
-    regex = compile regexStr []
-  in
-    isJust $ match regex text []
+  in assertBool msg $ not $ text Regex.=~ regexStr
 
 main :: IO ()
 main =
