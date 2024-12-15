@@ -36,7 +36,9 @@ module Test.Tasty
   , sequentialTestGroup
   -- * Running tests
   , defaultMain
+  , defaultMainWithOptions
   , defaultMainWithIngredients
+  , defaultMainWithIngredientsAndOptions
   , defaultIngredients
   , includingOptions
   -- * Adjusting and querying options
@@ -66,10 +68,10 @@ module Test.Tasty
   where
 
 import Test.Tasty.Core
-import Test.Tasty.Runners
+import Test.Tasty.Ingredients.Basic
 import Test.Tasty.Options
 import Test.Tasty.Options.Core
-import Test.Tasty.Ingredients.Basic
+import Test.Tasty.Runners
 
 -- | List of the default ingredients. This is what 'defaultMain' uses.
 --
@@ -105,6 +107,36 @@ defaultIngredients = [listingTests, consoleTestReporter]
 -- @since 0.1
 defaultMain :: TestTree -> IO ()
 defaultMain = defaultMainWithIngredients defaultIngredients
+
+-- | Parse the command line arguments and run the tests.
+--
+-- When the tests finish, this function calls 'System.Exit.exitWith' with the exit code
+-- that indicates whether any tests have failed. Most external systems
+-- (stack, cabal, travis-ci, jenkins etc.) rely on the exit code to detect
+-- whether the tests pass. If you want to do something else after
+-- `defaultMain` returns, you need to catch the exception and then re-throw
+-- it. Example:
+--
+-- >import Test.Tasty
+-- >import Test.Tasty.HUnit
+-- >import Test.Tasty.Runners
+-- >import System.Exit
+-- >import Control.Exception
+-- >
+-- >test = testCase "Test 1" (2 @?= 3)
+-- >
+-- >opts = singleOption $ NumThreads 1
+-- >
+-- >main = defaultMainWithOptions opts test
+-- >  `catch` (\e -> do
+-- >    if e == ExitSuccess
+-- >      then putStrLn "Yea"
+-- >      else putStrLn "Nay"
+-- >    throwIO e)
+--
+-- @since 1.5.1
+defaultMainWithOptions :: OptionSet -> TestTree -> IO ()
+defaultMainWithOptions = defaultMainWithIngredientsAndOptions defaultIngredients
 
 -- | Locally adjust the option value for the given test subtree.
 --
