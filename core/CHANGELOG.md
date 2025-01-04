@@ -1,6 +1,16 @@
 Changes
 =======
 
+Version 1.5.3
+--------------
+
+_2025-01-05_
+
+* Console reporter: disable line wrapping
+  ([#433](https://github.com/UnkindPartition/tasty/pull/433)).
+* Console reporter: force flushing of stdout after `showCursor`
+  ([#436](https://github.com/UnkindPartition/tasty/pull/436)).
+
 Version 1.5.2
 --------------
 

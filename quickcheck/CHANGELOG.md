@@ -4,8 +4,14 @@ Changes
 Version 0.11.1
 --------------
 
-* Add timeouts for individual tests within a property.
-* Define `showDefaultValue` for `QuickCheckTests`, `QuickCheckMaxSize` and `QuickCheckMaxRatio`.
+* Add timeouts for individual tests within a property
+  ([#425](https://github.com/UnkindPartition/tasty/pull/425)).
+* Define `showDefaultValue` for `QuickCheckTests`,
+  `QuickCheckMaxSize` and `QuickCheckMaxRatio`
+  ([#428](https://github.com/UnkindPartition/tasty/pull/428)).
+* Print the number of QuickCheck shrinks in the progress message
+  ([#431](https://github.com/UnkindPartition/tasty/pull/431)).
+* Drop support for GHC 7.10.
 
 Version 0.11
 --------------
