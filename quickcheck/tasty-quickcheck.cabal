@@ -25,7 +25,7 @@ library
   build-depends:       base >= 4.9 && < 5,
                        tagged < 0.9,
                        tasty >= 1.5.1 && < 1.6,
-                       random < 1.3,
+                       random < 1.4,
                        QuickCheck >= 2.10 && < 2.16,
                        optparse-applicative < 0.19
 
