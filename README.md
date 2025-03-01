@@ -829,6 +829,22 @@ Use `sequentialTestGroup` to mitigate these problems.
    [Known
    Issues](https://github.com/git-for-windows/build-extra/blob/main/ReleaseNotes.md#known-issues).
 
+## Migration from `test-framework`
+
+`tasty` architecture is quite similar to `test-framework`, so a few mechanical changes are usually enough to migrate:
+
+* Replace packages in `build-depends`:
+  * `test-framework` -> `tasty`,
+  * `test-framework-hunit` -> `tasty-hunit`,
+  * `test-framework-quickcheck2` -> `tasty-quickcheck`.
+* Replace module imports:
+  * `Test.Framework` -> `Test.Tasty`,
+  * `Test.Framework.Providers.HUnit` -> `Test.Tasty.HUnit`,
+  * `Test.Framework.Providers.QuickCheck2` -> `Test.Tasty.QuickCheck`.
+* Replace in type signatures:
+  * `Test` -> `TestTree`.
+* Replace `defaultMain tests` with `defaultMain (testGroup "All" tests)`.
+
 ## Press
 
 Blog posts and other publications related to tasty. If you wrote or just found
