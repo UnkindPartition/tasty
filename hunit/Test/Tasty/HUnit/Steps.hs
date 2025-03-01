@@ -4,9 +4,9 @@ module Test.Tasty.HUnit.Steps (testCaseSteps) where
 import Control.Applicative
 import Control.Exception
 import Data.IORef
-import Data.List (foldl')
+import Data.Foldable
 import Data.Typeable (Typeable)
-import Prelude  -- Silence AMP import warnings
+import Prelude hiding (Foldable(..))
 import Test.Tasty.HUnit.Orig
 import Test.Tasty.Providers
 import Test.Tasty.Runners (getTime)
