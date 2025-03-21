@@ -2,7 +2,7 @@ import Test.Tasty
 import Test.Tasty.Options
 import Test.Tasty.HUnit
 import Data.Typeable
-import System.Random
+import System.Random (StdGen, mkStdGen, uniformR)
 import Control.Monad (replicateM)
 import Control.Monad.State (State, state, evalState)
 
