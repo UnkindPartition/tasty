@@ -324,6 +324,8 @@ testGroup = TestGroup
 
 -- | Create a named group of test cases or other groups. Tests are executed in
 -- order. For parallel execution, see 'testGroup'.
+--
+-- @since 1.5
 sequentialTestGroup :: TestName -> DependencyType -> [TestTree] -> TestTree
 sequentialTestGroup nm depType = setSequential . TestGroup nm . map setParallel
  where
