@@ -21,6 +21,7 @@ module Test.Tasty.Core
   , TestTree(..)
   , testGroup
   , sequentialTestGroup
+  , filterableSequentialTestGroup
   , after
   , after_
   , TreeFold(..)
@@ -266,6 +267,8 @@ data DependencyType
 data ExecutionMode
   = Sequential DependencyType
   -- ^ Execute tests one after another
+  | FilterableSequential DependencyType
+  -- ^ Execute tests one after another unless dependencies have been filtered out
   | Parallel
   -- ^ Execute tests in parallel
   deriving (Show, Read)
@@ -331,6 +334,16 @@ sequentialTestGroup nm depType = setSequential . TestGroup nm . map setParallel
  where
   setParallel = PlusTestOptions (setOption Parallel)
   setSequential = PlusTestOptions (setOption (Sequential depType))
+
+-- | Create a named group of test cases or other groups. Tests are executed in
+-- order, but if a pattern has been provided, dependency will not be run.
+-- For sequential tests that cannot be filtered, see 'squentialTestGroup'.
+-- For parallel execution, see 'testGroup'.
+filterableSequentialTestGroup :: TestName -> DependencyType -> [TestTree] -> TestTree
+filterableSequentialTestGroup nm depType = setSequential . TestGroup nm . map setParallel
+ where
+  setParallel = PlusTestOptions (setOption Parallel)
+  setSequential = PlusTestOptions (setOption (FilterableSequential depType))
 
 -- | Like 'after', but accepts the pattern as a syntax tree instead
 -- of a string. Useful for generating a test tree programmatically.
@@ -583,15 +596,15 @@ filterByPattern = snd . go (Any False)
 
       AnnTestGroup (opts, _) name trees ->
         case lookupOption opts of
-          Parallel ->
-            bimap
-              mconcat
-              (mkGroup opts name)
-              (unzip (map (go forceMatch) trees))
           Sequential _ ->
             second
               (mkGroup opts name)
               (mapAccumR go forceMatch trees)
+          _ ->
+            bimap
+              mconcat
+              (mkGroup opts name)
+              (unzip (map (go forceMatch) trees))
 
       AnnWithResource (opts, _) res0 tree ->
         ( fst (go forceMatch (tree (throwIO NotRunningTests)))
