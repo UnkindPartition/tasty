@@ -421,8 +421,12 @@ createTestActions opts0 tree = do
         case lookupOption opts of
           Parallel ->
             sequence trees
-          Sequential depType ->
-            snd <$> mapAccumM (goSeqGroup depType) mempty trees
+          FilterableSequential depType -> foldSequential depType trees
+          Sequential depType -> foldSequential depType trees
+
+    foldSequential :: DependencyType -> [Tr] -> ReaderT (Path, Seq Dependency) IO [TestActionTree UnresolvedAction] 
+    foldSequential depType = 
+      fmap snd . mapAccumM (goSeqGroup depType) mempty
 
     -- * Utility functions
     collectTests :: TestActionTree act -> [TestAction act]
