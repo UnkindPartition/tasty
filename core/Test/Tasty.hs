@@ -34,7 +34,7 @@ module Test.Tasty
   , TestTree
   , testGroup
   , sequentialTestGroup
-  , filterableSequentialTestGroup
+  , inOrderTestGroup
   -- * Running tests
   , defaultMain
   , defaultMainWithIngredients
