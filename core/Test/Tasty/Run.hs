@@ -419,10 +419,9 @@ createTestActions opts0 tree = do
     foldGroup opts name trees =
       fmap tGroup $ local (first (|> name)) $
         case lookupOption opts of
-          Parallel ->
-            sequence trees
-          FilterableSequential depType -> foldSequential depType trees
-          Sequential depType -> foldSequential depType trees
+          Independent Parallel -> sequence trees
+          Independent NonParallel -> foldSequential AllFinish trees
+          Dependent depType -> foldSequential depType trees
 
     foldSequential :: DependencyType -> [Tr] -> ReaderT (Path, Seq Dependency) IO [TestActionTree UnresolvedAction] 
     foldSequential depType = 

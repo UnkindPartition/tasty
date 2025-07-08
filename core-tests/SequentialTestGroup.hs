@@ -52,7 +52,7 @@ testSequentialTestGroup =
     , testCase "F" $ filterTestTree "F" @?= ["A.E.F"]
     , testCase "G" $ filterTestTree "G" @?= ["A.E.F", "A.E.G"]
     , testCase "H" $ filterTestTree "H" @?= ["A.E.F", "A.E.G", "A.E.H"]
-    , testCase "H" $ filterForFilterableSequential "H" @?= ["A.E.H"]
+    , testCase "H" $ filterForOrderedTestGroups "H" @?= ["A.E.H"]
     ]
   ]
 
@@ -80,14 +80,14 @@ tree5 = InParallel () [tree0, tree1, tree2, tree3, tree4]
 tree6 :: SimpleTestTree () ()
 tree6 = Sequentially () [tree3, emptySeqTree, tree3]
 
-mkTestGroup :: (String -> DependencyType -> [TestTree] -> TestTree) -> String -> [TestName]
+mkTestGroup :: (String -> [TestTree] -> TestTree) -> String -> [TestName]
 mkTestGroup groupBuilder pattern =
   testsNames (singleOption (TestPattern (Just expr))) $
     testGroup "A"
       [ emptyTest "B"
       , emptyTest "C"
       , emptyTest "D"
-      , groupBuilder "E" AllSucceed
+      , groupBuilder "E"
         [ emptyTest "F"
         , emptyTest "G"
         , testGroup "XX" []
@@ -108,10 +108,10 @@ mkTestGroup groupBuilder pattern =
   emptyTest name = testCase name (pure ())
 
 filterTestTree :: HasCallStack => String -> [TestName]
-filterTestTree = mkTestGroup sequentialTestGroup
+filterTestTree = mkTestGroup (\name -> sequentialTestGroup name AllFinish)
 
-filterForFilterableSequential :: HasCallStack => String -> [TestName]
-filterForFilterableSequential = mkTestGroup filterableSequentialTestGroup
+filterForOrderedTestGroups :: HasCallStack => String -> [TestName]
+filterForOrderedTestGroups = mkTestGroup inOrderTestGroup
 
 -- | Dependencies should account for empty test groups
 emptySeq :: SimpleTestTree () ()
