@@ -335,6 +335,10 @@ testGroup = TestGroup
 -- order, all dependencies will be run (overriding filter).
 -- For parallel execution, see 'testGroup'.
 --
+-- Note that this is will only work when used with the default `TestManager`.
+-- If you use another manager, like `tasty-rerun` for instance, sequentiality
+-- might possibly be ignored.
+--
 -- @since 1.5
 sequentialTestGroup :: TestName -> DependencyType -> [TestTree] -> TestTree
 sequentialTestGroup nm depType = setSequential . TestGroup nm . map setParallel
@@ -344,6 +348,10 @@ sequentialTestGroup nm depType = setSequential . TestGroup nm . map setParallel
 
 -- | Create a named group of test cases that will be played sequentially,
 -- in the exact order provided, though filters are still applied.
+--
+-- Note that this is will only work when used with the default `TestManager`.
+-- If you use another manager, like `tasty-rerun` for instance, the fact that
+-- these tests should be run in the given order might possibly be ignored.
 inOrderTestGroup :: TestName -> [TestTree] -> TestTree
 inOrderTestGroup nm = setSequential . TestGroup nm . map setParallel
  where
