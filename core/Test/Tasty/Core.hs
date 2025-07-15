@@ -22,6 +22,7 @@ module Test.Tasty.Core
   , TestTree(..)
   , testGroup
   , sequentialTestGroup
+  , dependentTestGroup
   , inOrderTestGroup
   , after
   , after_
@@ -331,6 +332,13 @@ data TestTree
 testGroup :: TestName -> [TestTree] -> TestTree
 testGroup = TestGroup
 
+{-# DEPRECATED sequentialTestGroup "Use dependentTestGroup instead" #-}
+-- | Legacy name for dependentTestGroup.
+--
+-- @since 1.5
+sequentialTestGroup :: TestName -> DependencyType -> [TestTree] -> TestTree
+sequentialTestGroup = dependentTestGroup
+  
 -- | Create a named group of test cases or other groups. Tests are executed in
 -- order, all dependencies will be run (overriding filter).
 -- For parallel execution, see 'testGroup'.
@@ -340,11 +348,12 @@ testGroup = TestGroup
 -- might possibly be ignored.
 --
 -- @since 1.5
-sequentialTestGroup :: TestName -> DependencyType -> [TestTree] -> TestTree
-sequentialTestGroup nm depType = setSequential . TestGroup nm . map setParallel
+dependentTestGroup :: TestName -> DependencyType -> [TestTree] -> TestTree
+dependentTestGroup nm depType = setDependent . TestGroup nm . map setParallel
  where
   setParallel = PlusTestOptions (setOption $ Independent Parallel)
-  setSequential = PlusTestOptions (setOption (Dependent depType))
+  setDependent = PlusTestOptions (setOption (Dependent depType))
+
 
 -- | Create a named group of test cases that will be played sequentially,
 -- in the exact order provided, though filters are still applied.

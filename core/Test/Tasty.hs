@@ -33,6 +33,7 @@ module Test.Tasty
     TestName
   , TestTree
   , testGroup
+  , dependentTestGroup
   , sequentialTestGroup
   , inOrderTestGroup
   -- * Running tests
