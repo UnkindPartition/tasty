@@ -333,7 +333,7 @@ testGroup :: TestName -> [TestTree] -> TestTree
 testGroup = TestGroup
 
 {-# DEPRECATED sequentialTestGroup "Use dependentTestGroup instead" #-}
--- | Legacy name for dependentTestGroup.
+-- | Legacy name for 'dependentTestGroup'.
 --
 -- @since 1.5
 sequentialTestGroup :: TestName -> DependencyType -> [TestTree] -> TestTree
