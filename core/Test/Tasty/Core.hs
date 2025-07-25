@@ -340,8 +340,12 @@ sequentialTestGroup :: TestName -> DependencyType -> [TestTree] -> TestTree
 sequentialTestGroup = dependentTestGroup
   
 -- | Create a named group of test cases or other groups. Tests are executed in
--- order, all dependencies will be run (overriding filter).
--- For parallel execution, see 'testGroup'.
+-- order and each test is considered a dependency of the next one. If a filter
+-- is applied, any dependencies are run too, even if they would otherwise not
+-- match the filter's criteria.
+--
+-- For parallel execution, see 'testGroup'. For ordered test execution, but
+-- without dependencies, see 'inOrderTestGroup'.
 --
 -- Note that this is will only work when used with the default `TestManager`.
 -- If you use another manager, like `tasty-rerun` for instance, sequentiality
