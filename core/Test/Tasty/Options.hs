@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables, DeriveDataTypeable,
+{-# LANGUAGE ScopedTypeVariables,
              ExistentialQuantification, GADTs,
              FlexibleInstances, UndecidableInstances,
              TypeOperators #-}

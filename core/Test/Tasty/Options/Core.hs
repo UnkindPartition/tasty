@@ -1,5 +1,5 @@
 -- | Core options, i.e. the options used by tasty itself
-{-# LANGUAGE CPP, DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE CPP, GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-} -- for (^)
 module Test.Tasty.Options.Core
   ( NumThreads(..)
@@ -14,7 +14,6 @@ module Test.Tasty.Options.Core
 
 import Control.Monad (mfilter)
 import Data.Proxy
-import Data.Typeable
 import Data.Fixed
 import Options.Applicative hiding (str)
 import GHC.Conc
@@ -36,7 +35,7 @@ import Test.Tasty.Patterns
 --
 -- @since 0.1
 newtype NumThreads = NumThreads { getNumThreads :: Int }
-  deriving (Eq, Ord, Num, Typeable)
+  deriving (Eq, Ord, Num)
 instance IsOption NumThreads where
   defaultValue = NumThreads numCapabilities
   parseValue = mfilter onlyPositive . fmap NumThreads . safeRead
@@ -68,7 +67,6 @@ data Timeout
   --
   -- @since 1.5.1
   , Show
-  , Typeable
   )
 
 instance IsOption Timeout where
@@ -116,7 +114,7 @@ mkTimeout n =
 --
 -- @since 1.5
 newtype HideProgress = HideProgress { getHideProgress :: Bool }
-  deriving (Eq, Ord, Typeable)
+  deriving (Eq, Ord)
 instance IsOption HideProgress where
     defaultValue = HideProgress False
     parseValue = fmap HideProgress . safeReadBool

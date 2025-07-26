@@ -27,7 +27,7 @@ library
   exposed-modules:     Test.Tasty.HUnit
   other-modules:       Test.Tasty.HUnit.Orig
                        Test.Tasty.HUnit.Steps
-  other-extensions:    TypeFamilies, DeriveDataTypeable
+  other-extensions:    TypeFamilies
   build-depends:       base >= 4.9 && < 5,
                        tasty >= 1.2.2 && < 1.6,
                        call-stack < 0.5

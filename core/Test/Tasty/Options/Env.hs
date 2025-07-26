@@ -1,5 +1,5 @@
 -- | Get options from the environment
-{-# LANGUAGE DeriveDataTypeable, ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Test.Tasty.Options.Env (getEnvOptions, suiteEnvOptions) where
 
 import Test.Tasty.Options
@@ -8,14 +8,10 @@ import Test.Tasty.Ingredients
 import Test.Tasty.Runners.Reducers
 
 import System.Environment
-import Data.Foldable
 import Data.Tagged
 import Data.Proxy
 import Data.Char
-import Data.Typeable
 import Control.Exception
-import Control.Applicative
-import Prelude  -- Silence AMP and FTP import warnings
 import Text.Printf
 
 data EnvOptionException
@@ -23,7 +19,6 @@ data EnvOptionException
       String -- option name
       String -- variable name
       String -- value
-  deriving (Typeable)
 
 instance Show EnvOptionException where
   show (BadOption optName varName value) =

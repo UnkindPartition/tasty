@@ -1,11 +1,10 @@
-{-# LANGUAGE DeriveDataTypeable, BangPatterns #-}
+{-# LANGUAGE BangPatterns #-}
 module Test.Tasty.HUnit.Steps (testCaseSteps) where
 
 import Control.Applicative
 import Control.Exception
 import Data.IORef
 import Data.Foldable
-import Data.Typeable (Typeable)
 import Prelude hiding (Foldable(..))
 import Test.Tasty.HUnit.Orig
 import Test.Tasty.Providers
@@ -13,7 +12,6 @@ import Test.Tasty.Runners (getTime)
 import Text.Printf (printf)
 
 newtype TestCaseSteps = TestCaseSteps ((String -> IO ()) -> Assertion)
-  deriving Typeable
 
 instance IsTest TestCaseSteps where
   run _ (TestCaseSteps assertionFn) yieldProgress = do

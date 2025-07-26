@@ -1,9 +1,8 @@
-{-# LANGUAGE DeriveDataTypeable, BangPatterns #-}
+{-# LANGUAGE BangPatterns #-}
 import Test.Tasty
 import Test.Tasty.Options
 import Test.Tasty.HUnit
 import Data.Proxy
-import Data.Typeable
 import Text.Read
 import Control.Concurrent
 import System.Random (newStdGen, RandomGen)
@@ -41,21 +40,18 @@ allOptions =
   ]
 
 newtype Result = Result Bool
-  deriving Typeable
 instance IsOption Result where
   defaultValue = Result True
   parseValue = fmap Result . readMaybe
   optionName = return "result"
   optionHelp = return "True means the suite will succeed, False means it will fail"
 newtype Fast = Fast Int
-  deriving Typeable
 instance IsOption Fast where
   defaultValue = Fast 0
   parseValue = fmap Fast . readMaybe
   optionName = return "fast"
   optionHelp = return "Number of fast tests to add"
 newtype Slow = Slow Int
-  deriving Typeable
 instance IsOption Slow where
   defaultValue = Slow 0
   parseValue = fmap Slow . readMaybe

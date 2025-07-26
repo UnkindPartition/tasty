@@ -4,11 +4,8 @@
 module Test.Tasty.Runners.Utils where
 
 import Control.Exception
-import Control.Applicative
 import Control.Concurrent (mkWeakThreadId, myThreadId)
 import Control.Monad (forM_)
-import Data.Typeable (Typeable)
-import Prelude  -- Silence AMP import warnings
 import Text.Printf
 import Foreign.C (CInt)
 
@@ -102,7 +99,7 @@ installSignalHandlers = do
 --
 -- @since 1.2.1
 newtype SignalException = SignalException CInt
-  deriving (Show, Typeable)
+  deriving (Show)
 instance Exception SignalException
 
 -- | Measure the time taken by an 'IO' action to run.

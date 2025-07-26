@@ -1,5 +1,5 @@
 -- vim:fdm=marker
-{-# LANGUAGE BangPatterns, ImplicitParams, MultiParamTypeClasses, DeriveDataTypeable, FlexibleContexts, CApiFFI, NamedFieldPuns #-}
+{-# LANGUAGE BangPatterns, ImplicitParams, MultiParamTypeClasses, FlexibleContexts, CApiFFI, NamedFieldPuns #-}
 -- | Console reporter ingredient.
 --
 -- @since 0.11.3
@@ -597,7 +597,7 @@ consoleTestReporterWithHook hook = TestReporter consoleTestReporterOptions $
 --
 -- @since 0.8
 newtype Quiet = Quiet Bool
-  deriving (Eq, Ord, Typeable)
+  deriving (Eq, Ord)
 instance IsOption Quiet where
   defaultValue = Quiet False
   parseValue = fmap Quiet . safeReadBool
@@ -612,7 +612,7 @@ instance IsOption Quiet where
 --
 -- @since 0.8
 newtype HideSuccesses = HideSuccesses Bool
-  deriving (Eq, Ord, Typeable)
+  deriving (Eq, Ord)
 instance IsOption HideSuccesses where
   defaultValue = HideSuccesses False
   parseValue = fmap HideSuccesses . safeReadBool
@@ -625,7 +625,7 @@ instance IsOption HideSuccesses where
 --
 -- @since 1.5
 newtype MinDurationToReport = MinDurationToReport { minDurationMicros :: Integer }
-  deriving (Eq, Ord, Typeable)
+  deriving (Eq, Ord)
 instance IsOption MinDurationToReport where
   defaultValue = MinDurationToReport 10000
   parseValue = fmap MinDurationToReport . parseDuration
@@ -644,7 +644,7 @@ data UseColor
   = Never
   | Always
   | Auto -- ^ Only if stdout is an ANSI color supporting terminal
-  deriving (Eq, Ord, Typeable)
+  deriving (Eq, Ord)
 
 -- | Control color output
 instance IsOption UseColor where
@@ -672,7 +672,6 @@ instance IsOption UseColor where
 --
 -- @since 1.3
 newtype AnsiTricks = AnsiTricks { getAnsiTricks :: Bool }
-  deriving Typeable
 
 instance IsOption AnsiTricks where
   defaultValue = AnsiTricks True

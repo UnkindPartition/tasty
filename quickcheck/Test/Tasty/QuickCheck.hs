@@ -1,5 +1,5 @@
 -- | This module allows to use QuickCheck properties in tasty.
-{-# LANGUAGE GeneralizedNewtypeDeriving, DeriveDataTypeable, NamedFieldPuns #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, NamedFieldPuns #-}
 module Test.Tasty.QuickCheck
   ( testProperty
   , testProperties
@@ -59,7 +59,6 @@ import Options.Applicative (metavar)
 import System.Random (getStdRandom, randomR)
 
 newtype QC = QC QC.Property
-  deriving Typeable
 
 -- | Create a 'TestTree' for a QuickCheck 'QC.Testable' property
 testProperty :: QC.Testable a => TestName -> a -> TestTree
@@ -75,7 +74,7 @@ testProperties name = testGroup name . map (uncurry testProperty)
 
 -- | Number of test cases for QuickCheck to generate
 newtype QuickCheckTests = QuickCheckTests Int
-  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+  deriving (Num, Ord, Eq, Real, Enum, Integral)
 
 -- | Replay seed
 data QuickCheckReplay
@@ -92,35 +91,32 @@ data QuickCheckReplay
       --
       -- @since 0.11
       QuickCheckReplay (QCGen, Int)
-  deriving (Typeable)
 
 -- | If a test case fails unexpectedly, show the replay token
 newtype QuickCheckShowReplay = QuickCheckShowReplay Bool
-  deriving (Typeable)
 
 -- | Size of the biggest test cases
 newtype QuickCheckMaxSize = QuickCheckMaxSize Int
-  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+  deriving (Num, Ord, Eq, Real, Enum, Integral)
 
 -- | Maximum number of of discarded tests per successful test before giving up.
 newtype QuickCheckMaxRatio = QuickCheckMaxRatio Int
-  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+  deriving (Num, Ord, Eq, Real, Enum, Integral)
 
 -- | Show the test cases that QuickCheck generates
 newtype QuickCheckVerbose = QuickCheckVerbose Bool
-  deriving (Typeable)
 
 -- | Number of shrinks allowed before QuickCheck will fail a test.
 --
 -- @since 0.10.2
 newtype QuickCheckMaxShrinks = QuickCheckMaxShrinks Int
-  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+  deriving (Num, Ord, Eq, Real, Enum, Integral)
 
 -- | Timeout for individual tests within a property.
 --
 -- @since 0.11.1
 newtype QuickCheckTimeout = QuickCheckTimeout Timeout
-  deriving (Eq, Ord, Typeable)
+  deriving (Eq, Ord)
 
 instance IsOption QuickCheckTests where
   defaultValue = 100
