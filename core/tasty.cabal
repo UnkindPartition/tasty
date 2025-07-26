@@ -72,9 +72,6 @@ library
     build-depends:
       unbounded-delays >= 0.1 && < 0.2
 
-  if(!impl(ghc >= 8.0))
-    build-depends: semigroups < 0.21
-
   if(!impl(ghc >= 8.4))
     build-depends: time >= 1.4 && < 1.13
 
