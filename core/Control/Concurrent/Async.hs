@@ -175,10 +175,8 @@ data AsyncCancelled = AsyncCancelled
   deriving (Show, Eq, Typeable)
 
 instance Exception AsyncCancelled where
-#if __GLASGOW_HASKELL__ >= 708
   fromException = asyncExceptionFromException
   toException = asyncExceptionToException
-#endif
 
 -- | Cancel an asynchronous action
 --
