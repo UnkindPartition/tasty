@@ -1,5 +1,5 @@
 -- | Ingredient for listing test names
-{-# LANGUAGE CPP, GeneralizedNewtypeDeriving, DeriveDataTypeable #-}
+{-# LANGUAGE CPP, GeneralizedNewtypeDeriving #-}
 module Test.Tasty.Ingredients.ListTests
   ( ListTests(..)
   , testsNames
@@ -7,7 +7,6 @@ module Test.Tasty.Ingredients.ListTests
   ) where
 
 import Data.Proxy
-import Data.Typeable
 import Options.Applicative
 
 import Test.Tasty.Core
@@ -19,7 +18,7 @@ import Test.Tasty.Ingredients
 --
 -- @since 0.4
 newtype ListTests = ListTests Bool
-  deriving (Eq, Ord, Typeable)
+  deriving (Eq, Ord)
 instance IsOption ListTests where
   defaultValue = ListTests False
   parseValue = fmap ListTests . safeReadBool

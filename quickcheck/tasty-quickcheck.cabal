@@ -21,7 +21,7 @@ Source-repository head
 
 library
   exposed-modules:     Test.Tasty.QuickCheck
-  other-extensions:    GeneralizedNewtypeDeriving, DeriveDataTypeable
+  other-extensions:    GeneralizedNewtypeDeriving
   build-depends:       base >= 4.9 && < 5,
                        tagged < 0.9,
                        tasty >= 1.5.1 && < 1.6,

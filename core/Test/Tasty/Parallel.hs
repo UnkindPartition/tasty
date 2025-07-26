@@ -1,5 +1,4 @@
 -- | A helper module which takes care of parallelism
-{-# LANGUAGE DeriveDataTypeable #-}
 module Test.Tasty.Parallel (ActionStatus(..), Action(..), runInParallel) where
 
 import Control.Monad

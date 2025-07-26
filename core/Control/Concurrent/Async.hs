@@ -36,7 +36,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
-{-# LANGUAGE DeriveDataTypeable, MagicHash, UnboxedTuples #-}
+{-# LANGUAGE MagicHash, UnboxedTuples #-}
 
 module Control.Concurrent.Async (
   async, withAsync, wait, asyncThreadId, cancel, concurrently
@@ -47,7 +47,6 @@ import Control.Exception
 import Control.Concurrent
 import Control.Monad
 import Data.IORef
-import Data.Typeable
 import GHC.Conc (ThreadId(..))
 import GHC.Exts
 import GHC.IO hiding (onException)
@@ -172,7 +171,7 @@ cancel a@(Async t _) = throwTo t AsyncCancelled >> void (waitCatch a)
 
 -- | The exception thrown by `cancel` to terminate a thread.
 data AsyncCancelled = AsyncCancelled
-  deriving (Show, Eq, Typeable)
+  deriving (Show, Eq)
 
 instance Exception AsyncCancelled where
   fromException = asyncExceptionFromException

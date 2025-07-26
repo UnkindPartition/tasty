@@ -15,7 +15,7 @@
 -- >    -- assertion no. 3 (would have failed, but won't be executed because
 -- >    -- the previous assertion has already failed)
 -- >    "foo" @?= "bar"
-{-# LANGUAGE TypeFamilies, DeriveDataTypeable #-}
+{-# LANGUAGE TypeFamilies #-}
 module Test.Tasty.HUnit
   (
     -- * Constructing test cases
@@ -65,7 +65,6 @@ import Test.Tasty.Providers
 import Test.Tasty.HUnit.Orig
 import Test.Tasty.HUnit.Steps
 
-import Data.Typeable
 import Data.CallStack (HasCallStack)
 import Control.Exception
 
@@ -86,7 +85,6 @@ testCaseInfo name = singleTest name . TestCase
 -- In case of testCase, we simply make the result string empty, which makes
 -- tasty ignore it.
 newtype TestCase = TestCase (IO String)
-    deriving Typeable
 
 instance IsTest TestCase where
   run _ (TestCase assertion) _ = do

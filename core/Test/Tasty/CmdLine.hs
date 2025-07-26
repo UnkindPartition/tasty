@@ -8,7 +8,6 @@ module Test.Tasty.CmdLine
   ) where
 
 import Control.Arrow
-import Control.Monad
 import Data.Maybe
 import Data.Proxy
 import Data.Typeable (typeRep)
@@ -16,7 +15,6 @@ import Options.Applicative
 import Options.Applicative.Common (evalParser)
 import qualified Options.Applicative.Types as Applicative (Option(..))
 import Options.Applicative.Types (Parser(..), OptProperties(..))
-import Prelude  -- Silence AMP and FTP import warnings
 import System.Exit
 import System.IO
 #if !MIN_VERSION_base(4,11,0)

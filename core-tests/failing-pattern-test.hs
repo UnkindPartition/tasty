@@ -7,7 +7,6 @@ import Control.Monad (replicateM)
 import Control.Monad.State (State, state, evalState)
 
 newtype Seed = Seed Int
-  deriving Typeable
 
 instance IsOption Seed where
   defaultValue = Seed 0

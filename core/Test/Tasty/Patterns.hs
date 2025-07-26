@@ -1,6 +1,6 @@
 -- | Test patterns
 
-{-# LANGUAGE CPP, DeriveDataTypeable, TypeApplications #-}
+{-# LANGUAGE CPP, TypeApplications #-}
 
 module Test.Tasty.Patterns
   ( TestPattern(..)
@@ -21,7 +21,6 @@ import Data.Char
 import Data.Coerce (coerce)
 import Data.List.NonEmpty (nonEmpty)
 import Data.Maybe (catMaybes)
-import Data.Typeable
 import Options.Applicative hiding (Success)
 #if !MIN_VERSION_base(4,11,0)
 import Data.Monoid
@@ -33,8 +32,7 @@ newtype TestPattern =
   TestPattern
     (Maybe Expr)
   deriving
-  ( Typeable
-  , Show -- ^ @since 1.1
+  ( Show -- ^ @since 1.1
   , Eq   -- ^ @since 1.1
   )
 

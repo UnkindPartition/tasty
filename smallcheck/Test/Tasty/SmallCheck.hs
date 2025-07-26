@@ -1,6 +1,6 @@
 -- | This module allows to use SmallCheck properties in tasty.
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FlexibleContexts,
-             TypeOperators, DeriveDataTypeable, TypeFamilies,
+             TypeOperators, TypeFamilies,
              GeneralizedNewtypeDeriving #-}
 module Test.Tasty.SmallCheck
   ( testProperty
@@ -26,7 +26,7 @@ testProperty name prop = singleTest name $ (SC.test prop :: SC.Property IO)
 
 -- | The \"depth\" parameter for SmallCheck
 newtype SmallCheckDepth = SmallCheckDepth Int
-  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+  deriving (Num, Ord, Eq, Real, Enum, Integral)
 
 instance IsOption SmallCheckDepth where
   defaultValue = 5
@@ -38,7 +38,7 @@ instance IsOption SmallCheckDepth where
 -- | The maximum number of test cases to generate. Can be used as an
 -- alternative to setting 'SmallCheckDepth'.
 newtype SmallCheckMaxCount = SmallCheckMaxCount Int
-  deriving (Num, Ord, Eq, Real, Enum, Integral, Typeable)
+  deriving (Num, Ord, Eq, Real, Enum, Integral)
 
 instance IsOption SmallCheckMaxCount where
   defaultValue = SmallCheckMaxCount maxBound -- disable by default

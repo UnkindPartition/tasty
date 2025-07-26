@@ -233,7 +233,6 @@ data ResourceError
   = NotRunningTests
   | UnexpectedState String String
   | UseOutsideOfTest
-  deriving Typeable
 
 instance Show ResourceError where
   show NotRunningTests =

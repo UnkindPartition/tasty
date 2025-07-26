@@ -1,6 +1,6 @@
 -- | Running tests
 {-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes,
-             FlexibleContexts, CPP, DeriveDataTypeable, LambdaCase,
+             FlexibleContexts, CPP, LambdaCase,
              RecordWildCards, NamedFieldPuns #-}
 module Test.Tasty.Run
   ( Status(..)
@@ -18,7 +18,6 @@ import Data.Maybe
 import Data.List (intercalate)
 import Data.Graph (SCC(..), stronglyConnComp)
 import Data.Sequence (Seq, (|>), (<|), (><))
-import Data.Typeable
 import Control.Monad (forever, guard, join, liftM)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Reader (ReaderT(..), local, ask)
@@ -27,11 +26,9 @@ import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Concurrent.Async
 import Control.Exception as E
-import Control.Applicative
 import Control.Arrow
 import Data.Monoid (First(..))
 import GHC.Conc (labelThread)
-import Prelude  -- Silence AMP and FTP import warnings
 
 #if MIN_VERSION_base(4,18,0)
 import Data.Traversable (mapAccumM)
@@ -249,7 +246,6 @@ newtype DependencyException
     -- A finishes. Field lists detected cycles.
     --
     -- @since 1.5
-  deriving (Typeable)
 
 instance Show DependencyException where
   show (DependencyLoop css) = "Test dependencies have cycles:\n" ++ showCycles css

@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, FlexibleInstances, TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances, TypeSynonymInstances #-}
 
 -- required for HasCallStack by different versions of GHC
 {-# LANGUAGE ConstraintKinds, FlexibleContexts #-}
@@ -9,7 +9,6 @@ module Test.Tasty.HUnit.Orig where
 
 import qualified Control.Exception as E
 import Control.Monad
-import Data.Typeable (Typeable)
 import Data.CallStack
 
 -- Interfaces
@@ -134,7 +133,7 @@ instance (AssertionPredicable t) => AssertionPredicable (IO t)
 
 -- | Exception thrown by 'assertFailure' etc.
 data HUnitFailure = HUnitFailure (Maybe SrcLoc) String
-    deriving (Eq, Show, Typeable)
+    deriving (Eq, Show)
 instance E.Exception HUnitFailure where
   displayException (HUnitFailure mbloc s) = prependLocation mbloc s
 

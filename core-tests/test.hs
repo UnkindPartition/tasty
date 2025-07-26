@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable #-}
 import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.Runners
@@ -95,7 +94,6 @@ optionMessagesTests = testGroup "OptionMessages"
     (warnings, _) = optionParser [Option (Proxy :: Proxy JankyOption)]
 
 data JankyOption = MkJankyOption Int Int
-  deriving Typeable
 instance IsOption JankyOption where
   defaultValue   = MkJankyOption 27 42
   parseValue     = \_ -> return defaultValue
