@@ -66,6 +66,7 @@ import System.Console.ANSI
 #if !MIN_VERSION_base(4,11,0)
 import Data.Foldable (foldMap)
 #endif
+import System.IO.Unsafe
 
 --------------------------------------------------
 -- TestOutput base definitions
@@ -124,6 +125,27 @@ applyHook hook = go []
 
 type Level = Int
 
+-- TODO before the next major release:
+-- refactor this as an argument to 'buildTestOutput'
+-- to avoid unsafePerformIO.
+-- (We cannot add another argument to 'buildTestOutput'
+-- in the middle of tasty-1.5 series, because it is exported)
+terminalWidth :: Maybe Int
+terminalWidth = unsafePerformIO $ do
+  isTerminalStdin <- hIsTerminalDevice stdin
+  if isTerminalStdin
+  then fmap (fmap snd) getTerminalSize
+  else pure Nothing
+{-# NOINLINE terminalWidth #-}
+
+-- | How wide could 'resultShortDescription' be (in non-extreme scenarios)?
+-- Think of something like "OK", "FAIL (12.34s)", "TIMEOUT (100.00s)".
+--
+-- The field is freeform and test providers can put an arbitrarily long data,
+-- so we just settle for a reasonable (over)approximation.
+approxMaxResultShortDescriptionWidth :: Int
+approxMaxResultShortDescriptionWidth = 20
+
 -- | Build the 'TestOutput' for a 'TestTree' and 'OptionSet'. The @colors@
 -- ImplicitParam controls whether the output is colored.
 --
@@ -132,7 +154,10 @@ buildTestOutput :: (?colors :: Bool) => OptionSet -> TestTree -> TestOutput
 buildTestOutput opts tree =
   let
     -- Do not retain the reference to the tree more than necessary
-    !alignment = computeAlignment opts tree
+    !rawAlignment = computeAlignment opts tree
+    !alignment = case terminalWidth of
+      Nothing -> rawAlignment
+      Just width -> min (width - approxMaxResultShortDescriptionWidth) rawAlignment
 
     MinDurationToReport{minDurationMicros} = lookupOption opts
 
