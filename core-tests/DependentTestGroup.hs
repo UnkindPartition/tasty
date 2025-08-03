@@ -2,7 +2,7 @@
              TypeApplications, ViewPatterns #-}
 
 -- |
-module SequentialTestGroup where
+module DependentTestGroup where
 
 import Control.Concurrent
 import Control.Monad (forM_, zipWithM_)
@@ -26,11 +26,11 @@ import qualified Test.Tasty.QuickCheck as Q
 nUM_THREADS :: NumThreads
 nUM_THREADS = NumThreads 3
 
-testSequentialTestGroup :: TestTree
-testSequentialTestGroup =
+testDependentTestGroup :: TestTree
+testDependentTestGroup =
   adjustOption (const nUM_THREADS) $
 
-  testGroup "SequentialTestGroup"
+  testGroup "DependentTestGroup"
   [ testGroup "tree0"           [toTestTree (GenUniqueLabels True)  (labelTree tree0)]
   , testGroup "tree1"           [toTestTree (GenUniqueLabels True)  (labelTree tree1)]
   , testGroup "tree2"           [toTestTree (GenUniqueLabels True)  (labelTree tree2)]
@@ -52,11 +52,12 @@ testSequentialTestGroup =
     , testCase "F" $ filterTestTree "F" @?= ["A.E.F"]
     , testCase "G" $ filterTestTree "G" @?= ["A.E.F", "A.E.G"]
     , testCase "H" $ filterTestTree "H" @?= ["A.E.F", "A.E.G", "A.E.H"]
+    , testCase "H" $ filterForOrderedTestGroups "H" @?= ["A.E.H"]
     ]
   ]
 
 emptySeqTree :: SimpleTestTree () ()
-emptySeqTree = Sequentially () []
+emptySeqTree = Dependently () []
 
 tree0 :: SimpleTestTree () ()
 tree0 = Test ()
@@ -65,28 +66,28 @@ tree1 :: SimpleTestTree () ()
 tree1 = InParallel () [Test (), Test (), Test ()]
 
 tree2 :: SimpleTestTree () ()
-tree2 = Sequentially () [Test (), Test (), Test ()]
+tree2 = Dependently () [Test (), Test (), Test ()]
 
 tree3 :: SimpleTestTree () ()
-tree3 = Sequentially () [tree1, tree2]
+tree3 = Dependently () [tree1, tree2]
 
 tree4 :: SimpleTestTree () ()
-tree4 = Sequentially () [tree2, tree1]
+tree4 = Dependently () [tree2, tree1]
 
 tree5 :: SimpleTestTree () ()
 tree5 = InParallel () [tree0, tree1, tree2, tree3, tree4]
 
 tree6 :: SimpleTestTree () ()
-tree6 = Sequentially () [tree3, emptySeqTree, tree3]
+tree6 = Dependently () [tree3, emptySeqTree, tree3]
 
-filterTestTree :: HasCallStack => String -> [TestName]
-filterTestTree pattern =
+mkTestGroup :: (String -> [TestTree] -> TestTree) -> String -> [TestName]
+mkTestGroup groupBuilder pattern =
   testsNames (singleOption (TestPattern (Just expr))) $
     testGroup "A"
       [ emptyTest "B"
       , emptyTest "C"
       , emptyTest "D"
-      , sequentialTestGroup "E" AllSucceed
+      , groupBuilder "E"
         [ emptyTest "F"
         , emptyTest "G"
         , testGroup "XX" []
@@ -106,11 +107,17 @@ filterTestTree pattern =
 
   emptyTest name = testCase name (pure ())
 
+filterTestTree :: HasCallStack => String -> [TestName]
+filterTestTree = mkTestGroup (\name -> dependentTestGroup name AllFinish)
+
+filterForOrderedTestGroups :: HasCallStack => String -> [TestName]
+filterForOrderedTestGroups = mkTestGroup inOrderTestGroup
+
 -- | Dependencies should account for empty test groups
 emptySeq :: SimpleTestTree () ()
-emptySeq = Sequentially () [Test (), Sequentially () [], Test ()]
+emptySeq = Dependently () [Test (), Dependently () [], Test ()]
 
--- | Whether to generate unique labels in 'labelTree'. 'sequentialTestGroup' should work
+-- | Whether to generate unique labels in 'labelTree'. 'dependentTestGroup' should work
 -- properly, even if there are name collisions in the test tree.
 newtype GenUniqueLabels = GenUniqueLabels Bool
   deriving Show
@@ -130,14 +137,14 @@ inRange (lower, upper) a = a >= lower && a <= upper
 getRange :: SimpleTestTree (Range Word) Word -> Range Word
 getRange tree = case tree of
   InParallel r _ -> r
-  Sequentially r _ -> r
+  Dependently r _ -> r
   Test n -> (n, n)
 
 -- | Simplified version of Tasty's TestTree. Used to generate test cases for
--- 'sequentialTestGroup'.
+-- 'dependentTestGroup'.
 data SimpleTestTree n l
   = InParallel n [SimpleTestTree n l]
-  | Sequentially n [SimpleTestTree n l]
+  | Dependently n [SimpleTestTree n l]
   | Test l
   deriving (Show, Eq, Ord, Generic, Foldable)
 
@@ -156,14 +163,14 @@ labelTree = snd . go 0
       in
         (n1, InParallel (n0, n1-1) ts1)
 
-    Sequentially () ts0 ->
+    Dependently () ts0 ->
       let
         (n1, ts1) = mapAccumL go n0 ts0
       in
-        (n1, Sequentially (n0, n1-1) ts1)
+        (n1, Dependently (n0, n1-1) ts1)
 
 -- | Generates a 'SimpleTestTree' with arbitrary branches with 'InParallel' and
--- 'Sequentially'. The generated test tree is at most 5 levels deep, and each
+-- 'Dependently'. The generated test tree is at most 5 levels deep, and each
 -- level generates smaller and smaller 'InParallel' lists. This prevents trees
 -- from growing incredibly large.
 instance Q.Arbitrary (SimpleTestTree () ()) where
@@ -175,7 +182,7 @@ instance Q.Arbitrary (SimpleTestTree () ()) where
       else
         Q.frequency
           [ (1, InParallel () <$> (take n <$> Q.listOf (go (n-1))))
-          , (1, Sequentially () <$> (take n <$> Q.listOf (go (n-1))))
+          , (1, Dependently () <$> (take n <$> Q.listOf (go (n-1))))
           , (1, pure (Test ()))
           ]
 
@@ -200,22 +207,22 @@ unsafeRunTest genUniqueLabels testTree0 = unsafePerformIO $ do
 {-# NOINLINE unsafeRunTest #-}
 
 -- | Constructs a 'TestTree' from a 'SimpleTestTree'. 'testGroup' is used to
--- construct parallel test cases in 'InParallel'. Sequential test cases are
--- constructed using 'sequentialTestGroup' in 'Sequentially'. A 'Test' prepends its
+-- construct parallel test cases in 'InParallel'. Dependent test cases are
+-- constructed using 'dependenttestGroup' in 'Dependently'. A 'Test' prepends its
 -- label to a list shared between all tests. Finally, 'checkResult' is used
 -- to check whether the labels were prepended in a sensible order.
 toTestTree :: GenUniqueLabels -> SimpleTestTree (Range Word) Word -> TestTree
 toTestTree (GenUniqueLabels genUniqueLabels) tree =
   withResource (newMVar []) (const (pure ())) $ \mVar ->
-    sequentialTestGroup "Seq" AllSucceed [go tree mVar, checkResult tree mVar]
+    dependentTestGroup "Seq" AllSucceed [go tree mVar, checkResult tree mVar]
  where
   go :: SimpleTestTree n Word -> IO (MVar [Word]) -> TestTree
   go tree mVarIO = case tree of
     InParallel _ stts ->
       testGroup "Par" (map (`go` mVarIO) stts)
 
-    Sequentially _ ts ->
-      sequentialTestGroup "Seq" AllSucceed (map (`go` mVarIO) ts)
+    Dependently _ ts ->
+      dependentTestGroup "Seq" AllSucceed (map (`go` mVarIO) ts)
 
     Test n -> do
       -- Caller might opt to not generate unique labels for each test: 
@@ -233,7 +240,7 @@ toTestTree (GenUniqueLabels genUniqueLabels) tree =
 
 -- | Checks whether all test cases wrote their labels in the order imposed by
 -- the given 'SimpleTestTree'. The invariant that should hold is: given any
--- @Sequentially t1 t2@, all labels associated with @t1@ should appear _later_
+-- @Dependently t1 t2@, all labels associated with @t1@ should appear _later_
 -- in the word-list than all labels associated with @t2@.
 checkResult :: SimpleTestTree (Range Word) Word -> IO (MVar [Word]) -> TestTree
 checkResult fullTree resultM =
@@ -244,7 +251,7 @@ checkResult fullTree resultM =
     InParallel _ ts ->
       mapM_ (`go` result0) ts
 
-    Sequentially r (reverse -> trees) -> do
+    Dependently r (reverse -> trees) -> do
       let
         -- Parallel execution might "pollute" the result list with tests that are
         -- not in any of the trees in 'trees'.
@@ -252,7 +259,7 @@ checkResult fullTree resultM =
 
         -- Note that 'result' is preprended during test execution, so tests that
         -- ran last appear first. Hence, we reverse the tree list when matching
-        -- on 'Sequentially'.
+        -- on 'Dependently'.
         (_, results) = mapAccumL goResult result1 trees
 
       -- Recurse on all branches; if any element is missing or misplaced, the 'Test'
@@ -271,11 +278,11 @@ checkResult fullTree resultM =
 
 -- Run with:
 --
---    ghcid -c cabal repl tasty-core-tests -T SequentialTestGroup.main
+--    ghcid -c cabal repl tasty-core-tests -T DependentTestGroup.main
 --
 -- Add -W if you want to run tests in spite of warnings. Remove 'ghcid -c' if you
 -- do not want to run it automatically on changes.
 --
 main :: IO ()
 main = do
-  defaultMain testSequentialTestGroup
+  defaultMain testDependentTestGroup

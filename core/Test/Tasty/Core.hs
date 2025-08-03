@@ -18,9 +18,12 @@ module Test.Tasty.Core
   , ResourceError(..)
   , DependencyType(..)
   , ExecutionMode(..)
+  , Parallel(..)
   , TestTree(..)
   , testGroup
   , sequentialTestGroup
+  , dependentTestGroup
+  , inOrderTestGroup
   , after
   , after_
   , TreeFold(..)
@@ -264,19 +267,26 @@ data DependencyType
 
 -- | Determines mode of execution of a 'TestGroup'
 data ExecutionMode
-  = Sequential DependencyType
-  -- ^ Execute tests one after another
-  | Parallel
-  -- ^ Execute tests in parallel
+  = Dependent DependencyType
+  -- ^ Test have dependencies
+  | Independent Parallel
+  -- ^ Test have no dependencies
+  deriving (Show, Read)
+
+data Parallel
+  = Parallel
+  -- ^ Tests can be run in parallel
+  | NonParallel
+  -- ^ Tests should not be parallelized
   deriving (Show, Read)
 
 -- | Determines mode of execution of a 'TestGroup'. Note that this option is
 -- not exposed as a command line argument.
 instance IsOption ExecutionMode where
-  defaultValue = Parallel
+  defaultValue = Independent Parallel
   parseValue = readMaybe
   optionName = Tagged "execution-mode"
-  optionHelp = Tagged "Whether to execute tests sequentially or in parallel"
+  optionHelp = Tagged "Whether tests have dependencies or not"
   optionCLParser = mkOptionCLParser internal
 
 -- | The main data structure defining a test suite.
@@ -322,15 +332,44 @@ data TestTree
 testGroup :: TestName -> [TestTree] -> TestTree
 testGroup = TestGroup
 
--- | Create a named group of test cases or other groups. Tests are executed in
--- order. For parallel execution, see 'testGroup'.
+{-# DEPRECATED sequentialTestGroup "Use dependentTestGroup instead" #-}
+-- | Legacy name for 'dependentTestGroup'.
 --
 -- @since 1.5
 sequentialTestGroup :: TestName -> DependencyType -> [TestTree] -> TestTree
-sequentialTestGroup nm depType = setSequential . TestGroup nm . map setParallel
+sequentialTestGroup = dependentTestGroup
+  
+-- | Create a named group of test cases or other groups. Tests are executed in
+-- order and each test is considered a dependency of the next one. If a filter
+-- is applied, any dependencies are run too, even if they would otherwise not
+-- match the filter's criteria.
+--
+-- For parallel execution, see 'testGroup'. For ordered test execution, but
+-- without dependencies, see 'inOrderTestGroup'.
+--
+-- Note that this is will only work when used with the default `TestManager`.
+-- If you use another manager, like `tasty-rerun` for instance, sequentiality
+-- might possibly be ignored.
+--
+-- @since 1.5
+dependentTestGroup :: TestName -> DependencyType -> [TestTree] -> TestTree
+dependentTestGroup nm depType = setDependent . TestGroup nm . map setParallel
  where
-  setParallel = PlusTestOptions (setOption Parallel)
-  setSequential = PlusTestOptions (setOption (Sequential depType))
+  setParallel = PlusTestOptions (setOption $ Independent Parallel)
+  setDependent = PlusTestOptions (setOption (Dependent depType))
+
+
+-- | Create a named group of test cases that will be played sequentially,
+-- in the exact order provided, though filters are still applied.
+--
+-- Note that this is will only work when used with the default `TestManager`.
+-- If you use another manager, like `tasty-rerun` for instance, the fact that
+-- these tests should be run in the given order might possibly be ignored.
+inOrderTestGroup :: TestName -> [TestTree] -> TestTree
+inOrderTestGroup nm = setSequential . TestGroup nm . map setParallel
+ where
+  setParallel = PlusTestOptions (setOption $ Independent Parallel)
+  setSequential = PlusTestOptions (setOption (Independent NonParallel))
 
 -- | Like 'after', but accepts the pattern as a syntax tree instead
 -- of a string. Useful for generating a test tree programmatically.
@@ -583,15 +622,15 @@ filterByPattern = snd . go (Any False)
 
       AnnTestGroup (opts, _) name trees ->
         case lookupOption opts of
-          Parallel ->
+          Dependent _ ->
+            second
+              (mkGroup opts name)
+              (mapAccumR go forceMatch trees)
+          Independent _ ->
             bimap
               mconcat
               (mkGroup opts name)
               (unzip (map (go forceMatch) trees))
-          Sequential _ ->
-            second
-              (mkGroup opts name)
-              (mapAccumR go forceMatch trees)
 
       AnnWithResource (opts, _) res0 tree ->
         ( fst (go forceMatch (tree (throwIO NotRunningTests)))
