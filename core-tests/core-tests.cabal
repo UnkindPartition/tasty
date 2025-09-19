@@ -21,11 +21,15 @@ common commons
 executable tasty-core-tests
   import:              commons
   main-is:             test.hs
-  other-modules:       Resources, Timeouts, Utils, AWK, Dependencies, DependentTestGroup
-  -- other-extensions:
+  other-modules:
+    Resources
+    Timeouts
+    Utils
+    AWK
+    Dependencies
+    DependentTestGroup
   build-depends:       base >= 4.9 && <= 5, tasty, tasty-hunit, tasty-golden, tasty-quickcheck, containers, stm, mtl,
                        filepath, bytestring, optparse-applicative, random
-  -- hs-source-dirs:
   default-extensions:  CPP, NumDecimals
   ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-name-shadowing -fno-warn-incomplete-uni-patterns
 
