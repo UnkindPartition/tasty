@@ -29,12 +29,12 @@ flag unix
 
 library
   exposed-modules:
-    Test.Tasty,
-    Test.Tasty.Options,
-    Test.Tasty.Providers,
-    Test.Tasty.Providers.ConsoleFormat,
+    Test.Tasty
+    Test.Tasty.Options
+    Test.Tasty.Providers
+    Test.Tasty.Providers.ConsoleFormat
     Test.Tasty.Runners
-    Test.Tasty.Ingredients,
+    Test.Tasty.Ingredients
     Test.Tasty.Ingredients.Basic
     Test.Tasty.Ingredients.ConsoleReporter
 
@@ -45,16 +45,16 @@ library
     Test.Tasty.Patterns.Eval
   other-modules:
     Control.Concurrent.Async
-    Test.Tasty.Parallel,
-    Test.Tasty.Core,
-    Test.Tasty.Options.Core,
-    Test.Tasty.Options.Env,
-    Test.Tasty.Patterns,
-    Test.Tasty.Patterns.Expr,
-    Test.Tasty.Run,
-    Test.Tasty.Runners.Reducers,
-    Test.Tasty.Runners.Utils,
-    Test.Tasty.CmdLine,
+    Test.Tasty.Parallel
+    Test.Tasty.Core
+    Test.Tasty.Options.Core
+    Test.Tasty.Options.Env
+    Test.Tasty.Patterns
+    Test.Tasty.Patterns.Expr
+    Test.Tasty.Run
+    Test.Tasty.Runners.Reducers
+    Test.Tasty.Runners.Utils
+    Test.Tasty.CmdLine
     Test.Tasty.Ingredients.ListTests
     Test.Tasty.Ingredients.IncludingOptions
 
