@@ -41,6 +41,12 @@ runInParallel
 -- actions themselves. Any exceptions that reach this function or its
 -- threads are by definition unexpected.
 runInParallel nthreads actions = do
+  -- When linked with threaded RTS, ensure we have enough Capabilities
+  -- so that all Haskell worker threads can truly run in parallel.
+  when rtsSupportsBoundThreads $ do
+    ncap <- getNumCapabilities
+    when (ncap < nthreads) $ setNumCapabilities nthreads
+
   callingThread <- myThreadId
 
   -- Don't let the main thread be garbage-collected
