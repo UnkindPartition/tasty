@@ -20,6 +20,8 @@ import GHC.Conc
 #if !MIN_VERSION_base(4,11,0)
 import Data.Monoid
 #endif
+import Control.Concurrent
+import System.IO.Unsafe
 
 import Test.Tasty.Options
 import Test.Tasty.Patterns
@@ -37,12 +39,13 @@ import Test.Tasty.Patterns
 newtype NumThreads = NumThreads { getNumThreads :: Int }
   deriving (Eq, Ord, Num)
 instance IsOption NumThreads where
-  defaultValue = NumThreads numCapabilities
+  defaultValue = unsafePerformIO $ NumThreads <$>
+      if rtsSupportsBoundThreads then getNumProcessors else pure 1
   parseValue = mfilter onlyPositive . fmap NumThreads . safeRead
   optionName = return "num-threads"
   optionHelp = return "Number of threads to use for tests execution"
   optionCLParser = mkOptionCLParser (short 'j' <> metavar "NUMBER")
-  showDefaultValue _ = Just "# of cores/capabilities"
+  showDefaultValue _ = Just "Number of cores when using threaded RTS, 1 for non-threaded"
 
 -- | Filtering function to prevent non-positive number of threads
 onlyPositive :: NumThreads -> Bool
