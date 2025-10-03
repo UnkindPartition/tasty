@@ -35,6 +35,7 @@ testPassed desc = Result
   , resultShortDescription = "OK"
   , resultTime = 0
   , resultDetailsPrinter = noResultDetails
+  , resultExtraData = mempty
   }
 
 -- | 'Result' of a failed test.
@@ -49,6 +50,7 @@ testFailed desc = Result
   , resultShortDescription = "FAIL"
   , resultTime = 0
   , resultDetailsPrinter = noResultDetails
+  , resultExtraData = mempty
   }
 
 -- | 'Result' of a failed test with custom details printer
