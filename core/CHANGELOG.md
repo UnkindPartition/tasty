@@ -521,7 +521,7 @@ Version 0.6
 * Better handling of exceptions that arise during resource creation or
   disposal
 * Expose the `AppMonoid` wrapper
-* Add `askOption` and `inludingOptions`
+* Add `askOption` and `includingOptions`
 
 Version 0.5.2.1
 ---------------

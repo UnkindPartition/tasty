@@ -448,7 +448,7 @@ after deptype s =
 --
 -- Instead of constructing fresh records, build upon `trivialFold`
 -- instead. This way your code won't break when new nodes/fields are
--- indroduced.
+-- introduced.
 --
 -- @since 0.7
 data TreeFold b = TreeFold

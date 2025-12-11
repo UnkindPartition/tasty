@@ -161,7 +161,7 @@ instance IsOption QuickCheckMaxRatio where
   showDefaultValue (QuickCheckMaxRatio n) = Just (show n)
   parseValue = fmap QuickCheckMaxRatio . safeRead
   optionName = return "quickcheck-max-ratio"
-  optionHelp = return "Maximum number of discared tests per successful test before giving up"
+  optionHelp = return "Maximum number of discarded tests per successful test before giving up"
   optionCLParser = mkOptionCLParser $ metavar "NUMBER"
 
 instance IsOption QuickCheckVerbose where
