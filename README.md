@@ -236,7 +236,7 @@ Available options:
   --quickcheck-max-size NUMBER
                            Size of the biggest test cases quickcheck generates
   --quickcheck-max-ratio NUMBER
-                           Maximum number of discared tests per successful test
+                           Maximum number of discarded tests per successful test
                            before giving up
   --quickcheck-verbose     Show the generated test cases
   --quickcheck-shrinks NUMBER

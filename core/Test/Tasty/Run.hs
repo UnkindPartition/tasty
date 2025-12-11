@@ -134,7 +134,7 @@ executeTest action statusVar timeoutOpt hideProgressOpt inits fins = mask $ \res
       timed $ applyTimeout timeoutOpt $ do
         r <- wait asy
         -- Not only wait for the result to be returned, but make sure to
-        -- evalute it inside applyTimeout; see #280.
+        -- evaluate it inside applyTimeout; see #280.
         evaluate $
           resultOutcome r `seq`
           forceElements (resultDescription r) `seq`
@@ -287,7 +287,7 @@ isPatternDependency _ = False
 -- The mapAccumM function behaves like a combination of mapM and mapAccumL that
 -- traverses the structure while evaluating the actions and passing an accumulating
 -- parameter from left to right. It returns a final value of this accumulator
--- together with the new structure. The accummulator is often used for caching the
+-- together with the new structure. The accumulator is often used for caching the
 -- intermediate results of a computation.
 mapAccumM :: Monad m => (acc -> x -> m (acc, y)) -> acc -> [x] -> m (acc, [y])
 mapAccumM _ acc [] = return (acc, [])

@@ -1,5 +1,5 @@
 -- | This module can be used by providers to perform colorful/formatted
--- output and possibly re-use tasty's own output formats.
+-- output and possibly reuse tasty's own output formats.
 --
 -- @since 1.3.1
 module Test.Tasty.Providers.ConsoleFormat
@@ -68,13 +68,13 @@ failFormat = ConsoleFormat BoldIntensity   Vivid Red
 infoFailFormat :: ConsoleFormat
 infoFailFormat = ConsoleFormat NormalIntensity Dull  Red
 
--- | Format used to display sucesses
+-- | Format used to display successes
 --
 -- @since 1.3.1
 okFormat :: ConsoleFormat
 okFormat = ConsoleFormat NormalIntensity Dull  Green
 
--- | Format used to display additional information on sucesses
+-- | Format used to display additional information on successes
 --
 -- @since 1.3.1
 infoOkFormat :: ConsoleFormat

@@ -257,7 +257,7 @@ checkResult fullTree resultM =
         -- not in any of the trees in 'trees'.
         result1 = filter (inRange r) result0
 
-        -- Note that 'result' is preprended during test execution, so tests that
+        -- Note that 'result' is prepended during test execution, so tests that
         -- ran last appear first. Hence, we reverse the tree list when matching
         -- on 'Dependently'.
         (_, results) = mapAccumL goResult result1 trees
