@@ -1,8 +1,10 @@
 -- | Core types and definitions
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeApplications #-}
 module Test.Tasty.Core
   ( FailureReason(..)
   , Outcome(..)
@@ -31,11 +33,15 @@ module Test.Tasty.Core
   , foldTestTree
   , foldTestTree0
   , treeOptions
+  , testFailed
   ) where
 
 import Control.Exception
+import Control.Monad.Trans.Cont (ContT(..))
+import Data.Coerce (coerce)
 import qualified Data.Map as Map
 import Data.Bifunctor (Bifunctor(second, bimap))
+import Data.IORef (newIORef, readIORef, atomicModifyIORef')
 import Data.List (mapAccumR)
 import Data.Monoid (Any (getAny, Any))
 import Data.Sequence ((|>))
@@ -216,6 +222,36 @@ class Typeable t => IsTest t where
 
   -- | The list of options that affect execution of tests of this type
   testOptions :: Tagged t [OptionDescription]
+
+instance IsTest t => IsTest (ContT () IO t) where
+  testOptions = coerce (testOptions @t)
+  run opts (ContT k) yieldProgress = do
+    resRef <- newIORef Nothing
+    let runInIORef :: t -> IO ()
+        runInIORef t = do
+          res <- run opts t yieldProgress
+          let err = testFailed "Continuation was called multiple times"
+          atomicModifyIORef' resRef $ \prev ->
+            (Just $ maybe res (const err) prev, ())
+    k runInIORef
+    maybeRes <- readIORef resRef
+    pure $ case maybeRes of
+      Nothing -> testFailed "Continuation was not called"
+      Just r -> r
+
+-- | t'Result' of a failed test.
+--
+-- @since 0.8
+testFailed
+  :: String -- ^ description
+  -> Result
+testFailed desc = Result
+  { resultOutcome = Failure TestFailed
+  , resultDescription = desc
+  , resultShortDescription = "FAIL"
+  , resultTime = 0
+  , resultDetailsPrinter = noResultDetails
+  }
 
 -- | The name of a test or a group of tests.
 --

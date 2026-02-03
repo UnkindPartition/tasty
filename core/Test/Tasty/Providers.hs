@@ -37,20 +37,6 @@ testPassed desc = Result
   , resultDetailsPrinter = noResultDetails
   }
 
--- | t'Result' of a failed test.
---
--- @since 0.8
-testFailed
-  :: String -- ^ description
-  -> Result
-testFailed desc = Result
-  { resultOutcome = Failure TestFailed
-  , resultDescription = desc
-  , resultShortDescription = "FAIL"
-  , resultTime = 0
-  , resultDetailsPrinter = noResultDetails
-  }
-
 -- | t'Result' of a failed test with custom details printer
 --
 -- @since 1.3.1
