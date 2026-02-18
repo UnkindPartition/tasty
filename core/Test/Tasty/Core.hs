@@ -159,7 +159,7 @@ resultSuccessful r =
     Success -> True
     Failure {} -> False
 
--- | Shortcut for creating a 'Result' that indicates exception
+-- | Shortcut for creating a t'Result' that indicates exception
 exceptionResult :: SomeException -> Result
 exceptionResult e = Result
   { resultOutcome = Failure $ TestThrewException e
@@ -204,7 +204,7 @@ class Typeable t => IsTest t where
   -- | Run the test
   --
   -- This method should cleanly catch any exceptions in the code to test, and
-  -- return them as part of the 'Result', see 'FailureReason' for an
+  -- return them as part of the t'Result', see 'FailureReason' for an
   -- explanation. It is ok for 'run' to raise an exception if there is a
   -- problem with the test suite code itself (for example, if a file that
   -- should contain example data or expected output is not found).
@@ -222,7 +222,7 @@ class Typeable t => IsTest t where
 -- @since 0.1
 type TestName = String
 
--- | 'ResourceSpec' describes how to acquire a resource (the first field)
+-- | t'ResourceSpec' describes how to acquire a resource (the first field)
 -- and how to release it (the second field).
 --
 -- @since 0.6
@@ -325,7 +325,7 @@ data TestTree
     -- @since 1.2
 
 -- | Create a named group of test cases or other groups. Tests are executed in
--- parallel. For sequential execution, see 'sequentialTestGroup'.
+-- parallel. For sequential execution, see 'dependentTestGroup'.
 --
 -- @since 0.1
 testGroup :: TestName -> [TestTree] -> TestTree
@@ -337,21 +337,29 @@ testGroup = TestGroup
 -- @since 1.5
 sequentialTestGroup :: TestName -> DependencyType -> [TestTree] -> TestTree
 sequentialTestGroup = dependentTestGroup
-  
+
 -- | Create a named group of test cases or other groups. Tests are executed in
--- order and each test is considered a dependency of the next one. If a filter
--- is applied, any dependencies are run too, even if they would otherwise not
--- match the filter's criteria.
+-- order and each test is considered a dependency of the next one.
+-- If filtering by t'TestPattern' (@--pattern@) is in action,
+-- any test matching the pattern also shields earlier tests from filtering out,
+-- even if they themselves do not match the pattern.
 --
 -- For parallel execution, see 'testGroup'. For ordered test execution, but
--- without dependencies, see 'inOrderTestGroup'.
+-- with default filtering behavior, see 'inOrderTestGroup'.
 --
--- Note that this is will only work when used with the default `TestManager`.
--- If you use another manager, like `tasty-rerun` for instance, sequentiality
+-- Note that this is will only work when used with the default 'Test.Tasty.Ingredients.TestManager'.
+-- If you use another manager, like @tasty-rerun@ for instance, sequentiality
 -- might possibly be ignored.
 --
--- @since 1.5
-dependentTestGroup :: TestName -> DependencyType -> [TestTree] -> TestTree
+-- @since 1.5.4
+dependentTestGroup
+  :: TestName
+  -- ^ name of the group
+  -> DependencyType
+  -- ^ whether to run subsequent tests even if earlier ones have failed
+  -> [TestTree]
+  -- ^ tests to execute sequentially
+  -> TestTree
 dependentTestGroup nm depType = setDependent . TestGroup nm . map setParallel
  where
   setParallel = PlusTestOptions (setOption $ Independent Parallel)
@@ -359,12 +367,21 @@ dependentTestGroup nm depType = setDependent . TestGroup nm . map setParallel
 
 
 -- | Create a named group of test cases that will be played sequentially,
--- in the exact order provided, though filters are still applied.
+-- in the exact order provided. Similarly to 'testGroup'
+-- and in contrast to 'dependentTestGroup',
+-- filtering by t'TestPattern' is applied uniformly.
 --
--- Note that this is will only work when used with the default `TestManager`.
--- If you use another manager, like `tasty-rerun` for instance, the fact that
+-- Note that this is will only work when used with the default 'Test.Tasty.Ingredients.TestManager'.
+-- If you use another manager, like @tasty-rerun@ for instance, the fact that
 -- these tests should be run in the given order might possibly be ignored.
-inOrderTestGroup :: TestName -> [TestTree] -> TestTree
+--
+-- @since 1.5.4
+inOrderTestGroup
+  :: TestName
+  -- ^ name of the group
+  -> [TestTree]
+  -- ^ tests to execute sequentially
+  -> TestTree
 inOrderTestGroup nm = setSequential . TestGroup nm . map setParallel
  where
   setParallel = PlusTestOptions (setOption $ Independent Parallel)
@@ -490,7 +507,7 @@ type TestMatched = Any
 -- a user's filter. This is used to force dependencies of a test to run. For
 -- example, if test @A@ depends on test @B@ and test @A@ is selected to run, test
 -- @B@ will be forced to match. Note that this only applies to dependencies
--- specified using 'sequentialTestGroup'.
+-- specified using 'dependentTestGroup'.
 type ForceTestMatch = Any
 
 -- | Fold a test tree into a single value.
@@ -544,7 +561,7 @@ foldTestTree0 empty (TreeFold fTest fGroup fResource fAfter) opts0 tree0 =
       AnnWithResource opts res0 tree -> fResource opts res0 $ \res -> go (tree res)
       AnnAfter opts deptype dep tree -> fAfter opts deptype dep (go tree)
 
--- | 'TestTree' with arbitrary annotations, e. g., evaluated 'OptionSet'.
+-- | 'TestTree' with arbitrary annotations, e. g., evaluated t'OptionSet'.
 data AnnTestTree ann
   = AnnEmptyTestTree
   -- ^ Just an empty test tree (e. g., when everything has been filtered out).

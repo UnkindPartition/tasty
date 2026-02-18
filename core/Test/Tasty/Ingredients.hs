@@ -36,7 +36,7 @@ import Control.Concurrent.Async (concurrently)
 -- which options it cares about, so that those options are presented to
 -- the user if the ingredient is included in the test suite.
 --
--- An ingredient can choose, typically based on the 'OptionSet', whether to
+-- An ingredient can choose, typically based on the t'OptionSet', whether to
 -- run. That's what the 'Maybe' is for. The first ingredient that agreed to
 -- run does its work, and the remaining ingredients are ignored. Thus, the
 -- order in which you arrange the ingredients may matter.
@@ -87,7 +87,7 @@ data Ingredient
 
 -- | Try to run an 'Ingredient'.
 --
--- If the ingredient refuses to run (usually based on the 'OptionSet'),
+-- If the ingredient refuses to run (usually based on the t'OptionSet'),
 -- the function returns 'Nothing'.
 --
 -- For a 'TestReporter', this function automatically starts running the
@@ -117,7 +117,7 @@ tryIngredients ins opts' tree' =
 --
 -- Note that this isn't the same as simply pattern-matching on
 -- 'Ingredient'. E.g. options for a 'TestReporter' automatically include
--- 'NumThreads'.
+-- t'NumThreads'.
 --
 -- @since 0.4
 ingredientOptions :: Ingredient -> [OptionDescription]

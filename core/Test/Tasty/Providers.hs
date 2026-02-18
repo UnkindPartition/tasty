@@ -23,7 +23,7 @@ import Test.Tasty.Providers.ConsoleFormat (ResultDetailsPrinter, noResultDetails
 singleTest :: IsTest t => TestName -> t -> TestTree
 singleTest = SingleTest
 
--- | 'Result' of a passed test.
+-- | t'Result' of a passed test.
 --
 -- @since 0.8
 testPassed
@@ -37,7 +37,7 @@ testPassed desc = Result
   , resultDetailsPrinter = noResultDetails
   }
 
--- | 'Result' of a failed test.
+-- | t'Result' of a failed test.
 --
 -- @since 0.8
 testFailed
@@ -51,7 +51,7 @@ testFailed desc = Result
   , resultDetailsPrinter = noResultDetails
   }
 
--- | 'Result' of a failed test with custom details printer
+-- | t'Result' of a failed test with custom details printer
 --
 -- @since 1.3.1
 testFailedDetails

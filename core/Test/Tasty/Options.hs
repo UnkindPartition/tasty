@@ -135,7 +135,7 @@ lookupOption (OptionSet s) =
 changeOption :: forall v . IsOption v => (v -> v) -> OptionSet -> OptionSet
 changeOption f s = setOption (f $ lookupOption s) s
 
--- | Create a singleton 'OptionSet'.
+-- | Create a singleton t'OptionSet'.
 --
 -- @since 0.8
 singleOption :: IsOption v => v -> OptionSet

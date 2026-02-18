@@ -278,7 +278,7 @@ instance Show DependencySpec where
 data Dependency = Dependency DependencyType DependencySpec
   deriving (Eq, Show)
 
--- | Is given 'Dependency' a dependency that was introduced with 'After'?
+-- | Is given t'Dependency' a dependency that was introduced with 'After'?
 isPatternDependency :: Dependency -> Bool
 isPatternDependency (Dependency _ (PatternDep {})) = True
 isPatternDependency _ = False
@@ -300,7 +300,7 @@ mapAccumM f acc (x:xs) = do
 -- | An action with meta information
 data TestAction act = TestAction
   { testAction :: act
-    -- ^ Some action, typically 'UnresolvedAction', 'ResolvedAction', or 'Action'.
+    -- ^ Some action, typically 'UnresolvedAction', 'ResolvedAction', or t'Action'.
   , testPath :: Path
     -- ^ Path pointing to this action (a series of group names + a test name)
   , testDeps :: Seq Dependency
@@ -321,8 +321,8 @@ type ResolvedAction = IO ()
 type Size = Int
 
 -- | Simplified version of 'TestTree' that only includes the tests to be run (as
--- a 'TestAction') and the resources needed to run them (as 'Initializer's and
--- 'Finalizer's).
+-- a t'TestAction') and the resources needed to run them (as t'Initializer's and
+-- t'Finalizer's).
 data TestActionTree act
   = TResource Initializer Finalizer (TestActionTree act)
   | TGroup Size [TestActionTree act]
@@ -419,8 +419,8 @@ createTestActions opts0 tree = do
           Independent NonParallel -> foldSequential AllFinish trees
           Dependent depType -> foldSequential depType trees
 
-    foldSequential :: DependencyType -> [Tr] -> ReaderT (Path, Seq Dependency) IO [TestActionTree UnresolvedAction] 
-    foldSequential depType = 
+    foldSequential :: DependencyType -> [Tr] -> ReaderT (Path, Seq Dependency) IO [TestActionTree UnresolvedAction]
+    foldSequential depType =
       fmap snd . mapAccumM (goSeqGroup depType) mempty
 
     -- * Utility functions
@@ -576,7 +576,7 @@ destroyResource restore (Finalizer doRelease stateVar _) = join . atomically $ d
     FailedToCreate {} -> return $ return Nothing
     Destroyed         -> return $ return Nothing
 
--- While tasty allows to configure 'OptionSet' at any level of test tree,
+-- While tasty allows to configure t'OptionSet' at any level of test tree,
 -- it often has any effect only on options of test providers (class IsTest).
 -- But test runners and reporters typically only look into the OptionSet
 -- they were given as an argument. This is not unreasonable: e. g., if an option
@@ -585,9 +585,9 @@ destroyResource restore (Finalizer doRelease stateVar _) = join . atomically $ d
 -- a global option, without passing it via command line.
 --
 -- 'applyTopLevelPlusTestOptions' allows for a compromise: unwrap top-level
--- 'PlusTestOptions' from the 'TestTree' and apply them to the 'OptionSet'
+-- 'PlusTestOptions' from the 'TestTree' and apply them to the t'OptionSet'
 -- from command line. This way a user can wrap their tests in
--- 'adjustOption' / 'localOption' forcing, for instance, 'NumThreads' to 1.
+-- 'adjustOption' / 'localOption' forcing, for instance, t'NumThreads' to 1.
 --
 -- This function is not publicly exposed.
 applyTopLevelPlusTestOptions
@@ -606,7 +606,7 @@ applyTopLevelPlusTestOptions opts tree = (opts, tree)
 --
 -- Once the callback returns, stop running the tests.
 --
--- The number of test running threads is determined by the 'NumThreads'
+-- The number of test running threads is determined by the t'NumThreads'
 -- option.
 --
 -- @since 0.10

@@ -25,7 +25,7 @@ import Test.Tasty.Patterns.Expr
 
 type Token = ReadP
 
--- | A separate 'Parser' data type ensures that we don't forget to skip
+-- | A separate t'Parser' data type ensures that we don't forget to skip
 -- spaces.
 --
 -- @since 1.0

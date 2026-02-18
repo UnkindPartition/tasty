@@ -146,7 +146,7 @@ terminalWidth = unsafePerformIO $ do
 approxMaxResultShortDescriptionWidth :: Int
 approxMaxResultShortDescriptionWidth = 20
 
--- | Build the 'TestOutput' for a 'TestTree' and 'OptionSet'. The @colors@
+-- | Build the 'TestOutput' for a 'TestTree' and t'OptionSet'. The @colors@
 -- ImplicitParam controls whether the output is colored.
 --
 -- @since 0.11.3
@@ -276,7 +276,7 @@ foldTestOutput
   :: Monoid b
   => (String -> IO () -> IO Result -> (Result -> IO ()) -> b)
   -- ^ Eliminator for test cases. The @IO ()@ prints the testname. The
-  -- @IO Result@ blocks until the test is finished, returning it's 'Result'.
+  -- @IO Result@ blocks until the test is finished, returning it's t'Result'.
   -- The @Result -> IO ()@ function prints the formatted output.
   -> (String -> IO () -> b -> b)
   -- ^ Eliminator for test groups. The @IO ()@ prints the test group's name.
@@ -420,7 +420,7 @@ instance Monoid Statistics where
   mappend = (Sem.<>)
 #endif
 
--- | @computeStatistics@ computes a summary 'Statistics' for
+-- | @computeStatistics@ computes a summary t'Statistics' for
 -- a given state of the 'StatusMap'.
 -- Useful in combination with 'printStatistics'.
 --

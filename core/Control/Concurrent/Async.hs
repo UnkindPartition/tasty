@@ -58,8 +58,8 @@ import GHC.IO hiding (onException)
 --
 data Async a = Async
   { asyncThreadId :: {-# UNPACK #-} !ThreadId
-                  -- ^ Returns the 'ThreadId' of the thread running
-                  -- the given 'Async'.
+                  -- ^ Returns the t'ThreadId' of the thread running
+                  -- the given t'Async'.
   , _asyncWait    :: STM (Either SomeException a)
   }
 
@@ -150,12 +150,12 @@ waitCatchSTM :: Async a -> STM (Either SomeException a)
 waitCatchSTM (Async _ w) = w
 
 -- | Cancel an asynchronous action by throwing the @AsyncCancelled@
--- exception to it, and waiting for the `Async` thread to quit.
--- Has no effect if the 'Async' has already completed.
+-- exception to it, and waiting for the t'Async' thread to quit.
+-- Has no effect if the t'Async' has already completed.
 --
 -- > cancel a = throwTo (asyncThreadId a) AsyncCancelled <* waitCatch a
 --
--- Note that 'cancel' will not terminate until the thread the 'Async'
+-- Note that 'cancel' will not terminate until the thread the t'Async'
 -- refers to has terminated. This means that 'cancel' will block for
 -- as long said thread blocks when receiving an asynchronous exception.
 --

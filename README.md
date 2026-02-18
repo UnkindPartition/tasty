@@ -703,14 +703,14 @@ Tasty executes tests in parallel to make them finish faster.
 If this parallelism is not desirable, you can declare *dependencies* between
 tests, so that one test will not start until certain other tests finish.
 
-Dependencies are declared using the `after` or `sequentialTestGroup` combinator:
+Dependencies are declared using the `after` or `dependentTestGroup` combinator:
 
 * `after AllFinish "pattern" my_tests` will execute the test tree `my_tests` only after all
     tests that match the pattern finish.
 * `after AllSucceed "pattern" my_tests` will execute the test tree `my_tests` only after all
     tests that match the pattern finish **and** only if they all succeed. If at
     least one dependency fails, then `my_tests` will be skipped.
-* `sequentialTestGroup groupName dependencyType [tree1, tree2, ..]` will execute all tests
+* `dependentTestGroup groupName dependencyType [tree1, tree2, ..]` will execute all tests
    in `tree1` first, after which it will execute all tests in `tree2`, and so forth. Like
    `after`, `dependencyType` can either be set to `AllFinish` or `AllSucceed`.
 
@@ -723,7 +723,7 @@ after
   -> TestTree       -- ^ the subtree that depends on other tests
   -> TestTree       -- ^ the subtree annotated with dependency information
 
-sequentialTestGroup
+dependentTestGroup
   :: TestName       -- ^ name of the group
   -> DependencyType -- ^ whether to run the tests even if some of the dependencies fail
   -> [TestTree]     -- ^ trees to execute sequentially
@@ -792,7 +792,7 @@ Here are some caveats to keep in mind when using patterns to specify dependencie
    test tree, searching for the next test to execute may also have an
    overhead quadratic in the number of tests.
 
-Use `sequentialTestGroup` to mitigate these problems.
+Use `dependentTestGroup` to mitigate these problems.
 
 
 ## FAQ

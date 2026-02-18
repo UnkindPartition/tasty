@@ -226,7 +226,7 @@ toTestTree (GenUniqueLabels genUniqueLabels) tree =
 
     Test n -> do
       -- Caller might opt to not generate unique labels for each test: 
-      -- sequentialTestGroup should still function properly in face of name collisions.
+      -- dependentTestGroup should still function properly in face of name collisions.
       let label = if genUniqueLabels then "T" ++ show n else "T"
 
       testCase label $ do
