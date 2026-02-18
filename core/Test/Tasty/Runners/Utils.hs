@@ -63,7 +63,7 @@ forceElements = foldr seq ()
 
 -- from https://ro-che.info/articles/2014-07-30-bracket
 -- | Install signal handlers so that e.g. the cursor is restored if the test
--- suite is killed by SIGTERM. Upon a signal, a 'SignalException' will be
+-- suite is killed by SIGTERM. Upon a signal, a t'SignalException' will be
 -- thrown to the thread that has executed this action.
 --
 -- This function is called automatically from the @defaultMain*@ family of

@@ -62,11 +62,11 @@ data Timeout
   | NoTimeout
   deriving
   ( Eq
-  -- ^ Auto-derived instance, just to allow storing in a 'Map' and such.
+  -- ^ Auto-derived instance, just to allow storing in a 'Data.Map.Map' and such.
   --
   -- @since 1.5.1
   , Ord
-  -- ^ Auto-derived instance, just to allow storing in a 'Map' and such.
+  -- ^ Auto-derived instance, just to allow storing in a 'Data.Map.Map' and such.
   --
   -- @since 1.5.1
   , Show
@@ -100,7 +100,7 @@ parseDuration str =
         _ -> Nothing
     _ -> Nothing
 
--- | A shortcut for creating 'Timeout' values.
+-- | A shortcut for creating v'Timeout' values.
 --
 -- @since 0.8
 mkTimeout
@@ -127,7 +127,7 @@ instance IsOption HideProgress where
 
 -- | The list of all core options, i.e. the options not specific to any
 -- provider or ingredient, but to tasty itself. Currently contains
--- 'TestPattern' and 'Timeout'.
+-- t'TestPattern', t'Timeout' and t'HideProgress'.
 --
 -- @since 0.1
 coreOptions :: [OptionDescription]

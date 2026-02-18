@@ -7,7 +7,7 @@ import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Foreign.StablePtr
 
--- | What to do about an 'Action'?
+-- | What to do about an t'Action'?
 data ActionStatus
   = ActionReady
     -- ^ the action is ready to be executed
