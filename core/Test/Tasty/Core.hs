@@ -3,11 +3,17 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Test.Tasty.Core
   ( FailureReason(..)
   , Outcome(..)
   , Time
   , Result(..)
+  , SomeExtraData(..)
+  , attachExtraData
+  , lookupExtraData
   , resultSuccessful
   , exceptionResult
   , Progress(..)
@@ -123,10 +129,37 @@ data Result = Result
     -- Usually this is set to 'noResultDetails', which does nothing.
     --
     -- @since 1.3.1
+  , resultExtraData :: Map.Map TypeRep SomeExtraData
+    -- ^ Any extra data attached to result of test evaluation
+    --
+    -- @since NEXTVERSION
   }
   deriving
   ( Show -- ^ @since 1.2
   )
+
+-- | @Dynamic@-like wrapper for data of arbitrary type but it carries
+--   additional type class dictionaries.
+data SomeExtraData where
+  SomeExtraData :: (Typeable a, Show a, Read a, Eq a) => a -> SomeExtraData
+
+deriving instance Show SomeExtraData
+
+
+-- | Lookup values of given type o
+--
+-- @since NEXTVERSION
+lookupExtraData :: forall a. Typeable a => Result -> Maybe a
+lookupExtraData r = do
+  SomeExtraData a <- typeOf (undefined :: a) `Map.lookup` resultExtraData r
+  cast a
+
+-- | Attach value of arbitrary type to result of execution
+--
+-- @since NEXTVERSION
+attachExtraData :: (Typeable a, Show a, Read a, Eq a) => a -> Result -> Result
+attachExtraData a r =
+  r { resultExtraData = Map.insert (typeOf a) (SomeExtraData a) (resultExtraData r) }
 
 {- Note [Skipped tests]
    ~~~~~~~~~~~~~~~~~~~~
@@ -167,6 +200,7 @@ exceptionResult e = Result
   , resultShortDescription = "FAIL"
   , resultTime = 0
   , resultDetailsPrinter = noResultDetails
+  , resultExtraData = mempty
   }
 
 -- | Test progress information.
