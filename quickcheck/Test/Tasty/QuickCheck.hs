@@ -42,12 +42,13 @@ import Test.QuickCheck hiding -- for re-export
   , verboseCheckResult
   , verbose
   -- Template Haskell functions
-#if MIN_VERSION_QuickCheck(2,11,0)
   , allProperties
-#endif
   , forAllProperties
   , quickCheckAll
   , verboseCheckAll
+  , polyQuickCheck
+  , polyVerboseCheck
+  , monomorphic
   )
 
 import Control.Applicative

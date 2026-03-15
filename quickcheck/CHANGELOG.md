@@ -1,6 +1,12 @@
 Changes
 =======
 
+Version 0.12
+------------
+
+* Do not re-export TemplateHaskell functions
+  `polyQuickCheck`, `polyVerboseCheck` and `monomorphic`.
+
 Version 0.11.1
 --------------
 
