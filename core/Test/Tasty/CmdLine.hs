@@ -154,9 +154,7 @@ parseOptions ins tree = do
   mapM_ (hPutStrLn stderr) warnings
   cmdlineOpts <- execParser $
     info (helper <*> parser)
-    ( fullDesc <>
-      header "Mmm... tasty test suite"
-    )
+    (header "Mmm... tasty test suite")
   envOpts <- suiteEnvOptions ins tree
   return $ envOpts <> cmdlineOpts
 
