@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeApplications #-}
@@ -56,6 +57,10 @@ import Test.Tasty.Patterns.Types
 import Test.Tasty.Providers.ConsoleFormat
 import Text.Printf
 import Text.Read (readMaybe)
+
+#if MIN_VERSION_base(4,21,0) && !MIN_VERSION_base(4,22,0)
+import Control.Exception.Context
+#endif
 
 -- | If a test failed, 'FailureReason' describes why.
 --
@@ -169,11 +174,23 @@ resultSuccessful r =
 exceptionResult :: SomeException -> Result
 exceptionResult e = Result
   { resultOutcome = Failure $ TestThrewException e
-  , resultDescription = "Exception: " ++ displayException e
+  , resultDescription = "Exception: " ++ displayException' e
   , resultShortDescription = "FAIL"
   , resultTime = 0
   , resultDetailsPrinter = noResultDetails
   }
+
+displayException' :: SomeException -> String
+#if MIN_VERSION_base(4,22,0)
+displayException' = displayExceptionWithInfo
+#elif MIN_VERSION_base(4,21,0)
+displayException' (SomeException e) =
+  displayException e ++ case displayExceptionContext ?exceptionContext of
+    "" -> ""
+    dc -> "\n\n" ++ dc
+#else
+displayException' = displayException
+#endif
 
 -- | Test progress information.
 --
