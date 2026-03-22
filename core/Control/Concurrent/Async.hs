@@ -36,7 +36,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
-{-# LANGUAGE MagicHash, UnboxedTuples #-}
+{-# LANGUAGE CPP, MagicHash, UnboxedTuples #-}
 
 module Control.Concurrent.Async (
   async, withAsync, wait, asyncThreadId, cancel, concurrently
@@ -44,12 +44,39 @@ module Control.Concurrent.Async (
 
 import Control.Concurrent.STM
 import Control.Exception
+  ( BlockedIndefinitelyOnMVar(..)
+  , BlockedIndefinitelyOnSTM(..)
+  , Exception
+  , SomeException
+  , asyncExceptionFromException
+  , asyncExceptionToException
+  , catch
+  , fromException
+  , onException
+  , toException
+  , try
+  )
 import Control.Concurrent
 import Control.Monad
 import Data.IORef
 import GHC.Conc (ThreadId(..))
 import GHC.Exts
 import GHC.IO hiding (onException)
+
+#if MIN_VERSION_base(4,21,0)
+import Control.Exception (ExceptionWithContext, tryWithContext, catchNoPropagate, rethrowIO)
+#else
+type ExceptionWithContext x = x
+
+catchNoPropagate :: IO a -> (ExceptionWithContext SomeException -> IO a) -> IO a
+catchNoPropagate = catchAll
+
+tryWithContext :: IO a -> IO (Either (ExceptionWithContext SomeException) a)
+tryWithContext = try
+
+rethrowIO :: ExceptionWithContext SomeException -> IO a
+rethrowIO = throwIO
+#endif
 
 -- | An asynchronous action spawned by 'async' or 'withAsync'.
 -- Asynchronous actions are executed in a separate thread, and
@@ -60,7 +87,7 @@ data Async a = Async
   { asyncThreadId :: {-# UNPACK #-} !ThreadId
                   -- ^ Returns the t'ThreadId' of the thread running
                   -- the given t'Async'.
-  , _asyncWait    :: STM (Either SomeException a)
+  , _asyncWait    :: STM (Either (ExceptionWithContext SomeException) a)
   }
 
 -- | Spawn an asynchronous action in a separate thread.
@@ -102,11 +129,11 @@ withAsyncUsing :: (IO () -> IO ThreadId)
 withAsyncUsing doFork = \action inner -> do
   var <- newEmptyTMVarIO
   mask $ \restore -> do
-    t <- doFork $ try (restore action) >>= atomically . putTMVar var
+    t <- doFork $ tryWithContext (restore action) >>= atomically . putTMVar var
     let a = Async t (readTMVar var)
-    r <- restore (inner a) `catchAll` \e -> do
+    r <- restore (inner a) `catchNoPropagate` \e -> do
       uninterruptibleCancel a
-      throwIO e
+      rethrowIO (e :: ExceptionWithContext SomeException)
     uninterruptibleCancel a
     return r
 
@@ -130,7 +157,7 @@ wait = tryAgain . atomically . waitSTM
 -- > waitCatch = atomically . waitCatchSTM
 --
 {-# INLINE waitCatch #-}
-waitCatch :: Async a -> IO (Either SomeException a)
+waitCatch :: Async a -> IO (Either (ExceptionWithContext SomeException) a)
 waitCatch = tryAgain . atomically . waitCatchSTM
   where
     -- See: https://github.com/simonmar/async/issues/14
@@ -146,7 +173,7 @@ waitSTM a = do
 -- | A version of 'waitCatch' that can be used inside an STM transaction.
 --
 {-# INLINE waitCatchSTM #-}
-waitCatchSTM :: Async a -> STM (Either SomeException a)
+waitCatchSTM :: Async a -> STM (Either (ExceptionWithContext SomeException) a)
 waitCatchSTM (Async _ w) = w
 
 -- | Cancel an asynchronous action by throwing the @AsyncCancelled@
