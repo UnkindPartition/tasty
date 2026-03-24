@@ -1,6 +1,26 @@
 Changes
 =======
 
+Version 1.5.4
+--------------
+
+_2025-03-31_
+
+* Fix display of `HasCallStack` backtraces when a test throws an error
+  ([#472](https://github.com/UnkindPartition/tasty/pull/472)).
+* Introduce `dependentTestGroup` and `inOrderTestGroup`,
+  deprecate `sequentialTestGroup`
+  ([#448](https://github.com/UnkindPartition/tasty/pull/448)).
+* Add `instance IsTest t => IsTest (ContT () IO t)`
+  ([#466](https://github.com/UnkindPartition/tasty/pull/466)).
+* Limit maximum line length in console reporter
+  ([#451](https://github.com/UnkindPartition/tasty/pull/451)).
+* Make `-j` to entail `+RTS -N` automatically
+  ([#457](https://github.com/UnkindPartition/tasty/pull/457)).
+* Do not depend on `unbounded-delays` on `ppc64le` and `loongarch64`
+  ([#460](https://github.com/UnkindPartition/tasty/pull/460),
+   [#465](https://github.com/UnkindPartition/tasty/pull/465)).
+
 Version 1.5.3
 --------------
 
