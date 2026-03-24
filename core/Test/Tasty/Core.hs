@@ -240,6 +240,7 @@ class Typeable t => IsTest t where
   -- | The list of options that affect execution of tests of this type
   testOptions :: Tagged t [OptionDescription]
 
+-- | @since 1.5.4
 instance IsTest t => IsTest (ContT () IO t) where
   testOptions = coerce (testOptions @t)
   run opts (ContT k) yieldProgress = do
