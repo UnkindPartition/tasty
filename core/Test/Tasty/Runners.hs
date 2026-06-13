@@ -32,6 +32,7 @@ module Test.Tasty.Runners
   , optionParser
   , suiteOptionParser
   , defaultMainWithIngredients
+  , defaultMainWithIngredientsAndOptions
     -- * Running tests
   , Status(..)
   , Result(..)
@@ -54,12 +55,12 @@ module Test.Tasty.Runners
   )
   where
 
+import Test.Tasty.CmdLine
 import Test.Tasty.Core
-import Test.Tasty.Run
 import Test.Tasty.Ingredients
+import Test.Tasty.Ingredients.Basic
 import Test.Tasty.Options.Core
 import Test.Tasty.Patterns
-import Test.Tasty.CmdLine
-import Test.Tasty.Ingredients.Basic
+import Test.Tasty.Run
 import Test.Tasty.Runners.Reducers
 import Test.Tasty.Runners.Utils
