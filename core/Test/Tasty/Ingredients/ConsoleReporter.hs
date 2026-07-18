@@ -600,7 +600,7 @@ consoleTestReporterWithHook hook = TestReporter consoleTestReporterOptions $
       isTerm <- hSupportsANSI stdout
       isTermColor <- hSupportsANSIColor stdout
 
-      (\k -> if isTerm
+      (\k -> if isTerm && ansiTricks
         -- When killing with Ctrl+C 'showCursor' can fail
         -- to restore terminal cursor if not flushed explicitly
         then (do hideCursor; k) `finally` (do showCursor; hFlush stdout)
