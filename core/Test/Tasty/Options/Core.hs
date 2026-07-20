@@ -1,6 +1,7 @@
 -- | Core options, i.e. the options used by tasty itself
-{-# LANGUAGE CPP, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-} -- for (^)
+{- HLINT ignore "Avoid restricted function" -}
 module Test.Tasty.Options.Core
   ( NumThreads(..)
   , Timeout(..)
@@ -12,16 +13,16 @@ module Test.Tasty.Options.Core
   )
   where
 
-import Control.Monad (mfilter)
-import Data.Proxy
-import Data.Fixed
-import Options.Applicative hiding (str)
-import GHC.Conc
-#if !MIN_VERSION_base(4,11,0)
-import Data.Monoid
-#endif
 import Control.Concurrent
+import Control.Monad (mfilter)
+import Data.Fixed
+import Data.Monoid
+import Data.Proxy
+import GHC.Conc
+import GHC.Environment (getFullArgs)
+import Options.Applicative hiding (str)
 import System.IO.Unsafe
+import Text.Read (readMaybe)
 
 import Test.Tasty.Options
 import Test.Tasty.Patterns
@@ -35,17 +36,41 @@ import Test.Tasty.Patterns
 -- reporters are handled already involves parallelism. Other ingredients
 -- may also choose to include this option.
 --
+-- By default it is the number of cores when using threaded RTS and 1 for non-threaded,
+-- unless the test suite is run with @+RTS -Nx@, in which case it is @x@.
+--
 -- @since 0.1
 newtype NumThreads = NumThreads { getNumThreads :: Int }
   deriving (Eq, Ord, Num)
 instance IsOption NumThreads where
-  defaultValue = unsafePerformIO $ NumThreads <$>
-      if rtsSupportsBoundThreads then getNumProcessors else pure 1
+  defaultValue = unsafePerformIO $ NumThreads <$> do
+      rtsDashNArg <- extractRtsDashNArgument
+      if rtsSupportsBoundThreads
+        then maybe getNumProcessors pure rtsDashNArg
+        else pure 1
   parseValue = mfilter onlyPositive . fmap NumThreads . safeRead
   optionName = return "num-threads"
   optionHelp = return "Number of threads to use for tests execution"
   optionCLParser = mkOptionCLParser (short 'j' <> metavar "NUMBER")
-  showDefaultValue _ = Just "Number of cores when using threaded RTS, 1 for non-threaded"
+  showDefaultValue = Just . show . getNumThreads
+
+extractRtsDashNArgument :: IO (Maybe Int)
+extractRtsDashNArgument = do
+  fullArgs <- getFullArgs
+  pure $ getLast $ foldMap (Last . isDashNArgument) $ cropBetweenRts fullArgs
+  where
+    isDashNArgument :: String -> Maybe Int
+    isDashNArgument ('-' : 'N' : rest) = readMaybe rest
+    isDashNArgument _ = Nothing
+
+    cropBetweenRts :: [String] -> [String]
+    cropBetweenRts xs = foldr go (const []) xs False
+      where
+        go :: String -> (Bool -> [String]) -> Bool -> [String]
+        go "+RTS" rest False = rest True
+        go "-RTS" rest True = rest False
+        go _ rest False = rest False
+        go arg rest True = arg : rest True
 
 -- | Filtering function to prevent non-positive number of threads
 onlyPositive :: NumThreads -> Bool
