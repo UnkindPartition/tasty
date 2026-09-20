@@ -90,14 +90,14 @@ jobs:
   build-wasi:
     runs-on: ubuntu-latest
     env:
-      GHC_WASM_META_REV: 895f7067e1d4c918a45559da9d2d6a403a690703
+      GHC_WASM_META_REV: 1fb547741c9665d2c05ee4e3fc73c715b2ff65a1
       FLAVOUR: '9.6'
     steps:
 
     - name: Setup ghc-wasm32-wasi
       run: |
         cd "$(mktemp -d)"
-        curl -L "https://gitlab.haskell.org/ghc/ghc-wasm-meta/-/archive/${GHC_WASM_META_REV}/ghc-wasm-meta-master.tar.gz" | tar xz --strip-components=1
+        curl -L "https://gitlab.haskell.org/haskell-wasm/ghc-wasm-meta/-/archive/${GHC_WASM_META_REV}/ghc-wasm-meta-master.tar.gz" | tar xz --strip-components=1
         ./setup.sh
         ~/.ghc-wasm/add_to_github_path.sh
 
@@ -122,7 +122,7 @@ jobs:
         wasm32-wasi-cabal install ./core-tests
         for test in tasty-core-tests exit-status-test resource-release-test failing-pattern-test; do
           echo '#!/usr/bin/env bash' > "${TEST_WRAPPERS}/${test}"
-          echo "wasmtime --mapdir /::/ --env PWD=\"\$PWD\" ~/.ghc-wasm/.cabal/bin/$test.wasm -- \"\$@\"" \
+          echo "wasmtime --dir /::/ --env PWD=\"\$PWD\" ~/.ghc-wasm/.cabal/bin/$test.wasm -- \"\$@\"" \
             >> "${TEST_WRAPPERS}/${test}"
           chmod +x "${TEST_WRAPPERS}/${test}"
         done
