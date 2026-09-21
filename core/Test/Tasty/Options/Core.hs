@@ -22,6 +22,9 @@ import Data.Monoid
 import Data.Proxy
 import GHC.Conc
 import GHC.Environment (getFullArgs)
+#if MIN_VERSION_base(4,10,0)
+import GHC.RTS.Flags
+#endif
 import Options.Applicative hiding (str)
 import System.Environment (lookupEnv)
 import System.IO.Unsafe
@@ -43,9 +46,13 @@ import Test.Tasty.Patterns
 -- * 1, if the test suite is not linked with the threaded RTS.
 --
 -- * The result of 'getNumCapabilities' at the time of parsing the options if
---   it's greater than 1. Otherwise, it's 1 if a single capability was requested
---   explicitly by passing @-N1@ or @-maxN1@ as an RTS command-line argument or
---   in the @GHCRTS@ environment variable.
+--   it's greater than 1, or if it differs from the number of capabilities the
+--   RTS started with, i.e. the test suite called 'setNumCapabilities'.
+--   Detection of such a call requires @base-4.10@ or newer.
+--
+-- * 1, if a single capability was requested explicitly by passing @-N1@ or
+--   @-maxN1@ as an RTS command-line argument or in the @GHCRTS@ environment
+--   variable.
 --
 -- * The number of cores otherwise.
 --
@@ -66,7 +73,8 @@ defaultNumThreads = unsafePerformIO $
     then pure 1
     else do
       caps <- getNumCapabilities
-      if caps > 1
+      startupCaps <- startupCapabilities
+      if caps > 1 || maybe False (/= caps) startupCaps
         then pure caps
         else do
           -- A single capability is ambiguous: it means either that no -N was
@@ -76,6 +84,18 @@ defaultNumThreads = unsafePerformIO $
             then pure 1
             else getNumProcessors
 {-# NOINLINE defaultNumThreads #-}
+
+-- | Number of capabilities the RTS started with, if it can be determined.
+--
+-- A current number that differs from it means that 'setNumCapabilities' was
+-- called, so the current number is a conscious choice of the user.
+startupCapabilities :: IO (Maybe Int)
+startupCapabilities =
+#if MIN_VERSION_base(4,10,0)
+  Just . fromIntegral . nCapabilities . parFlags <$> getRTSFlags
+#else
+  pure Nothing
+#endif
 
 -- | Check whether @-N1@ or @-maxN1@ was passed to the RTS as an argument or in
 -- the @GHCRTS@ environment variable.
