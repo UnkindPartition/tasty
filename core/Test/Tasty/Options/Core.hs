@@ -21,6 +21,7 @@ import Data.Proxy
 import GHC.Conc
 import GHC.Environment (getFullArgs)
 import Options.Applicative hiding (str)
+import System.Environment (lookupEnv)
 import System.IO.Unsafe
 import Text.Read (readMaybe)
 
@@ -57,7 +58,8 @@ instance IsOption NumThreads where
 extractRtsDashNArgument :: IO (Maybe Int)
 extractRtsDashNArgument = do
   fullArgs <- getFullArgs
-  pure $ getLast $ foldMap (Last . isDashNArgument) $ cropBetweenRts fullArgs
+  ghcRtsEnv <- maybe [] words <$> lookupEnv "GHCRTS"
+  pure $ getLast $ foldMap (Last . isDashNArgument) $ ghcRtsEnv ++ cropBetweenRts fullArgs
   where
     isDashNArgument :: String -> Maybe Int
     isDashNArgument ('-' : 'N' : rest) = readMaybe rest
