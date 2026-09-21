@@ -67,6 +67,7 @@ extractRtsDashNArgument = do
     cropBetweenRts xs = foldr go (const []) xs False
       where
         go :: String -> (Bool -> [String]) -> Bool -> [String]
+        go "--RTS" _ _ = []
         go "+RTS" rest False = rest True
         go "-RTS" rest True = rest False
         go _ rest False = rest False
