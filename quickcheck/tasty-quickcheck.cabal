@@ -23,7 +23,7 @@ library
   exposed-modules:     Test.Tasty.QuickCheck
   other-extensions:    GeneralizedNewtypeDeriving
   build-depends:       base >= 4.9 && < 5,
-                       tagged < 0.9,
+                       tagged < 0.10,
                        tasty >= 1.5.1 && < 1.6,
                        random < 1.4,
                        QuickCheck >= 2.11 && < 2.20,
