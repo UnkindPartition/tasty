@@ -1,6 +1,7 @@
 -- | Core options, i.e. the options used by tasty itself
 {-# LANGUAGE CPP, GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-} -- for (^)
+{- HLINT ignore "Avoid restricted function" -}
 module Test.Tasty.Options.Core
   ( NumThreads(..)
   , Timeout(..)
@@ -12,15 +13,20 @@ module Test.Tasty.Options.Core
   )
   where
 
+import Control.Concurrent
 import Control.Monad (mfilter)
-import Data.Proxy
 import Data.Fixed
-import Options.Applicative hiding (str)
-import GHC.Conc
 #if !MIN_VERSION_base(4,11,0)
 import Data.Monoid
 #endif
-import Control.Concurrent
+import Data.Proxy
+import GHC.Conc
+import GHC.Environment (getFullArgs)
+#if MIN_VERSION_base(4,10,0)
+import GHC.RTS.Flags
+#endif
+import Options.Applicative hiding (str)
+import System.Environment (lookupEnv)
 import System.IO.Unsafe
 
 import Test.Tasty.Options
@@ -35,17 +41,82 @@ import Test.Tasty.Patterns
 -- reporters are handled already involves parallelism. Other ingredients
 -- may also choose to include this option.
 --
+-- The default value is
+--
+-- * 1, if the test suite is not linked with the threaded RTS.
+--
+-- * The result of 'getNumCapabilities' at the time of parsing the options if
+--   it's greater than 1, or if it differs from the number of capabilities the
+--   RTS started with, i.e. the test suite called 'setNumCapabilities'.
+--   Detection of such a call requires @base-4.10@ or newer.
+--
+-- * 1, if a single capability was requested explicitly by passing @-N1@ or
+--   @-maxN1@ as an RTS command-line argument or in the @GHCRTS@ environment
+--   variable.
+--
+-- * The number of cores otherwise.
+--
 -- @since 0.1
 newtype NumThreads = NumThreads { getNumThreads :: Int }
   deriving (Eq, Ord, Num)
 instance IsOption NumThreads where
-  defaultValue = unsafePerformIO $ NumThreads <$>
-      if rtsSupportsBoundThreads then getNumProcessors else pure 1
+  defaultValue = NumThreads defaultNumThreads
   parseValue = mfilter onlyPositive . fmap NumThreads . safeRead
   optionName = return "num-threads"
   optionHelp = return "Number of threads to use for tests execution"
   optionCLParser = mkOptionCLParser (short 'j' <> metavar "NUMBER")
-  showDefaultValue _ = Just "Number of cores when using threaded RTS, 1 for non-threaded"
+  showDefaultValue _ = Just "Number of cores/capabilities when using threaded RTS, 1 for non-threaded"
+
+defaultNumThreads :: Int
+defaultNumThreads = unsafePerformIO $
+  if not rtsSupportsBoundThreads
+    then pure 1
+    else do
+      caps <- getNumCapabilities
+      startupCaps <- startupCapabilities
+      if caps > 1 || maybe False (/= caps) startupCaps
+        then pure caps
+        else do
+          -- A single capability is ambiguous: it means either that no -N was
+          -- given at all, or that a single one was requested explicitly.
+          singleRequested <- isSingleCapabilityRequested
+          if singleRequested
+            then pure 1
+            else getNumProcessors
+{-# NOINLINE defaultNumThreads #-}
+
+-- | Number of capabilities the RTS started with, if it can be determined.
+--
+-- A current number that differs from it means that 'setNumCapabilities' was
+-- called, so the current number is a conscious choice of the user.
+startupCapabilities :: IO (Maybe Int)
+startupCapabilities =
+#if MIN_VERSION_base(4,10,0)
+  Just . fromIntegral . nCapabilities . parFlags <$> getRTSFlags
+#else
+  pure Nothing
+#endif
+
+-- | Check whether @-N1@ or @-maxN1@ was passed to the RTS as an argument or in
+-- the @GHCRTS@ environment variable.
+isSingleCapabilityRequested :: IO Bool
+isSingleCapabilityRequested = do
+  argsFlags <- cropBetweenRts <$> getFullArgs
+  envFlags <- maybe [] words <$> lookupEnv "GHCRTS"
+  pure $ any isSingleCapability $ argsFlags ++ envFlags
+  where
+    isSingleCapability :: String -> Bool
+    isSingleCapability arg = arg == "-N1" || arg == "-maxN1"
+
+    cropBetweenRts :: [String] -> [String]
+    cropBetweenRts xs = foldr go (const []) xs False
+      where
+        go :: String -> (Bool -> [String]) -> Bool -> [String]
+        go "--RTS" _ _ = []
+        go "+RTS" rest False = rest True
+        go "-RTS" rest True = rest False
+        go _ rest False = rest False
+        go arg rest True = arg : rest True
 
 -- | Filtering function to prevent non-positive number of threads
 onlyPositive :: NumThreads -> Bool

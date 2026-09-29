@@ -211,7 +211,8 @@ Available options:
   --no-progress            Do not show progress
   -l,--list-tests          Do not run the tests; just print their names
   -j,--num-threads NUMBER  Number of threads to use for tests execution
-                           (default: # of cores/capabilities)
+                           (default: Number of cores/capabilities when using
+                           threaded RTS, 1 for non-threaded)
   -q,--quiet               Do not produce any output; indicate success only by
                            the exit code
   --hide-successes         Do not print tests that passed successfully
@@ -270,9 +271,23 @@ It is possible to combine run-time and compile-time options, too, by using
 during the run time, but increase or decrease it slightly for individual
 tests.
 
-This method currently doesn't work for ingredient options, such as `--quiet` or
-`--num-threads`. You can set them by setting the corresponding environment
-variable before calling `defaultMain`:
+Ingredient options, such as `--quiet` or `--num-threads`, are read from the
+top-level option set instead of individual tests. Still, since `tasty-1.5.1` you
+can set them in the test suite itself, as long as you wrap the *entire* test
+tree: outermost layers of `localOption` and `adjustOption` are applied to the
+top-level options before the tests are launched. For instance, this is how to
+run the tests sequentially:
+
+```haskell
+import Test.Tasty
+import Test.Tasty.Runners (NumThreads(..))
+
+main = defaultMain $ localOption (NumThreads 1) tests
+```
+
+Wrapping a subgroup rather than the entire test tree has no effect on ingredient
+options. If you cannot wrap the entire test tree, set the corresponding
+environment variable before calling `defaultMain`:
 
 <a id="num_threads_example">
 
@@ -583,11 +598,15 @@ Return the length, in characters, of its argument taken as a string, or of the w
 
 ### Running tests in parallel
 
-In order to run tests in parallel, you have to do the following:
+In order to run tests in parallel, you have to compile (or, more precisely,
+*link*) your test program with the `-threaded` flag.
 
-* Compile (or, more precisely, *link*) your test program with the `-threaded`
-  flag;
-* Launch the program with `+RTS -N -RTS`.
+By default tasty runs as many tests in parallel as there are cores. If more than
+one capability is available, that number is used instead: this is the case when
+the RTS was given an explicit `-N<x>` or `-maxN<x>` on the command line, in the
+`GHCRTS` environment variable or via `-with-rtsopts` at link time, as well as
+when the test suite calls `setNumCapabilities` with the appropriate value before
+the options are parsed.
 
 ### Timeout
 
