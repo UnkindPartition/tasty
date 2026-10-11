@@ -1,6 +1,20 @@
 Changes
 =======
 
+Version 1.5.5
+--------------
+
+_2025-10-30_
+
+* Revert making `-j` to entail `+RTS -N` automatically, restoring
+  the behaviour from `tasty-1.5.3` and earlier
+  ([#485](https://github.com/UnkindPartition/tasty/pull/485)).
+* Ensure that disabling `--ansi-tricks` disables
+  terminal width detection via ANSI tricks and disables
+  attempts to hide / show the cursor
+  ([#477](https://github.com/UnkindPartition/tasty/pull/477),
+   [#481](https://github.com/UnkindPartition/tasty/pull/481)).
+
 Version 1.5.4
 --------------
 
