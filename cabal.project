@@ -4,3 +4,7 @@ packages:
   hunit
   quickcheck
   smallcheck
+
+if impl(ghc >= 10.0)
+  allow-newer:
+    splitmix:base

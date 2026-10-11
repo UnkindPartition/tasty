@@ -22,9 +22,9 @@ import Control.Monad (forever, guard, join, liftM)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Reader (ReaderT(..), local, ask)
 import Control.Monad.Trans.Writer (execWriterT, tell)
-import Control.Concurrent
-import Control.Concurrent.STM
-import Control.Concurrent.Async
+import Control.Concurrent (threadDelay)
+import Control.Concurrent.STM (TVar, STM, check, readTVar, writeTVar, atomically, retry, throwSTM, newTVarIO)
+import Control.Concurrent.Async (wait, asyncThreadId, withAsync)
 import Control.Exception as E
 import Control.Arrow
 import Data.Monoid (First(..))
@@ -436,7 +436,7 @@ createTestActions opts0 tree = do
       TGroup _ trees    -> mconcat (map collectFinalizers trees)
       TAction _         -> mempty
 
-    goSeqGroup 
+    goSeqGroup
       :: DependencyType
       -> Seq Dependency
       -> Tr
