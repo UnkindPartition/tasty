@@ -17,7 +17,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest]
-        ghc: ['8.0', '8.2', '8.4', '8.6', '8.8', '8.10', '9.0', '9.2', '9.4', '9.6', '9.8', '9.10', '9.12', '9.14']
+        ghc: ['8.0', '8.2', '8.4', '8.6', '8.8', '8.10', '9.0', '9.2', '9.4', '9.6', '9.8', '9.10', '9.12', '9.14', '10.0']
         include:
         - os: macOS-latest
           ghc: 'latest'
@@ -26,7 +26,7 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     # Andreas, 2025-07-26, this step is no longer necessary:
     # - name: Install prerequisites for GHC <= 8.2 on ubuntu-22.04
@@ -40,7 +40,7 @@ jobs:
         ghc-version: ${{ matrix.ghc }}
         cabal-update: true
 
-    - uses: actions/cache/restore@v4
+    - uses: actions/cache/restore@v6
       name: Restore cabal cache
       id: cache
       with:
@@ -80,7 +80,7 @@ jobs:
 
     - name: Save cache
       if: always()
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v6
       with:
         path: |
           ${{ steps.setup-haskell.outputs.cabal-store }}
@@ -101,9 +101,10 @@ jobs:
         ./setup.sh
         ~/.ghc-wasm/add_to_github_path.sh
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
-    - uses: actions/cache/restore@v4
+    - uses: actions/cache/restore@v6
+
       id: cache
       with:
         path: |
@@ -133,7 +134,7 @@ jobs:
         core-tests/exit-status-tests.sh
         core-tests/failing-pattern-test.sh
 
-    - uses: actions/cache/save@v4
+    - uses: actions/cache/save@v6
       if: always()
       with:
         path: |
