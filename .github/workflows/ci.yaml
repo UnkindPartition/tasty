@@ -122,7 +122,7 @@ jobs:
         wasm32-wasi-cabal install ./core-tests
         for test in tasty-core-tests exit-status-test resource-release-test failing-pattern-test; do
           echo '#!/usr/bin/env bash' > "${TEST_WRAPPERS}/${test}"
-          echo "wasmtime --dir /::/ --env PWD=\"\$PWD\" ~/.ghc-wasm/.cabal/bin/$test.wasm -- \"\$@\"" \
+          echo "wasmtime --dir /::/ --env PWD=\"\$PWD\" ~/.ghc-wasm/.cabal/bin/$test.wasm \"\$@\"" \
             >> "${TEST_WRAPPERS}/${test}"
           chmod +x "${TEST_WRAPPERS}/${test}"
         done
