@@ -306,5 +306,5 @@ makeReplayMsg seedSz =
 replayFromResult :: QC.Result -> Maybe (QCGen, Int)
 replayFromResult r =
   case r of
-    Failure{} -> Just (QC.usedSeed r, QC.usedSize r)
+    Failure{usedSeed, usedSize} -> Just (usedSeed, usedSize)
     _ -> Nothing
