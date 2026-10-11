@@ -4,8 +4,6 @@
 module Test.Tasty.Runners.Utils where
 
 import Control.Exception
-import Control.Concurrent (mkWeakThreadId, myThreadId)
-import Control.Monad (forM_)
 import Text.Printf
 import Foreign.C (CInt)
 
@@ -27,6 +25,8 @@ import Data.Time.Clock.POSIX (getPOSIXTime)
 #endif
 
 #if INSTALL_HANDLERS
+import Control.Concurrent (mkWeakThreadId, myThreadId)
+import Control.Monad (forM_)
 import System.Posix.Signals
 import System.Mem.Weak (deRefWeak)
 #endif
