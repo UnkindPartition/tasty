@@ -533,7 +533,7 @@ consoleTestReporter :: Ingredient
 consoleTestReporter = TestReporter consoleTestReporterOptions $ \opts tree ->
   let
     TestPattern pattern = lookupOption opts
-    tests = testsNames opts tree
+    !tests = testsNames opts tree
     hook = (return .) . appendPatternIfTestFailed tests pattern
     TestReporter _ cb = consoleTestReporterWithHook hook
   in cb opts tree

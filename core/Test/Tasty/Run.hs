@@ -1,7 +1,7 @@
 -- | Running tests
 {-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes,
              FlexibleContexts, CPP, LambdaCase,
-             RecordWildCards, NamedFieldPuns #-}
+             RecordWildCards, NamedFieldPuns, BangPatterns #-}
 module Test.Tasty.Run
   ( Status(..)
   , StatusMap
@@ -378,7 +378,7 @@ createTestActions opts0 tree = do
 
   let
     finalizers :: Seq Finalizer
-    finalizers = collectFinalizers unresolvedTestTree
+    !finalizers = collectFinalizers unresolvedTestTree
 
     tests :: [TestAction ResolvedAction]
     tests = collectTests (resolveTestActions unresolvedTestTree)
@@ -402,7 +402,8 @@ createTestActions opts0 tree = do
     foldResource _opts (ResourceSpec doInit doRelease) a = do
       initVar <- liftIO $ newTVarIO NotCreated
       testTree <- a (getResource initVar)
-      finishVar <- liftIO $ newTVarIO (testActionTreeSize testTree)
+      let !size = testActionTreeSize testTree
+      finishVar <- liftIO $ newTVarIO size
       let
         ini = Initializer doInit initVar
         fin = Finalizer doRelease initVar finishVar
@@ -494,6 +495,11 @@ resolveDeps tests = maybeCheckCycles $ do
       }
   return (TestAction { testAction = action, .. }, (testPath, dep_paths))
  where
+  testsInfo = [ (testPath, testStatus) | TestAction{testPath, testStatus} <- tests ]
+  -- Here, we force evaluation of all TestActions. This drops unused references
+  -- to the test threads, allowing the GC to detect execution loops in the threads.
+  !_ = length testsInfo
+
   -- Skip cycle checking if no patterns are used: sequential test groups can't
   -- introduce cycles on their own.
   maybeCheckCycles
@@ -510,7 +516,7 @@ resolveDeps tests = maybeCheckCycles $ do
       PatternDep expr -> do
         -- A dependency defined using patterns needs to scan the whole test
         -- tree for matching tests.
-        TestAction{testPath, testStatus} <- tests
+        (testPath, testStatus) <- testsInfo
         guard $ exprMatches expr testPath
         [(depType, testStatus, testPath)]
 
