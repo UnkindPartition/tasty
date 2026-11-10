@@ -1,7 +1,7 @@
 -- | Running tests
 {-# LANGUAGE ScopedTypeVariables, ExistentialQuantification, RankNTypes,
-             FlexibleContexts, CPP, LambdaCase,
-             RecordWildCards, NamedFieldPuns, BangPatterns #-}
+             FlexibleContexts, CPP, LambdaCase, RecordWildCards,
+             NamedFieldPuns, BangPatterns #-}
 module Test.Tasty.Run
   ( Status(..)
   , StatusMap
