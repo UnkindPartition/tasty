@@ -14,19 +14,10 @@ import GHC.IO hiding (onException)
 import System.Mem.Weak (Weak, deRefWeak)
 
 #if MIN_VERSION_base(4,21,0)
-import Control.Exception (ExceptionWithContext, tryWithContext, catchNoPropagate, rethrowIO)
+import Control.Exception (ExceptionWithContext)
 #else
 type ExceptionWithContext x = x
 #endif
-
-
-{-
-#if MIN_VERSION_base(4,21,0)
-import Control.Exception (ExceptionWithContext, tryWithContext, catchNoPropagate, rethrowIO)
-#else
-type ExceptionWithContext x = x
-#endif
--}
 
 -- | A handle to an 'Async' that does /not/ keep the underlying thread alive.
 --
