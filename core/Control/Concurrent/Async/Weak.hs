@@ -7,10 +7,10 @@ import Control.Concurrent.STM
 import Control.Exception
   ( BlockedIndefinitelyOnSTM(..)
   , SomeException
+  , catch
   )
 import Control.Concurrent
 import Control.Monad
-import GHC.IO hiding (onException)
 import System.Mem.Weak (Weak, deRefWeak)
 
 #if MIN_VERSION_base(4,21,0)
