@@ -50,6 +50,7 @@ library
     Test.Tasty.Patterns.Eval
   other-modules:
     Control.Concurrent.Async
+    Control.Concurrent.Async.Weak
     Test.Tasty.Parallel
     Test.Tasty.Core
     Test.Tasty.Options.Core

@@ -4,6 +4,7 @@ module Test.Tasty.Parallel (ActionStatus(..), Action(..), runInParallel) where
 import Control.Monad
 import Control.Concurrent
 import Control.Concurrent.Async
+import Control.Concurrent.Async.Weak
 import Control.Concurrent.STM
 import Foreign.StablePtr
 
