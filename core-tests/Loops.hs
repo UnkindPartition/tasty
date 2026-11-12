@@ -10,7 +10,7 @@
 -- always reachable, and then the loop could never be detected.
 module Loops (testLoops) where
 
-import Control.Concurrent.MVar
+import Control.Concurrent (MVar, newEmptyMVar, rtsSupportsBoundThreads, takeMVar)
 import Control.Exception
 import System.Timeout (timeout)
 import Test.Tasty
@@ -35,8 +35,14 @@ threw p r = case resultOutcome r of
   Failure (TestThrewException e) -> maybe False p (fromException e)
   _ -> False
 
+-- | Detection relies on the idle GC, which only the threaded RTS runs, so
+-- the test is skipped on the non-threaded RTS (e.g. wasm).
 testLoops :: TestTree
-testLoops = testCase "Loop and deadlock detection" $ do
+testLoops = testGroup "Run if threading is enabled" $
+  if rtsSupportsBoundThreads then [testLoopDetection] else []
+
+testLoopDetection :: TestTree
+testLoopDetection = testCase "Loop and deadlock detection" $ do
   -- a regression shows up as a hang, so timeout after 30s
   res <- timeout (30 * 10^(6 :: Int)) $
     launchTestTree mempty loopTree $ \smap -> do
