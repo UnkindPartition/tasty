@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 {-# LANGUAGE CPP, MagicHash, UnboxedTuples #-}
 
 module Control.Concurrent.Async (
-  async, withAsync, wait, asyncThreadId, cancel, concurrently
+  Async(..), AsyncCancelled(..), async, withAsync, wait, cancel, concurrently
   ) where
 
 import Control.Concurrent.STM

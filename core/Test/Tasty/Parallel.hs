@@ -4,6 +4,7 @@ module Test.Tasty.Parallel (ActionStatus(..), Action(..), runInParallel) where
 import Control.Monad
 import Control.Concurrent
 import Control.Concurrent.Async
+import Control.Concurrent.Async.Weak
 import Control.Concurrent.STM
 import Foreign.StablePtr
 
@@ -52,7 +53,14 @@ runInParallel nthreads actions = do
 
   actionsVar <- atomically $ newTMVar actions
 
-  pids <- replicateM nthreads (async $ work actionsVar)
+  -- Only keep weak references to the worker threads. 'callingThread' is
+  -- pinned above, so it is a GC root, and anything it holds strongly stays
+  -- reachable. If it held the workers strongly, then so would be every test
+  -- thread below them, and the runtime would never be able to tell that a
+  -- test is stuck forever (an infinite loop on a thunk that depends on
+  -- itself, or an MVar that nobody will fill): the test would hang instead of
+  -- failing with NonTermination / BlockedIndefinitelyOnMVar.
+  pids <- replicateM nthreads (async (work actionsVar) >>= weakAsync)
 
   return $ do
     -- Tell worker threads there is no more work after their current task.
@@ -64,7 +72,7 @@ runInParallel nthreads actions = do
     -- Cancel all the current tasks, waiting for workers to clean up.
     -- The waiting part is important (see #249), that's why we use cancel
     -- instead of killThread.
-    mapM_ cancel pids
+    mapM_ cancelWeak pids
 
 work :: TMVar [Action] -> IO ()
 work actionsVar = go

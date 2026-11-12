@@ -8,6 +8,7 @@ import Data.Typeable
 import Options.Applicative
 import Resources
 import Timeouts
+import Loops
 import Dependencies
 import AWK
 import DependentTestGroup (testDependentTestGroup)
@@ -22,6 +23,7 @@ mainGroup = do
   return $ testGroup "Tests"
     [ testResources
     , testTimeouts
+    , testLoops
     , testDependencies
     , testDependentTestGroup
     , patternTests
